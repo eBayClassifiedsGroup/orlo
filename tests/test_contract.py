@@ -1,80 +1,101 @@
+from __future__ import print_function
 import sponge
-from httplib import HTTPConnection
 import json
-import unittest
 import uuid
-from flask import Flask
-from flask.ext.testing import LiveServerTestCase
+from flask.ext.testing import TestCase
+from sponge.orm import db
 
-HOST = 'localhost'
-HEADERS = {'Content-Type': 'application/json'}
 
-class ContractTest(LiveServerTestCase):
+class SpongeTest(TestCase):
+    """
+    Base test class
+    """
+
     def create_app(self):
         app = sponge.app
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
         app.config['TESTING'] = True
-        app.config['LIVESERVER_PORT'] = 7767
-        return app
+        app.config['DEBUG'] = True
+        app.config['TRAP_HTTP_EXCEPTIONS'] = True
+        return sponge.app
 
+    def setUp(self):
+        db.create_all()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+
+    def test_ping(self):
+        """
+        Start with something simple
+        """
+        response = self.client.get('/ping')
+        self.assert200(response)
+        self.assertEqual(response.data, 'pong')
+
+
+class ContractTest(SpongeTest):
+    """
+    Test the api views
+    """
 
     def test_create_release(self):
-        response, release = self._create_release(
-                platforms=['poop'],
-                references=[],
-                notes='')
-        self.assertEqual(response.status, 200)
-        self.assertEqual(uuid.UUID(release['id']).get_version(), 4)
+        """
+        Create a release
 
+        Return the response so it can be used by other tests
+        """
+        response = self.client.post('/release',
+            data=json.dumps({
+                'platforms': ['test_platform'],
+                'references': ['TestTicket-123'],
+                'note': '',
+            }),
+            content_type='application/json',
+        )
+        self.assert200(response)
+
+        release_id = response.json['id']
+        self.assertEqual(uuid.UUID(release_id).get_version(), 4)
+
+        return release_id
 
     def test_create_package(self):
-        release_response, release = self._create_release(
-                platforms=['poop'])
-        package_response, package = self._create_package(
-                release,
-                name='somepkg',
-                version='someversion')
-        self.assertEqual(package_response.status, 200)
-        self.assertEqual(uuid.UUID(package['id']).get_version(), 4)
+        """
+        Create a package
 
+        Calls create_release first, and returns both ids for future tests
+        """
+        release_id = self.test_create_release()
+
+        package_response = self.client.post(
+            '/release/{}/packages'.format(release_id),
+            data=json.dumps({
+                'name': 'test-package',
+                'version': '1.2.3'
+            }),
+            content_type='application/json',
+        )
+        self.assert200(package_response)
+
+        package_id = package_response.json['id']
+        self.assertEqual(uuid.UUID(package_id).get_version(), 4)
+
+        return release_id, package_id
 
     def test_add_results(self):
-        release_response, release = self._create_release(
-                platforms=['stuffs']
-                )
-        package_response, package = self._create_package(
-                release,
-                name='someotherpkg',
-                version='42')
-        url = "/release/%s/packages/%s/results" % (release['id'], package['id'])
-        conn = self.__connect()
-        try:
-            conn.request('POST', url, '{}', HEADERS)
-            response = conn.getresponse()
-            self.assertEqual(204, response.status)
-        finally:
-            conn.close()
+        """
+        Add the results of a package deploy
+        """
+        release_id, package_id = self.test_create_package()
 
-
-    def _create_release(self, **args):
-        conn = self.__connect()
-        try:
-            print(json.dumps(args))
-            conn.request('POST', '/release', json.dumps(args), HEADERS)
-            response = conn.getresponse()
-            return (response, json.loads(response.read()))
-        finally:
-            conn.close()
-
-
-    def _create_package(self, release, **args):
-        url = "/release/%s/packages" % release['id']
-        conn = self.__connect()
-        try:
-            conn.request('POST', url, json.dumps(args), HEADERS)
-            response = conn.getresponse()
-            return (response, json.loads(response.read()))
-        finally:
-            conn.close()
-
-    def __connect(self):
-        return HTTPConnection(HOST, self.port)
+        results_response = self.client.post(
+            '/release/{}/packages/{}/results'.format(
+                release_id, package_id),
+            data=json.dumps({
+                'success': 'true',
+                'foo': 'bar',
+            })
+        )
+        self.assertEqual(results_response.status_code, 204)
