@@ -1,4 +1,6 @@
 # Sponge
+[![Build Status](https://travis-ci.org/eBayClassifiedsGroup/sponge.svg?branch=master)](https://travis-ci.org/eBayClassifiedsGroup/sponge/)
+
 An API for tracking deployments, written with Python, Flask and SqlAlchemy.
 
 ## Introduction
