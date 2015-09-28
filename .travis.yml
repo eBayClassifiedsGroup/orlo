@@ -1,0 +1,20 @@
+language: python
+
+notifications:
+  slack: ebayclassifiedsgroup:lH5V2FnojyNCh8X84Qi1FKjk
+
+python:
+  - "2.7"
+
+addons:
+  apt:
+    packages:
+    - curl
+
+before_install:
+  - pip install -r requirements.txt
+  - ./runserver.py &
+
+script:
+  - sleep 2
+  - python setup.py test
