@@ -28,43 +28,20 @@ def handle_invalid_usage(error):
     return response
 
 
-class Release:
-    def __init__(self, notes, references, platforms):
-        self.start = datetime.now()
-        self.notes = notes
-        self.references = references
-        self.platforms = platforms
-        self.id = uuid.uuid4()
+def create_release(request):
+    """
+    Create a DbRelease object from a request
+    """
 
-    @staticmethod
-    def create_from(request):
-        return Release(request.json.get('notes'),
-                       request.json.get('references', []),
-                       request.json['platforms'])
-
-
-@app.route('/ping', methods=['GET'])
-def ping():
-    return 'pong'
-
-
-@app.route('/release', methods=['POST'])
-def post_release():
-    _validate_release_input(request)
-    release = Release.create_from(request)
-
-    app.logger.info('Release notes: %s, references: %s, platforms: %s',
-                    release.notes, release.references, release.platforms)
-    app.logger.info('Posting release for id: %s', release.id)
-
-    dbRelease = DbRelease(str(release.id), release.platforms[0], 'nobody',
-                          next(iter(release.references), ''), release.notes)
-    dbRelease.start()
-
-    db.session.add(dbRelease)
-    db.session.commit()
-
-    return jsonify(id=release.id)
+    return DbRelease(
+        # Required attributes
+        platforms=request.json['platforms'],
+        user=request.json['user'],
+        # Not required
+        notes=request.json.get('notes'),
+        team=request.json.get('team'),
+        references=request.json.get('references', []),
+    )
 
 
 def _validate_release_input(request):
@@ -74,6 +51,31 @@ def _validate_release_input(request):
         raise(InvalidUsage('JSON doc missing platforms field', status_code=400))
 
 
+@app.route('/ping', methods=['GET'])
+def ping():
+    return 'pong'
+
+
+@app.route('/release', methods=['POST'])
+def post_release():
+    """
+    Posting a release - the first step in a deployment
+    """
+    _validate_release_input(request)
+    release = create_release(request)
+
+    app.logger.info('Release notes: %s, references: %s, platforms: %s',
+                    release.notes, release.references, release.platforms)
+    app.logger.info('Started release: %s', release.id)
+
+    release.start()
+
+    db.session.add(release)
+    db.session.commit()
+
+    return jsonify(id=release.id)
+
+
 @app.route('/release/<id>/packages', methods=['POST'])
 def post_packages(id):
     if _package_input_is_valid(request, id):
@@ -81,19 +83,18 @@ def post_packages(id):
             'Releasing package name: %s and version: %s, for release: %s',
             request.json['name'],
             request.json['version'], id)
-        package_id = uuid.uuid4()
-        app.logger.info('Package id: %s', str(package_id))
 
         dbPackage = DbPackage(
-            str(package_id),
+            id,
             request.json['name'],
             request.json['version'],
-            id)
+        )
+        app.logger.info('Package id: %s', str(dbPackage.id))
         dbPackage.start()
         db.session.add(dbPackage)
         db.session.commit()
 
-        return jsonify(id=package_id)
+        return jsonify(id=dbPackage.id)
     else:
         # TODO have a proper error handler!
         abort(400)

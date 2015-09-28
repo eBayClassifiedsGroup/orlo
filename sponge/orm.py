@@ -2,8 +2,11 @@ from __future__ import print_function
 
 __author__ = 'alforbes'
 from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy_utils.types.uuid import UUIDType
+
 from sponge import app
 from datetime import datetime
+import uuid
 
 db = SQLAlchemy(app)
 
@@ -14,21 +17,30 @@ class DbRelease(db.Model):
     """
     __tablename__ = 'release'
 
-    id = db.Column(db.String, primary_key=True)
-    notes = db.Column(db.String)
-    platform = db.Column(db.String)
-    reference = db.Column(db.String(18))
-    stime = db.Column(db.DateTime)
-    duration = db.Column(db.Time)
-    user_id = db.Column(db.String)
-    team_id = db.Column(db.String)
+    id = db.Column(UUIDType, primary_key=True, unique=True, nullable=False)
+    notes = db.Column(db.String, nullable=True)
+    platforms = db.Column(db.String)
+    references = db.Column(db.String, nullable=True)
+    stime = db.Column(db.DateTime, nullable=True)
+    ftime = db.Column(db.DateTime, nullable=True)
+    duration = db.Column(db.Time, nullable=True)
+    user = db.Column(db.String)
+    team = db.Column(db.String, nullable=True)
 
-    def __init__(self, id, platform, user, reference="", notes=""):
-        self.id = id
-        self.notes = notes
-        self.platform = platform
-        self.reference = reference
+    def __init__(self, platforms, user,
+                 notes=None, team=None, references=None):
+        self.id = uuid.uuid4()
+        self.platforms = str(platforms)
         self.user = user
+
+        if notes:
+            self.notes = str(notes)
+        if team:
+            self.team = team
+        if references:
+            self.references = str(references)
+        if notes:
+            self.notes = notes
 
     def start(self):
         """
@@ -40,8 +52,10 @@ class DbRelease(db.Model):
         """
         Mark a release as stopped
         """
+        td = datetime.now() - self.stime
+        self.duration = (datetime.min + td).time()
         if not self.duration:
-            self.duration = datetime.now() - self.stime
+            self.duration = self.ftime - self.stime
 
 
 class DbPackage(db.Model):
@@ -50,19 +64,20 @@ class DbPackage(db.Model):
     """
     __tablename__ = 'package'
 
-    id = db.Column(db.String, primary_key=True)
-    name = db.Column(db.String(120))
+    id = db.Column(UUIDType, primary_key=True, unique=True, nullable=False)
+    name = db.Column(db.String(120), nullable=False)
     stime = db.Column(db.DateTime)
+    ftime = db.Column(db.DateTime)
     duration = db.Column(db.Time)
     success = db.Column(db.Boolean)
-    version = db.Column(db.String(16))
+    version = db.Column(db.String(16), nullable=False)
 
-    release_id = db.Column(db.Integer, db.ForeignKey("release.id"))
+    release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',
                                                               order_by=id))
 
-    def __init__(self, id, release_id, name, version):
-        self.id = id
+    def __init__(self, release_id, name, version):
+        self.id = uuid.uuid4()
         self.name = name
         self.version = version
         self.release_id = release_id
@@ -77,8 +92,11 @@ class DbPackage(db.Model):
         """
         Mark a deployment as stopped
         """
-        if not self.ftime:
-            self.duration = datetime.now() - self.stime
+        self.ftime = datetime.now()
+
+        if not self.duration:
+            td = datetime.now() - self.stime
+            self.duration = (datetime.min + td).time()
         self.success = success
 
 

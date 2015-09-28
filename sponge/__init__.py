@@ -2,13 +2,10 @@ from flask import Flask
 from logging.handlers import RotatingFileHandler
 
 from sponge.config import config
-from sponge.version import __version__
-
 
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = config.get('db', 'uri')
-app.config['VERSION'] = __version__
 
 if config.getboolean('main', 'propagate_exceptions'):
     app.config['PROPAGATE_EXCEPTIONS'] = True
