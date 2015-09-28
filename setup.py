@@ -19,6 +19,7 @@ setup(name='sponge',
               'Flask-SQLAlchemy',
               'Flask-Testing',
               'Flask-Migrate',
+              'sqlalchemy-utils',
       ],
       test_suite='tests',
       )

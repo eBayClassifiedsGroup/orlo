@@ -17,6 +17,7 @@ class SpongeTest(TestCase):
         app.config['TESTING'] = True
         app.config['DEBUG'] = True
         app.config['TRAP_HTTP_EXCEPTIONS'] = True
+
         return sponge.app
 
     def setUp(self):
@@ -26,6 +27,12 @@ class SpongeTest(TestCase):
         db.session.remove()
         db.drop_all()
 
+
+class ContractTest(SpongeTest):
+    """
+    Test the api views
+    """
+
     def test_ping(self):
         """
         Start with something simple
@@ -33,12 +40,6 @@ class SpongeTest(TestCase):
         response = self.client.get('/ping')
         self.assert200(response)
         self.assertEqual(response.data, 'pong')
-
-
-class ContractTest(SpongeTest):
-    """
-    Test the api views
-    """
 
     def test_create_release(self):
         """
@@ -48,9 +49,10 @@ class ContractTest(SpongeTest):
         """
         response = self.client.post('/release',
             data=json.dumps({
+                'note': '',
                 'platforms': ['test_platform'],
                 'references': ['TestTicket-123'],
-                'note': '',
+                'user': 'testuser',
             }),
             content_type='application/json',
         )
@@ -99,3 +101,4 @@ class ContractTest(SpongeTest):
             })
         )
         self.assertEqual(results_response.status_code, 204)
+
