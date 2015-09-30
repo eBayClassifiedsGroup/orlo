@@ -39,8 +39,6 @@ class DbRelease(db.Model):
             self.team = team
         if references:
             self.references = str(references)
-        if notes:
-            self.notes = notes
 
     def start(self):
         """
