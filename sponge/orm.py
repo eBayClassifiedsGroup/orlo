@@ -69,6 +69,7 @@ class DbPackage(db.Model):
     duration = db.Column(db.Time)
     success = db.Column(db.Boolean)
     version = db.Column(db.String(16), nullable=False)
+    diff_url = db.Column(db.String)
 
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',

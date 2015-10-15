@@ -49,9 +49,10 @@ class ContractTest(SpongeTest):
         """
         response = self.client.post('/release',
             data=json.dumps({
-                'note': '',
+                'note': 'test note asdf',
                 'platforms': ['test_platform'],
                 'references': ['TestTicket-123'],
+                'team': 'Test Team',
                 'user': 'testuser',
             }),
             content_type='application/json',
@@ -86,7 +87,7 @@ class ContractTest(SpongeTest):
 
         return release_id, package_id
 
-    def test_add_results(self):
+    def test_add_package_results(self):
         """
         Add the results of a package deploy
         """
@@ -101,4 +102,31 @@ class ContractTest(SpongeTest):
             })
         )
         self.assertEqual(results_response.status_code, 204)
+
+    def test_add_release_log(self):
+        """
+        Add a log a release
+        """
+        pass
+
+    def test_set_release_success(self):
+        """
+        Set the status of a release
+
+        IN_PROGRESS, SUCCESSFUL, FAILED
+        """
+        pass
+
+    def test_create_release_optional(self):
+        """
+        Create a release, omitting all optional parameters
+        """
+        response = self.client.post('/release',
+                                    data=json.dumps({
+                                        'platforms': ['test_platform'],
+                                        'user': 'testuser',
+                                    }),
+                                    content_type='application/json',
+                                    )
+        self.assert200(response)
 
