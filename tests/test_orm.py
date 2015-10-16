@@ -71,3 +71,4 @@ class SpongeDbTest(SpongeTest):
         self.assertIs(type(p.stime), datetime.datetime)
         self.assertIs(type(p.ftime), datetime.datetime)
         self.assertIs(type(p.duration), datetime.time)
+        self.assertIs(type(p.status), unicode)

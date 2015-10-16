@@ -17,6 +17,7 @@ class SpongeTest(TestCase):
         app.config['TESTING'] = True
         app.config['DEBUG'] = True
         app.config['TRAP_HTTP_EXCEPTIONS'] = True
+        app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
 
         return sponge.app
 
@@ -87,7 +88,7 @@ class ContractTest(SpongeTest):
 
         return release_id, package_id
 
-    def test_add_package_results(self):
+    def test_add_results(self):
         """
         Add the results of a package deploy
         """
@@ -99,34 +100,58 @@ class ContractTest(SpongeTest):
             data=json.dumps({
                 'success': 'true',
                 'foo': 'bar',
-            })
+            }),
+            content_type='application/json',
         )
         self.assertEqual(results_response.status_code, 204)
 
     def test_add_release_log(self):
         """
-        Add a log a release
+        Add a log of a release
         """
-        pass
+        release_id, package_id = self.test_create_package()
 
-    def test_set_release_success(self):
+    def test_package_start(self):
         """
-        Set the status of a release
-
-        IN_PROGRESS, SUCCESSFUL, FAILED
+        Test starting a package
         """
-        pass
 
-    def test_create_release_optional(self):
+        release_id, package_id = self.test_create_package()
+        results_response = self.client.post(
+            '/release/{}/packages/{}/start'.format(release_id, package_id),
+            content_type='application/json',
+        )
+        self.assertEqual(results_response.status_code, 204)
+        return release_id, package_id
+
+    def test_package_stop(self):
+        """
+        Test stopping a package
+
+        Calls test_package start first as we need one that has started
+        """
+
+        release_id, package_id = self.test_package_start()
+        results_response = self.client.post(
+            '/release/{}/packages/{}/stop'.format(release_id, package_id),
+            data=json.dumps({
+                'success': 'true',
+                'foo': 'bar',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(results_response.status_code, 204)
+
+    def test_create_release_minimal(self):
         """
         Create a release, omitting all optional parameters
         """
         response = self.client.post('/release',
-                                    data=json.dumps({
-                                        'platforms': ['test_platform'],
-                                        'user': 'testuser',
-                                    }),
-                                    content_type='application/json',
-                                    )
+            data=json.dumps({
+                'platforms': ['test_platform'],
+                'user': 'testuser',
+            }),
+            content_type='application/json',
+        )
         self.assert200(response)
 
