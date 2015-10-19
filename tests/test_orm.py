@@ -54,22 +54,21 @@ class SpongeDbTest(SpongeTest):
         """
         Test the types returned by DbRelease objects are OK
         """
-        releases = db.session.query(DbRelease).all()
-        for r in releases:
-            self.assertIs(type(r.id), uuid.UUID)
-            self.assertIs(type(r.notes), unicode)
-            self.assertIs(type(r.platforms), unicode)
-            self.assertIs(type(r.references), unicode)
-            self.assertIs(type(list(r.references)), list)
+        r = db.session.query(DbRelease).first()
+        self.assertIs(type(r.id), uuid.UUID)
+        self.assertIs(type(r.notes), unicode)
+        self.assertIs(type(r.platforms), unicode)
+        self.assertIs(type(r.references), unicode)
+        self.assertIs(type(list(r.references)), list)
 
     def test_package_types(self):
         """
         Test the types returned by DbPackage objects are OK
         """
-        packages = db.session.query(DbPackage).all()
-        for p in packages:
-            self.assertIs(type(p.id), uuid.UUID)
-            self.assertIs(type(p.name), unicode)
-            self.assertIs(type(p.stime), datetime.datetime)
-            self.assertIs(type(p.ftime), datetime.datetime)
-            self.assertIs(type(p.duration), datetime.time)
+        p = db.session.query(DbPackage).first()
+        self.assertIs(type(p.id), uuid.UUID)
+        self.assertIs(type(p.name), unicode)
+        self.assertIs(type(p.stime), datetime.datetime)
+        self.assertIs(type(p.ftime), datetime.datetime)
+        self.assertIs(type(p.duration), datetime.time)
+        self.assertIs(type(p.status), unicode)

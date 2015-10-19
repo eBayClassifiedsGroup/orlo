@@ -67,8 +67,11 @@ class DbPackage(db.Model):
     stime = db.Column(db.DateTime)
     ftime = db.Column(db.DateTime)
     duration = db.Column(db.Time)
-    success = db.Column(db.Boolean)
+    status = db.Column(
+        db.Enum('NOT_STARTED', 'IN_PROGRESS', 'SUCCESSFUL', 'FAILED'),
+        default='NOT_STARTED')
     version = db.Column(db.String(16), nullable=False)
+    diff_url = db.Column(db.String)
 
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',
@@ -82,20 +85,24 @@ class DbPackage(db.Model):
 
     def start(self):
         """
-        Mark a deployment as started
+        Mark a package deployment as started
         """
         self.stime = datetime.now()
+        self.status = 'IN_PROGRESS'
 
     def stop(self, success):
         """
-        Mark a deployment as stopped
+        Mark a package deployment as stopped
         """
         self.ftime = datetime.now()
 
         if not self.duration:
             td = datetime.now() - self.stime
             self.duration = (datetime.min + td).time()
-        self.success = success
+        if success:
+            self.status = 'SUCCESSFUL'
+        else:
+            self.status = 'FAILED'
 
 
 class DbResults(db.Model):
