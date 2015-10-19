@@ -4,8 +4,8 @@ __author__ = 'alforbes'
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.types.uuid import UUIDType
 
-from sponge import app
-from datetime import datetime
+from sponge import app, config
+from datetime import datetime, timedelta
 import uuid
 
 db = SQLAlchemy(app)
@@ -23,7 +23,7 @@ class DbRelease(db.Model):
     references = db.Column(db.String, nullable=True)
     stime = db.Column(db.DateTime, nullable=True)
     ftime = db.Column(db.DateTime, nullable=True)
-    duration = db.Column(db.Time, nullable=True)
+    duration = db.Column(db.Interval, nullable=True)
     user = db.Column(db.String)
     team = db.Column(db.String, nullable=True)
 
@@ -40,6 +40,25 @@ class DbRelease(db.Model):
         if references:
             self.references = str(references)
 
+        # Assume the release started when it was created
+        self.start()
+
+    def __str__(self):
+        return unicode(self.to_dict())
+
+    def to_dict(self):
+        time_format = config.get('main', 'time_format')
+        return {
+            'id': unicode(self.id),
+            'platforms': self.platforms,
+            'references': self.references,
+            'stime': self.stime.strftime(time_format) if self.stime else None,
+            'ftime': self.ftime.strftime(time_format) if self.ftime else None,
+            'duration': self.duration.seconds if self.duration else None,
+            'user': self.user,
+            'team': self.team,
+        }
+
     def start(self):
         """
         Mark a release as started
@@ -50,10 +69,9 @@ class DbRelease(db.Model):
         """
         Mark a release as stopped
         """
-        td = datetime.now() - self.stime
-        self.duration = (datetime.min + td).time()
-        if not self.duration:
-            self.duration = self.ftime - self.stime
+        self.ftime = datetime.now()
+        td = self.ftime - self.stime
+        self.duration = td
 
 
 class DbPackage(db.Model):
