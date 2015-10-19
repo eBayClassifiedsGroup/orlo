@@ -41,22 +41,39 @@ def _create_package(release_id, request):
     )
 
 
+def _fetch_package(release_id, package_id):
+    """
+    Fetch a package, and validate it is part of the release
+    """
+
+    rq = db.session.query(DbRelease).filter(DbRelease.id == release_id)
+    pq = db.session.query(DbPackage).filter(DbPackage.id == package_id)
+    dbRelease = rq.first()
+    dbPackage = pq.first()
+
+    if not dbRelease:
+        raise InvalidUsage("Release does not exist")
+    if not dbPackage:
+        raise InvalidUsage("Package does not exist")
+    if str(dbPackage.release_id) != release_id:
+        raise InvalidUsage("This package does not belong to this release")
+
+    return dbPackage
+
+
 def _validate_release_input(request):
     if not request.json:
         raise(InvalidUsage('Missing application/json header', status_code=400))
     if 'platforms' not in request.json:
         raise(InvalidUsage('JSON doc missing platforms field', status_code=400))
+    return True
 
 
-def _package_input_is_valid(request, id):
+def _validate_package_input(request, id):
     if not request.json:
-        app.logger.error("Missing JSON body.")
-        return False
-
+        raise InvalidUsage("Missing JSON body")
     if not 'name' in request.json or not 'version' in request.json:
-        app.logger.error("Missing name / version in request body.")
-        return False
-
+        raise InvalidUsage("Missing name / version in request body.")
     return True
 
 
@@ -87,8 +104,7 @@ def post_release():
 
 @app.route('/release/<id>/packages', methods=['POST'])
 def post_packages(id):
-    if not _package_input_is_valid(request, id):
-        raise InvalidUsage("Input not valid")
+    _validate_package_input(request, id)
 
     app.logger.info(
         'Releasing package name: %s and version: %s, for release: %s',
@@ -140,25 +156,3 @@ def post_package_stop(release_id, package_id):
     db.session.add(dbPackage)
     db.session.commit()
     return '', 204
-
-
-def _fetch_package(release_id, package_id):
-    """
-    Fetch a package, and validate it is part of the release
-    """
-
-    rq = db.session.query(DbRelease).filter(DbRelease.id == release_id)
-    pq = db.session.query(DbPackage).filter(DbPackage.id == package_id)
-    dbRelease = rq.first()
-    dbPackage = pq.first()
-
-    if not dbRelease:
-        raise InvalidUsage("Release does not exist")
-    if not dbPackage:
-        raise InvalidUsage("Package does not exist")
-    if str(dbPackage.release_id) != release_id:
-        raise InvalidUsage("This package does not belong to this release, "
-                           "or invalid release specified")
-
-    return dbPackage
-
