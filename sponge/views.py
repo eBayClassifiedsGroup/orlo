@@ -82,8 +82,8 @@ def ping():
     return 'pong'
 
 
-@app.route('/release', methods=['POST'])
-def post_release():
+@app.route('/releases', methods=['POST'])
+def post_releases():
     """
     Posting a release - the first step in a deployment
     """
@@ -102,7 +102,7 @@ def post_release():
     return jsonify(id=release.id)
 
 
-@app.route('/release/<id>/packages', methods=['POST'])
+@app.route('/releases/<id>/packages', methods=['POST'])
 def post_packages(id):
     _validate_package_input(request, id)
 
@@ -120,7 +120,7 @@ def post_packages(id):
     return jsonify(id=dbPackage.id)
 
 
-@app.route('/release/<release_id>/packages/<package_id>/results',
+@app.route('/releases/<release_id>/packages/<package_id>/results',
            methods=['POST'])
 def post_results(release_id, package_id):
     dbResults = DbResults(package_id, str(request.json))
@@ -129,7 +129,7 @@ def post_results(release_id, package_id):
     return '', 204
 
 
-@app.route('/release/<release_id>/packages/<package_id>/start',
+@app.route('/releases/<release_id>/packages/<package_id>/start',
            methods=['POST'])
 def post_package_start(release_id, package_id):
     """
@@ -143,7 +143,7 @@ def post_package_start(release_id, package_id):
     return '', 204
 
 
-@app.route('/release/<release_id>/packages/<package_id>/stop',
+@app.route('/releases/<release_id>/packages/<package_id>/stop',
            methods=['POST'])
 def post_package_stop(release_id, package_id):
     """
