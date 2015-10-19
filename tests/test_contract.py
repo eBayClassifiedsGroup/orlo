@@ -48,7 +48,7 @@ class ContractTest(SpongeTest):
 
         Return the response so it can be used by other tests
         """
-        response = self.client.post('/release',
+        response = self.client.post('/releases',
             data=json.dumps({
                 'note': 'test note asdf',
                 'platforms': ['test_platform'],
@@ -74,7 +74,7 @@ class ContractTest(SpongeTest):
         release_id = self.test_create_release()
 
         package_response = self.client.post(
-            '/release/{}/packages'.format(release_id),
+            '/releases/{}/packages'.format(release_id),
             data=json.dumps({
                 'name': 'test-package',
                 'version': '1.2.3'
@@ -95,7 +95,7 @@ class ContractTest(SpongeTest):
         release_id, package_id = self.test_create_package()
 
         results_response = self.client.post(
-            '/release/{}/packages/{}/results'.format(
+            '/releases/{}/packages/{}/results'.format(
                 release_id, package_id),
             data=json.dumps({
                 'success': 'true',
@@ -118,7 +118,7 @@ class ContractTest(SpongeTest):
 
         release_id, package_id = self.test_create_package()
         results_response = self.client.post(
-            '/release/{}/packages/{}/start'.format(release_id, package_id),
+            '/releases/{}/packages/{}/start'.format(release_id, package_id),
             content_type='application/json',
         )
         self.assertEqual(results_response.status_code, 204)
@@ -133,7 +133,7 @@ class ContractTest(SpongeTest):
 
         release_id, package_id = self.test_package_start()
         results_response = self.client.post(
-            '/release/{}/packages/{}/stop'.format(release_id, package_id),
+            '/releases/{}/packages/{}/stop'.format(release_id, package_id),
             data=json.dumps({
                 'success': 'true',
                 'foo': 'bar',
@@ -146,7 +146,7 @@ class ContractTest(SpongeTest):
         """
         Create a release, omitting all optional parameters
         """
-        response = self.client.post('/release',
+        response = self.client.post('/releases',
             data=json.dumps({
                 'platforms': ['test_platform'],
                 'user': 'testuser',
