@@ -198,6 +198,12 @@ def get_releases():
     """
     rq = db.session.query(DbRelease).order_by(DbRelease.stime.asc())
     releases = rq.all()
+
+    args = request.args
+
+    print(request.args)
+
+
     output = []
     for r in releases:
         output.append(r.to_dict())
