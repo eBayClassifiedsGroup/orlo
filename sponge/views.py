@@ -196,14 +196,12 @@ def get_releases():
     """
     Return a list of releases to the client, filters optional
     """
-    rq = db.session.query(DbRelease).order_by(DbRelease.stime.asc())
-    releases = rq.all()
+    query = db.session.query(DbRelease).order_by(DbRelease.stime.asc())
 
-    args = request.args
+    if 'package_name' in request.args:
+        query = query.join(DbPackage).filter(DbPackage.name == request.args['package_name'])
 
-    print(request.args)
-
-
+    releases = query.all()
     output = []
     for r in releases:
         output.append(r.to_dict())

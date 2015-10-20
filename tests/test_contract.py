@@ -279,7 +279,7 @@ class GetContractTest(SpongeTest):
         release_id = self._create_release()
         package_id = self._create_package(release_id, name='specific-package')
         results = self._get_release(filters=[
-            'package=specific-package'
+            'package_name=specific-package'
             ])
 
         for r in results['releases']:
