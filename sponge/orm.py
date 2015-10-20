@@ -6,9 +6,18 @@ from sqlalchemy_utils.types.uuid import UUIDType
 
 from sponge import app, config
 from datetime import datetime, timedelta
+import pytz
 import uuid
 
 db = SQLAlchemy(app)
+
+try:
+   TIMEZONE = pytz.timezone(config.get('main', 'time_zone'))
+except pytz.exceptions.UnknownTimeZoneError:
+    app.logger.critical(
+        'Unknown time zone "{}", see pytz docs for valid values'.format(
+            config.get('main', 'timezone')
+        ))
 
 
 class DbRelease(db.Model):
@@ -26,6 +35,8 @@ class DbRelease(db.Model):
     duration = db.Column(db.Interval)
     user = db.Column(db.String, nullable=False)
     team = db.Column(db.String)
+    timezone = db.Column(db.String, default=config.get('main', 'time_zone'),
+                         nullable=False)
 
     def __init__(self, platforms, user,
                  notes=None, team=None, references=None):
@@ -57,6 +68,7 @@ class DbRelease(db.Model):
             'duration': self.duration.seconds if self.duration else None,
             'user': self.user,
             'team': self.team,
+            'timezone': self.timezone,
         }
 
     def start(self):
@@ -90,6 +102,8 @@ class DbPackage(db.Model):
         default='NOT_STARTED')
     version = db.Column(db.String(16), nullable=False)
     diff_url = db.Column(db.String)
+    timezone = db.Column(db.String, default=config.get('main', 'time_zone'),
+                         nullable=False)
 
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',
