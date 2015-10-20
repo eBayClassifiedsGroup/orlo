@@ -18,14 +18,14 @@ class DbRelease(db.Model):
     __tablename__ = 'release'
 
     id = db.Column(UUIDType, primary_key=True, unique=True, nullable=False)
-    notes = db.Column(db.String, nullable=True)
-    platforms = db.Column(db.String)
-    references = db.Column(db.String, nullable=True)
-    stime = db.Column(db.DateTime, nullable=True)
-    ftime = db.Column(db.DateTime, nullable=True)
-    duration = db.Column(db.Interval, nullable=True)
-    user = db.Column(db.String)
-    team = db.Column(db.String, nullable=True)
+    notes = db.Column(db.String)
+    platforms = db.Column(db.String, nullable=False)
+    references = db.Column(db.String)
+    stime = db.Column(db.DateTime)
+    ftime = db.Column(db.DateTime)
+    duration = db.Column(db.Interval)
+    user = db.Column(db.String, nullable=False)
+    team = db.Column(db.String)
 
     def __init__(self, platforms, user,
                  notes=None, team=None, references=None):
@@ -84,7 +84,7 @@ class DbPackage(db.Model):
     name = db.Column(db.String(120), nullable=False)
     stime = db.Column(db.DateTime)
     ftime = db.Column(db.DateTime)
-    duration = db.Column(db.Time)
+    duration = db.Column(db.Interval)
     status = db.Column(
         db.Enum('NOT_STARTED', 'IN_PROGRESS', 'SUCCESSFUL', 'FAILED'),
         default='NOT_STARTED')
@@ -113,10 +113,9 @@ class DbPackage(db.Model):
         Mark a package deployment as stopped
         """
         self.ftime = datetime.now()
+        td = self.ftime - self.stime
+        self.duration = td
 
-        if not self.duration:
-            td = datetime.now() - self.stime
-            self.duration = (datetime.min + td).time()
         if success:
             self.status = 'SUCCESSFUL'
         else:

@@ -32,6 +32,10 @@ class SpongeTest(TestCase):
 class ContractTest(SpongeTest):
     """
     Test the api views
+
+    Most of these are dependant on prior tests, because for example to test
+    package stop, we first need a package that has been started. Thus failures
+    in tests earlier in the workflow will cause later tests to fail as well.
     """
 
     def test_ping(self):

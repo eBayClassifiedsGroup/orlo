@@ -60,6 +60,10 @@ class SpongeDbTest(SpongeTest):
         self.assertIs(type(r.platforms), unicode)
         self.assertIs(type(r.references), unicode)
         self.assertIs(type(list(r.references)), list)
+        self.assertIs(type(r.stime), datetime.datetime)
+        self.assertIs(type(r.ftime), datetime.datetime)
+        self.assertIs(type(r.duration), datetime.timedelta)
+        self.assertIs(type(r.team), unicode)
 
     def test_package_types(self):
         """
@@ -70,5 +74,6 @@ class SpongeDbTest(SpongeTest):
         self.assertIs(type(p.name), unicode)
         self.assertIs(type(p.stime), datetime.datetime)
         self.assertIs(type(p.ftime), datetime.datetime)
-        self.assertIs(type(p.duration), datetime.time)
+        self.assertIs(type(p.duration), datetime.timedelta)
         self.assertIs(type(p.status), unicode)
+        self.assertIs(type(p.version), unicode)
