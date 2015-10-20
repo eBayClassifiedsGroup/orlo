@@ -61,6 +61,7 @@ class DbRelease(db.Model):
         time_format = config.get('main', 'time_format')
         return {
             'id': unicode(self.id),
+            'packages': [p.to_dict() for p in self.packages],
             'platforms': self.platforms,
             'references': self.references,
             'stime': self.stime.strftime(time_format) if self.stime else None,
@@ -134,6 +135,20 @@ class DbPackage(db.Model):
             self.status = 'SUCCESSFUL'
         else:
             self.status = 'FAILED'
+
+    def to_dict(self):
+        time_format = config.get('main', 'time_format')
+        return {
+            'id': self.id,
+            'name': self.name,
+            'version': self.version,
+            'stime': self.stime.strftime(time_format) if self.stime else None,
+            'ftime': self.ftime.strftime(time_format) if self.ftime else None,
+            'duration': self.duration.seconds if self.duration else None,
+            'status': self.status,
+            'diff_url': self.diff_url,
+            'timezone': self.timezone,
+        }
 
 
 class DbResults(db.Model):
