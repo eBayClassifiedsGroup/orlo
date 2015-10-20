@@ -196,7 +196,7 @@ def get_releases():
     """
     Return a list of releases to the client, filters optional
     """
-    rq = db.session.query(DbRelease)
+    rq = db.session.query(DbRelease).order_by(DbRelease.stime.asc())
     releases = rq.all()
     output = []
     for r in releases:

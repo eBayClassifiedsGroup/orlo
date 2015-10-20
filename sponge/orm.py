@@ -63,13 +63,13 @@ class DbRelease(db.Model):
         """
         Mark a release as started
         """
-        self.stime = datetime.now()
+        self.stime = datetime.utcnow()
 
     def stop(self):
         """
         Mark a release as stopped
         """
-        self.ftime = datetime.now()
+        self.ftime = datetime.utcnow()
         td = self.ftime - self.stime
         self.duration = td
 
@@ -93,7 +93,7 @@ class DbPackage(db.Model):
 
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',
-                                                              order_by=id))
+                                                              order_by=stime))
 
     def __init__(self, release_id, name, version):
         self.id = uuid.uuid4()
@@ -105,14 +105,14 @@ class DbPackage(db.Model):
         """
         Mark a package deployment as started
         """
-        self.stime = datetime.now()
+        self.stime = datetime.utcnow()
         self.status = 'IN_PROGRESS'
 
     def stop(self, success):
         """
         Mark a package deployment as stopped
         """
-        self.ftime = datetime.now()
+        self.ftime = datetime.utcnow()
         td = self.ftime - self.stime
         self.duration = td
 
