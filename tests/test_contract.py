@@ -170,6 +170,12 @@ class ContractTest(SpongeTest):
         )
         self.assert200(response)
 
+
+class GetContractTest(ContractTest):
+    """
+    Testing the get methods
+    """
+
     def test_get_release(self):
         """
         Test the list of releases
@@ -184,3 +190,63 @@ class ContractTest(SpongeTest):
         self.assertEqual(results_response.status_code, 200)
         r_json = json.loads(results_response.data)
         self.assertEqual(len(r_json['releases']), 2)
+
+    def test_get_release_filter_package(self):
+        """
+        Filter on releases that contain a package
+        """
+        pass
+
+    def test_get_release_filter_user(self):
+        """
+        Filter on releases that were performed by a user
+        """
+        pass
+
+    def test_get_release_filter_platform(self):
+        """
+        Filter on releases that were on a particular platform
+        """
+        pass
+
+    def test_get_release_filter_stime_before(self):
+        """
+        Filter on releases that started before a particular time
+        """
+        pass
+
+    def test_get_release_filter_stime_after(self):
+        """
+        Filter on releases that started after a particular time
+        """
+        pass
+
+    def test_get_release_filter_ftime_before(self):
+        """
+        Filter on releases that finished before a particular time
+        """
+        pass
+
+    def test_get_release_filter_ftime_after(self):
+        """
+        Filter on releases that finished after a particular time
+        """
+        pass
+
+    def test_get_release_filter_duration_less(self):
+        """
+        Filter on releases that took less than x seconds
+        """
+        pass
+
+    def test_get_release_filter_duration_greater(self):
+        """
+        Filter on releases that took greater than x seconds
+        """
+        pass
+
+    def test_get_release_filter_team(self):
+        """
+        Filter on releases that a team was responsible for
+        """
+        pass
