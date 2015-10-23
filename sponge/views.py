@@ -5,6 +5,7 @@ import uuid
 from collections import OrderedDict
 from datetime import datetime
 from orm import db, DbRelease, DbPackage, DbResults
+from sponge.util import list_to_string
 
 
 @app.errorhandler(InvalidUsage)
@@ -19,14 +20,22 @@ def _create_release(request):
     Create a DbRelease object from a request
     """
 
+    references = request.json.get('references', [])
+    if references and type(references) is list:
+        references = list_to_string(references)
+
+    platforms = request.json['platforms']
+    if platforms and type(platforms) is list:
+        platforms = list_to_string(platforms)
+
     return DbRelease(
         # Required attributes
-        platforms=request.json['platforms'],
+        platforms=platforms,
         user=request.json['user'],
         # Not required
         notes=request.json.get('notes'),
         team=request.json.get('team'),
-        references=request.json.get('references', []),
+        references=references,
     )
 
 
@@ -202,8 +211,13 @@ def get_releases():
         query = query.join(DbPackage).filter(DbPackage.name == request.args['package_name'])
     if 'user' in request.args:
         query = query.filter(DbRelease.user == request.args['user'])
+    if 'platform' in request.args:
+        query = query.filter(
+            DbRelease.platforms.like('%{}%'.format(request.args['platform']))
+        )
 
     releases = query.all()
+    app.logger.debug("Returning {} releases".format(len(releases)))
     output = []
     for r in releases:
         output.append(r.to_dict())

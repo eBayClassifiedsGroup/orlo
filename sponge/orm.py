@@ -1,10 +1,11 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 __author__ = 'alforbes'
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.types.uuid import UUIDType
 
 from sponge import app, config
+from sponge.util import string_to_list
 from datetime import datetime, timedelta
 import pytz
 import uuid
@@ -40,6 +41,7 @@ class DbRelease(db.Model):
 
     def __init__(self, platforms, user,
                  notes=None, team=None, references=None):
+        # platforms and references are stored as strings in DB but really are lists
         self.id = uuid.uuid4()
         self.platforms = str(platforms)
         self.user = user
@@ -62,8 +64,8 @@ class DbRelease(db.Model):
         return {
             'id': unicode(self.id),
             'packages': [p.to_dict() for p in self.packages],
-            'platforms': self.platforms,
-            'references': self.references,
+            'platforms': string_to_list(self.platforms),
+            'references': string_to_list(self.references),
             'stime': self.stime.strftime(time_format) if self.stime else None,
             'ftime': self.ftime.strftime(time_format) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,

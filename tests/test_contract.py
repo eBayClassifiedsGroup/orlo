@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import sponge
 import json
 import uuid
@@ -32,15 +32,15 @@ class SpongeTest(TestCase):
     def _create_release(self,
                         user='testuser',
                         team='test team',
-                        platform='test_platform',
-                        reference='TestTicket-123',
+                        platforms='test_platform',
+                        references='TestTicket-123',
                         ):
         """
         Create a release using the REST API
 
         :param user:
         :param team:
-        :param platform:
+        :param platforms:
         :param reference:
         :return: the release ID
         """
@@ -49,8 +49,8 @@ class SpongeTest(TestCase):
             '/releases',
             data=json.dumps({
                 'note': 'test note lorem ipsum',
-                'platforms': [platform],
-                'references': [reference],
+                'platforms': platforms,
+                'references': references,
                 'team': team,
                 'user': user,
             }),
@@ -301,7 +301,6 @@ class GetContractTest(SpongeTest):
 
         first_results = self._get_releases(filters=['user=firstUser'])
         second_results = self._get_releases(filters=['user=secondUser'])
-        all_results = self._get_releases()
 
         self.assertEqual(len(first_results['releases']), 3)
         self.assertEqual(len(second_results['releases']), 2)
@@ -315,7 +314,24 @@ class GetContractTest(SpongeTest):
         """
         Filter on releases that were on a particular platform
         """
-        pass
+        for _ in range(0, 3):
+            self._create_release(platforms='firstPlatform')
+
+        for _ in range(0, 2):
+            self._create_release(platforms=['firstPlatform', 'secondPlatform'])
+
+        first_results = self._get_releases(filters=['platform=firstPlatform'])
+        second_results = self._get_releases(filters=['platform=secondPlatform'])
+
+        # Should be all releases
+        self.assertEqual(len(first_results['releases']), 5)
+        # Just those that contain "secondPlatform"
+        self.assertEqual(len(second_results['releases']), 2)
+
+        for r in first_results['releases']:
+            self.assertIn('firstPlatform', r['platforms'])
+        for r in second_results['releases']:
+            self.assertIn('secondPlatform', r['platforms'])
 
     def test_get_release_filter_stime_before(self):
         """
