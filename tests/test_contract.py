@@ -235,7 +235,7 @@ class GetContractTest(SpongeTest):
     Test the HTTP GET contract
     """
 
-    def _get_release(self, filters=None):
+    def _get_releases(self, filters=None):
         """
         Perform a GET to /releases with optional filters
         """
@@ -266,7 +266,7 @@ class GetContractTest(SpongeTest):
         """
         for _ in range(0, 3):
             self._create_finished_release()
-        results = self._get_release()
+        results = self._get_releases()
         self.assertEqual(len(results['releases']), 3)
 
     def test_get_release_filter_package(self):
@@ -278,7 +278,7 @@ class GetContractTest(SpongeTest):
 
         release_id = self._create_release()
         package_id = self._create_package(release_id, name='specific-package')
-        results = self._get_release(filters=[
+        results = self._get_releases(filters=[
             'package_name=specific-package'
             ])
 
@@ -293,7 +293,23 @@ class GetContractTest(SpongeTest):
         """
         Filter on releases that were performed by a user
         """
-        pass
+        for _ in range(0, 3):
+            self._create_release(user='firstUser')
+
+        for _ in range(0, 2):
+            self._create_release(user='secondUser')
+
+        first_results = self._get_releases(filters=['user=firstUser'])
+        second_results = self._get_releases(filters=['user=secondUser'])
+        all_results = self._get_releases()
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 2)
+
+        for r in first_results['releases']:
+            self.assertEqual(r['user'], 'firstUser')
+        for r in second_results['releases']:
+            self.assertEqual(r['user'], 'secondUser')
 
     def test_get_release_filter_platform(self):
         """

@@ -200,6 +200,8 @@ def get_releases():
 
     if 'package_name' in request.args:
         query = query.join(DbPackage).filter(DbPackage.name == request.args['package_name'])
+    if 'user' in request.args:
+        query = query.filter(DbRelease.user == request.args['user'])
 
     releases = query.all()
     output = []
