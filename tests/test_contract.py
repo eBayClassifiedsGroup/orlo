@@ -32,6 +32,10 @@ class SpongeTest(TestCase):
 class ContractTest(SpongeTest):
     """
     Test the api views
+
+    Most of these are dependant on prior tests, because for example to test
+    package stop, we first need a package that has been started. Thus failures
+    in tests earlier in the workflow will cause later tests to fail as well.
     """
 
     def test_ping(self):
@@ -105,12 +109,6 @@ class ContractTest(SpongeTest):
         )
         self.assertEqual(results_response.status_code, 204)
 
-    def test_add_release_log(self):
-        """
-        Add a log of a release
-        """
-        release_id, package_id = self.test_create_package()
-
     def test_package_start(self):
         """
         Test starting a package
@@ -142,6 +140,23 @@ class ContractTest(SpongeTest):
         )
         self.assertEqual(results_response.status_code, 204)
 
+        # for test_release_stop
+        return release_id
+
+    def test_release_stop(self):
+        """
+        Test stopping a release
+
+        As before, calls all the others as we need a full workflow present
+        """
+        release_id = self.test_package_stop()
+        results_response = self.client.post(
+            '/releases/{}/stop'.format(release_id),
+            content_type='application/json',
+        )
+
+        self.assertEqual(results_response.status_code, 204)
+
     def test_create_release_minimal(self):
         """
         Create a release, omitting all optional parameters
@@ -155,3 +170,17 @@ class ContractTest(SpongeTest):
         )
         self.assert200(response)
 
+    def test_get_release(self):
+        """
+        Test the list of releases
+        """
+        for _ in range(0, 2):
+            self.test_release_stop()
+
+        results_response = self.client.get(
+            '/releases',
+            content_type='application/json',
+        )
+        self.assertEqual(results_response.status_code, 200)
+        r_json = json.loads(results_response.data)
+        self.assertEqual(len(r_json['releases']), 2)

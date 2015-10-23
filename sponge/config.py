@@ -5,13 +5,13 @@ __author__ = 'alforbes'
 config = ConfigParser.ConfigParser()
 
 config.add_section('main')
-config.add_section('db')
-config.add_section('logging')
-
 config.set('main', 'propagate_exceptions', 'true')
+config.set('main', 'time_format', '%Y-%m-%d %H:%M:%S')
 
+config.add_section('db')
 config.set('db', 'uri', 'sqlite://')
 
+config.add_section('logging')
 config.set('logging', 'debug', 'true')
 config.set('logging', 'file', 'disabled')
 

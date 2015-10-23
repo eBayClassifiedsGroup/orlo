@@ -4,8 +4,8 @@ __author__ = 'alforbes'
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.types.uuid import UUIDType
 
-from sponge import app
-from datetime import datetime
+from sponge import app, config
+from datetime import datetime, timedelta
 import uuid
 
 db = SQLAlchemy(app)
@@ -18,14 +18,14 @@ class DbRelease(db.Model):
     __tablename__ = 'release'
 
     id = db.Column(UUIDType, primary_key=True, unique=True, nullable=False)
-    notes = db.Column(db.String, nullable=True)
-    platforms = db.Column(db.String)
-    references = db.Column(db.String, nullable=True)
-    stime = db.Column(db.DateTime, nullable=True)
-    ftime = db.Column(db.DateTime, nullable=True)
-    duration = db.Column(db.Time, nullable=True)
-    user = db.Column(db.String)
-    team = db.Column(db.String, nullable=True)
+    notes = db.Column(db.String)
+    platforms = db.Column(db.String, nullable=False)
+    references = db.Column(db.String)
+    stime = db.Column(db.DateTime)
+    ftime = db.Column(db.DateTime)
+    duration = db.Column(db.Interval)
+    user = db.Column(db.String, nullable=False)
+    team = db.Column(db.String)
 
     def __init__(self, platforms, user,
                  notes=None, team=None, references=None):
@@ -40,6 +40,25 @@ class DbRelease(db.Model):
         if references:
             self.references = str(references)
 
+        # Assume the release started when it was created
+        self.start()
+
+    def __str__(self):
+        return unicode(self.to_dict())
+
+    def to_dict(self):
+        time_format = config.get('main', 'time_format')
+        return {
+            'id': unicode(self.id),
+            'platforms': self.platforms,
+            'references': self.references,
+            'stime': self.stime.strftime(time_format) if self.stime else None,
+            'ftime': self.ftime.strftime(time_format) if self.ftime else None,
+            'duration': self.duration.seconds if self.duration else None,
+            'user': self.user,
+            'team': self.team,
+        }
+
     def start(self):
         """
         Mark a release as started
@@ -50,10 +69,9 @@ class DbRelease(db.Model):
         """
         Mark a release as stopped
         """
-        td = datetime.now() - self.stime
-        self.duration = (datetime.min + td).time()
-        if not self.duration:
-            self.duration = self.ftime - self.stime
+        self.ftime = datetime.now()
+        td = self.ftime - self.stime
+        self.duration = td
 
 
 class DbPackage(db.Model):
@@ -66,7 +84,7 @@ class DbPackage(db.Model):
     name = db.Column(db.String(120), nullable=False)
     stime = db.Column(db.DateTime)
     ftime = db.Column(db.DateTime)
-    duration = db.Column(db.Time)
+    duration = db.Column(db.Interval)
     status = db.Column(
         db.Enum('NOT_STARTED', 'IN_PROGRESS', 'SUCCESSFUL', 'FAILED'),
         default='NOT_STARTED')
@@ -95,10 +113,9 @@ class DbPackage(db.Model):
         Mark a package deployment as stopped
         """
         self.ftime = datetime.now()
+        td = self.ftime - self.stime
+        self.duration = td
 
-        if not self.duration:
-            td = datetime.now() - self.stime
-            self.duration = (datetime.min + td).time()
         if success:
             self.status = 'SUCCESSFUL'
         else:
