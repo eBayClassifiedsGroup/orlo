@@ -1,9 +1,11 @@
 from __future__ import print_function, unicode_literals
+from datetime import datetime, timedelta
 import sponge
 import json
 import uuid
 from flask.ext.testing import TestCase
 from sponge.orm import db
+from sponge.config import config
 
 
 class SpongeTest(TestCase):
@@ -245,6 +247,7 @@ class GetContractTest(SpongeTest):
         else:
             path = '/releases'
 
+        print("GET {}".format(path))
         results_response = self.client.get(
             path, content_type='application/json',
         )
@@ -337,7 +340,19 @@ class GetContractTest(SpongeTest):
         """
         Filter on releases that started before a particular time
         """
-        pass
+        for _ in range(0, 3):
+            self._create_release()
+
+        t_format = config.get('main', 'time_format')
+        now = datetime.utcnow()
+        tomorrow = (now + timedelta(days=1)).strftime(t_format)
+        yesterday = (now - timedelta(days=1)).strftime(t_format)
+
+        r_tomorrow = self._get_releases(filters=['stime_before={}'.format(tomorrow)])
+        r_yesterday = self._get_releases(filters=['stime_before={}'.format(yesterday)])
+
+        self.assertEqual(3, len(r_tomorrow['releases']))
+        self.assertEqual(0, len(r_yesterday['releases']))
 
     def test_get_release_filter_stime_after(self):
         """

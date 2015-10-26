@@ -1,9 +1,8 @@
 from sponge import app
+from sponge.config import config
 from sponge.exceptions import InvalidUsage
 from flask import jsonify, request, abort
-import uuid
-from collections import OrderedDict
-from datetime import datetime
+import arrow
 from orm import db, DbRelease, DbPackage, DbResults
 from sponge.util import list_to_string
 
@@ -215,6 +214,9 @@ def get_releases():
         query = query.filter(
             DbRelease.platforms.like('%{}%'.format(request.args['platform']))
         )
+    if 'stime_before' in request.args:
+        t = arrow.get(request.args['stime_before'])
+        query = query.filter(DbRelease.stime < t)
 
     releases = query.all()
     app.logger.debug("Returning {} releases".format(len(releases)))
