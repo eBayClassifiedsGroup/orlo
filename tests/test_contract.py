@@ -358,7 +358,19 @@ class GetContractTest(SpongeTest):
         """
         Filter on releases that started after a particular time
         """
-        pass
+        for _ in range(0, 3):
+            self._create_release()
+
+        t_format = config.get('main', 'time_format')
+        now = datetime.utcnow()
+        tomorrow = (now + timedelta(days=1)).strftime(t_format)
+        yesterday = (now - timedelta(days=1)).strftime(t_format)
+
+        r_tomorrow = self._get_releases(filters=['stime_after={}'.format(tomorrow)])
+        r_yesterday = self._get_releases(filters=['stime_after={}'.format(yesterday)])
+
+        self.assertEqual(0, len(r_tomorrow['releases']))
+        self.assertEqual(3, len(r_yesterday['releases']))
 
     def test_get_release_filter_ftime_before(self):
         """
