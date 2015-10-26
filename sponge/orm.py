@@ -100,13 +100,13 @@ class DbPackage(db.Model):
     ftime = db.Column(ArrowType)
     duration = db.Column(db.Interval)
     status = db.Column(
-        db.Enum('NOT_STARTED', 'IN_PROGRESS', 'SUCCESSFUL', 'FAILED'),
+        db.Enum('NOT_STARTED', 'IN_PROGRESS', 'SUCCESSFUL', 'FAILED',
+                name='status_types'),
         default='NOT_STARTED')
     version = db.Column(db.String(16), nullable=False)
     diff_url = db.Column(db.String)
     timezone = db.Column(db.String, default=config.get('main', 'time_zone'),
                          nullable=False)
-
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',
                                                               order_by=stime))
@@ -158,13 +158,14 @@ class DbResults(db.Model):
     """
     __tablename__ = 'results'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(UUIDType, primary_key=True, unique=True)
     content = db.Column(db.Text)
 
-    package_id = db.Column(db.Integer, db.ForeignKey("package.id"))
+    package_id = db.Column(UUIDType, db.ForeignKey("package.id"))
     package = db.relationship("DbPackage", backref=db.backref('results',
                                                               order_by=id))
 
     def __init__(self, package_id, content):
+        self.id = uuid.uuid4()
         self.package_id = package_id
         self.content = content
