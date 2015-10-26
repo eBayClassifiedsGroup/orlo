@@ -233,6 +233,8 @@ def get_releases():
     if 'duration_greater' in request.args:
         td = datetime.timedelta(seconds=int(request.args['duration_greater']))
         query = query.filter(DbRelease.duration > td)
+    if 'team' in request.args:
+        query = query.filter(DbRelease.team == request.args['team'])
 
     releases = query.all()
     app.logger.debug("Returning {} releases".format(len(releases)))

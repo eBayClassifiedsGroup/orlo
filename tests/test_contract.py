@@ -430,4 +430,19 @@ class GetContractTest(SpongeTest):
         """
         Filter on releases that a team was responsible for
         """
-        pass
+        for _ in range(0, 3):
+            self._create_release(team='firstTeam')
+
+        for _ in range(0, 2):
+            self._create_release(team='secondTeam')
+
+        first_results = self._get_releases(filters=['team=firstTeam'])
+        second_results = self._get_releases(filters=['team=secondTeam'])
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 2)
+
+        for r in first_results['releases']:
+            self.assertEqual(r['team'], 'firstTeam')
+        for r in second_results['releases']:
+            self.assertEqual(r['team'], 'secondTeam')
