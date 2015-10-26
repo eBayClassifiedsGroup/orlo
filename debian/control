@@ -1,0 +1,13 @@
+Source: python-sponge
+Section: python
+Priority: extra
+Maintainer: Alex Forbes <alforbes@ebay.com>
+Build-Depends: debhelper (>= 9), python, dh-virtualenv, gcc, python-dev
+Standards-Version: 3.9.5
+
+Package: python-sponge
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}
+Description: A simple Flask app that can listen on any port and return arbitrary strings
+
+
