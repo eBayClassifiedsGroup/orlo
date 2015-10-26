@@ -336,20 +336,34 @@ class GetContractTest(SpongeTest):
         for r in second_results['releases']:
             self.assertIn('secondPlatform', r['platforms'])
 
+    def _get_releases_time_filter(self, field, finished=False):
+        """
+        Return releases given the time-based filter field
+
+        Abstracts a bit of common code in the stime/ftime tests
+        """
+        for _ in range(0, 3):
+            if finished:
+                self._create_finished_release()
+            else:
+                self._create_release()
+
+        t_format = config.get('main', 'time_format')
+        now = datetime.utcnow()
+
+        yesterday = (now - timedelta(days=1)).strftime(t_format)
+        tomorrow = (now + timedelta(days=1)).strftime(t_format)
+
+        r_yesterday = self._get_releases(filters=['{}={}'.format(field, yesterday)])
+        r_tomorrow = self._get_releases(filters=['{}={}'.format(field, tomorrow)])
+
+        return r_yesterday, r_tomorrow
+
     def test_get_release_filter_stime_before(self):
         """
         Filter on releases that started before a particular time
         """
-        for _ in range(0, 3):
-            self._create_release()
-
-        t_format = config.get('main', 'time_format')
-        now = datetime.utcnow()
-        tomorrow = (now + timedelta(days=1)).strftime(t_format)
-        yesterday = (now - timedelta(days=1)).strftime(t_format)
-
-        r_tomorrow = self._get_releases(filters=['stime_before={}'.format(tomorrow)])
-        r_yesterday = self._get_releases(filters=['stime_before={}'.format(yesterday)])
+        r_yesterday, r_tomorrow = self._get_releases_time_filter('stime_before')
 
         self.assertEqual(3, len(r_tomorrow['releases']))
         self.assertEqual(0, len(r_yesterday['releases']))
@@ -358,16 +372,7 @@ class GetContractTest(SpongeTest):
         """
         Filter on releases that started after a particular time
         """
-        for _ in range(0, 3):
-            self._create_release()
-
-        t_format = config.get('main', 'time_format')
-        now = datetime.utcnow()
-        tomorrow = (now + timedelta(days=1)).strftime(t_format)
-        yesterday = (now - timedelta(days=1)).strftime(t_format)
-
-        r_tomorrow = self._get_releases(filters=['stime_after={}'.format(tomorrow)])
-        r_yesterday = self._get_releases(filters=['stime_after={}'.format(yesterday)])
+        r_yesterday, r_tomorrow = self._get_releases_time_filter('stime_after')
 
         self.assertEqual(0, len(r_tomorrow['releases']))
         self.assertEqual(3, len(r_yesterday['releases']))
@@ -376,13 +381,21 @@ class GetContractTest(SpongeTest):
         """
         Filter on releases that finished before a particular time
         """
-        pass
+        r_yesterday, r_tomorrow = self._get_releases_time_filter(
+            'ftime_before', finished=True)
+
+        self.assertEqual(3, len(r_tomorrow['releases']))
+        self.assertEqual(0, len(r_yesterday['releases']))
 
     def test_get_release_filter_ftime_after(self):
         """
         Filter on releases that finished after a particular time
         """
-        pass
+        r_yesterday, r_tomorrow = self._get_releases_time_filter(
+            'ftime_after', finished=True)
+
+        self.assertEqual(0, len(r_tomorrow['releases']))
+        self.assertEqual(3, len(r_yesterday['releases']))
 
     def test_get_release_filter_duration_less(self):
         """

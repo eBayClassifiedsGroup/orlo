@@ -220,6 +220,12 @@ def get_releases():
     if 'stime_after' in request.args:
         t = arrow.get(request.args['stime_after'])
         query = query.filter(DbRelease.stime >= t)
+    if 'ftime_before' in request.args:
+        t = arrow.get(request.args['ftime_before'])
+        query = query.filter(DbRelease.ftime <= t)
+    if 'ftime_after' in request.args:
+        t = arrow.get(request.args['ftime_after'])
+        query = query.filter(DbRelease.ftime >= t)
 
     releases = query.all()
     app.logger.debug("Returning {} releases".format(len(releases)))
