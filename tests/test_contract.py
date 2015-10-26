@@ -400,14 +400,31 @@ class GetContractTest(SpongeTest):
     def test_get_release_filter_duration_less(self):
         """
         Filter on releases that took less than x seconds
+
+        All releases take a very small amount of time in our tests,
+        but all should be <10 and >0 at least!
         """
-        pass
+        for _ in range(0, 3):
+            self._create_finished_release()
+
+        r = self._get_releases(filters=['duration_less=10'])
+        self.assertEqual(3, len(r['releases']))
+
+        r = self._get_releases(filters=['duration_less=0'])
+        self.assertEqual(0, len(r['releases']))
 
     def test_get_release_filter_duration_greater(self):
         """
         Filter on releases that took greater than x seconds
         """
-        pass
+        for _ in range(0, 3):
+            self._create_finished_release()
+
+        r = self._get_releases(filters=['duration_greater=10'])
+        self.assertEqual(0, len(r['releases']))
+
+        r = self._get_releases(filters=['duration_greater=0'])
+        self.assertEqual(3, len(r['releases']))
 
     def test_get_release_filter_team(self):
         """

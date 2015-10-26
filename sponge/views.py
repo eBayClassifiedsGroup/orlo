@@ -3,6 +3,7 @@ from sponge.config import config
 from sponge.exceptions import InvalidUsage
 from flask import jsonify, request, abort
 import arrow
+import datetime
 from orm import db, DbRelease, DbPackage, DbResults
 from sponge.util import list_to_string
 
@@ -226,6 +227,12 @@ def get_releases():
     if 'ftime_after' in request.args:
         t = arrow.get(request.args['ftime_after'])
         query = query.filter(DbRelease.ftime >= t)
+    if 'duration_less' in request.args:
+        td = datetime.timedelta(seconds=int(request.args['duration_less']))
+        query = query.filter(DbRelease.duration < td)
+    if 'duration_greater' in request.args:
+        td = datetime.timedelta(seconds=int(request.args['duration_greater']))
+        query = query.filter(DbRelease.duration > td)
 
     releases = query.all()
     app.logger.debug("Returning {} releases".format(len(releases)))
