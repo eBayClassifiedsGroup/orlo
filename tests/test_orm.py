@@ -3,6 +3,7 @@ from tests.test_contract import SpongeTest
 from random import randrange
 from tests.test_contract import db
 from sponge.orm import DbRelease, DbPackage, DbResults
+import arrow
 import datetime
 import uuid
 
@@ -60,11 +61,10 @@ class SpongeDbTest(SpongeTest):
         self.assertIs(type(r.platforms), unicode)
         self.assertIs(type(r.references), unicode)
         self.assertIs(type(list(r.references)), list)
-        self.assertIs(type(r.stime), datetime.datetime)
-        self.assertIs(type(r.ftime), datetime.datetime)
+        self.assertIs(type(r.stime), arrow.arrow.Arrow)
+        self.assertIs(type(r.ftime), arrow.arrow.Arrow)
         self.assertIs(type(r.duration), datetime.timedelta)
         self.assertIs(type(r.team), unicode)
-        self.assertIs(type(r.timezone), unicode)
 
     def test_package_types(self):
         """
@@ -73,11 +73,8 @@ class SpongeDbTest(SpongeTest):
         p = db.session.query(DbPackage).first()
         self.assertIs(type(p.id), uuid.UUID)
         self.assertIs(type(p.name), unicode)
-        self.assertIs(type(p.stime), datetime.datetime)
-        self.assertIs(type(p.ftime), datetime.datetime)
+        self.assertIs(type(p.stime), arrow.arrow.Arrow)
+        self.assertIs(type(p.ftime), arrow.arrow.Arrow)
         self.assertIs(type(p.duration), datetime.timedelta)
         self.assertIs(type(p.status), unicode)
         self.assertIs(type(p.version), unicode)
-        self.assertIs(type(p.timezone), unicode)
-
-        self.assertEqual(p.timezone, 'UTC')

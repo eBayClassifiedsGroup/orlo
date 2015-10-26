@@ -3,12 +3,14 @@ from __future__ import print_function, unicode_literals
 __author__ = 'alforbes'
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.types.uuid import UUIDType
+from sqlalchemy_utils.types.arrow import ArrowType
 
 from sponge import app, config
 from sponge.util import string_to_list
 from datetime import datetime, timedelta
 import pytz
 import uuid
+import arrow
 
 db = SQLAlchemy(app)
 
@@ -31,13 +33,11 @@ class DbRelease(db.Model):
     notes = db.Column(db.String)
     platforms = db.Column(db.String, nullable=False)
     references = db.Column(db.String)
-    stime = db.Column(db.DateTime)
-    ftime = db.Column(db.DateTime)
+    stime = db.Column(ArrowType)
+    ftime = db.Column(ArrowType)
     duration = db.Column(db.Interval)
     user = db.Column(db.String, nullable=False)
     team = db.Column(db.String)
-    timezone = db.Column(db.String, default=config.get('main', 'time_zone'),
-                         nullable=False)
 
     def __init__(self, platforms, user,
                  notes=None, team=None, references=None):
@@ -66,25 +66,24 @@ class DbRelease(db.Model):
             'packages': [p.to_dict() for p in self.packages],
             'platforms': string_to_list(self.platforms),
             'references': string_to_list(self.references),
-            'stime': self.stime.strftime(time_format) if self.stime else None,
-            'ftime': self.ftime.strftime(time_format) if self.ftime else None,
+            'stime': self.stime.format(config.get('main', 'time_format')) if self.stime else None,
+            'ftime': self.ftime.format(config.get('main', 'time_format')) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
             'user': self.user,
             'team': self.team,
-            'timezone': self.timezone,
         }
 
     def start(self):
         """
         Mark a release as started
         """
-        self.stime = datetime.utcnow()
+        self.stime = arrow.now(config.get('main', 'time_zone'))
 
     def stop(self):
         """
         Mark a release as stopped
         """
-        self.ftime = datetime.utcnow()
+        self.ftime = arrow.now(config.get('main', 'time_zone'))
         td = self.ftime - self.stime
         self.duration = td
 
@@ -97,8 +96,8 @@ class DbPackage(db.Model):
 
     id = db.Column(UUIDType, primary_key=True, unique=True, nullable=False)
     name = db.Column(db.String(120), nullable=False)
-    stime = db.Column(db.DateTime)
-    ftime = db.Column(db.DateTime)
+    stime = db.Column(ArrowType)
+    ftime = db.Column(ArrowType)
     duration = db.Column(db.Interval)
     status = db.Column(
         db.Enum('NOT_STARTED', 'IN_PROGRESS', 'SUCCESSFUL', 'FAILED'),
@@ -122,14 +121,14 @@ class DbPackage(db.Model):
         """
         Mark a package deployment as started
         """
-        self.stime = datetime.utcnow()
+        self.stime = arrow.now(config.get('main', 'time_zone'))
         self.status = 'IN_PROGRESS'
 
     def stop(self, success):
         """
         Mark a package deployment as stopped
         """
-        self.ftime = datetime.utcnow()
+        self.ftime = arrow.now(config.get('main', 'time_zone'))
         td = self.ftime - self.stime
         self.duration = td
 
@@ -144,8 +143,8 @@ class DbPackage(db.Model):
             'id': self.id,
             'name': self.name,
             'version': self.version,
-            'stime': self.stime.strftime(time_format) if self.stime else None,
-            'ftime': self.ftime.strftime(time_format) if self.ftime else None,
+            'stime': self.stime.format(config.get('main', 'time_format')) if self.stime else None,
+            'ftime': self.ftime.format(config.get('main', 'time_format')) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
             'status': self.status,
             'diff_url': self.diff_url,
