@@ -6,7 +6,8 @@ config = ConfigParser.ConfigParser()
 
 config.add_section('main')
 config.set('main', 'propagate_exceptions', 'true')
-config.set('main', 'time_format', '%Y-%m-%d %H:%M:%S')
+config.set('main', 'time_format', '%Y-%m-%dT%H:%M:%S.000Z')
+config.set('main', 'time_zone', 'UTC')
 
 config.add_section('db')
 config.set('db', 'uri', 'sqlite://')

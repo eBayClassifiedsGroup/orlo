@@ -64,6 +64,7 @@ class SpongeDbTest(SpongeTest):
         self.assertIs(type(r.ftime), datetime.datetime)
         self.assertIs(type(r.duration), datetime.timedelta)
         self.assertIs(type(r.team), unicode)
+        self.assertIs(type(r.timezone), unicode)
 
     def test_package_types(self):
         """
@@ -77,3 +78,6 @@ class SpongeDbTest(SpongeTest):
         self.assertIs(type(p.duration), datetime.timedelta)
         self.assertIs(type(p.status), unicode)
         self.assertIs(type(p.version), unicode)
+        self.assertIs(type(p.timezone), unicode)
+
+        self.assertEqual(p.timezone, 'UTC')

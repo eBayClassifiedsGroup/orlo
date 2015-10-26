@@ -6,9 +6,18 @@ from sqlalchemy_utils.types.uuid import UUIDType
 
 from sponge import app, config
 from datetime import datetime, timedelta
+import pytz
 import uuid
 
 db = SQLAlchemy(app)
+
+try:
+   TIMEZONE = pytz.timezone(config.get('main', 'time_zone'))
+except pytz.exceptions.UnknownTimeZoneError:
+    app.logger.critical(
+        'Unknown time zone "{}", see pytz docs for valid values'.format(
+            config.get('main', 'timezone')
+        ))
 
 
 class DbRelease(db.Model):
@@ -26,6 +35,8 @@ class DbRelease(db.Model):
     duration = db.Column(db.Interval)
     user = db.Column(db.String, nullable=False)
     team = db.Column(db.String)
+    timezone = db.Column(db.String, default=config.get('main', 'time_zone'),
+                         nullable=False)
 
     def __init__(self, platforms, user,
                  notes=None, team=None, references=None):
@@ -50,6 +61,7 @@ class DbRelease(db.Model):
         time_format = config.get('main', 'time_format')
         return {
             'id': unicode(self.id),
+            'packages': [p.to_dict() for p in self.packages],
             'platforms': self.platforms,
             'references': self.references,
             'stime': self.stime.strftime(time_format) if self.stime else None,
@@ -57,19 +69,20 @@ class DbRelease(db.Model):
             'duration': self.duration.seconds if self.duration else None,
             'user': self.user,
             'team': self.team,
+            'timezone': self.timezone,
         }
 
     def start(self):
         """
         Mark a release as started
         """
-        self.stime = datetime.now()
+        self.stime = datetime.utcnow()
 
     def stop(self):
         """
         Mark a release as stopped
         """
-        self.ftime = datetime.now()
+        self.ftime = datetime.utcnow()
         td = self.ftime - self.stime
         self.duration = td
 
@@ -90,10 +103,12 @@ class DbPackage(db.Model):
         default='NOT_STARTED')
     version = db.Column(db.String(16), nullable=False)
     diff_url = db.Column(db.String)
+    timezone = db.Column(db.String, default=config.get('main', 'time_zone'),
+                         nullable=False)
 
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',
-                                                              order_by=id))
+                                                              order_by=stime))
 
     def __init__(self, release_id, name, version):
         self.id = uuid.uuid4()
@@ -105,14 +120,14 @@ class DbPackage(db.Model):
         """
         Mark a package deployment as started
         """
-        self.stime = datetime.now()
+        self.stime = datetime.utcnow()
         self.status = 'IN_PROGRESS'
 
     def stop(self, success):
         """
         Mark a package deployment as stopped
         """
-        self.ftime = datetime.now()
+        self.ftime = datetime.utcnow()
         td = self.ftime - self.stime
         self.duration = td
 
@@ -120,6 +135,20 @@ class DbPackage(db.Model):
             self.status = 'SUCCESSFUL'
         else:
             self.status = 'FAILED'
+
+    def to_dict(self):
+        time_format = config.get('main', 'time_format')
+        return {
+            'id': self.id,
+            'name': self.name,
+            'version': self.version,
+            'stime': self.stime.strftime(time_format) if self.stime else None,
+            'ftime': self.ftime.strftime(time_format) if self.ftime else None,
+            'duration': self.duration.seconds if self.duration else None,
+            'status': self.status,
+            'diff_url': self.diff_url,
+            'timezone': self.timezone,
+        }
 
 
 class DbResults(db.Model):
