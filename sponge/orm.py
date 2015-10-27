@@ -66,8 +66,8 @@ class DbRelease(db.Model):
             'packages': [p.to_dict() for p in self.packages],
             'platforms': string_to_list(self.platforms),
             'references': string_to_list(self.references),
-            'stime': self.stime.format(config.get('main', 'time_format')) if self.stime else None,
-            'ftime': self.ftime.format(config.get('main', 'time_format')) if self.ftime else None,
+            'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
+            'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
             'user': self.user,
             'team': self.team,
@@ -105,8 +105,6 @@ class DbPackage(db.Model):
         default='NOT_STARTED')
     version = db.Column(db.String(16), nullable=False)
     diff_url = db.Column(db.String)
-    timezone = db.Column(db.String, default=config.get('main', 'time_zone'),
-                         nullable=False)
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',
                                                               order_by=stime))
@@ -143,12 +141,11 @@ class DbPackage(db.Model):
             'id': self.id,
             'name': self.name,
             'version': self.version,
-            'stime': self.stime.format(config.get('main', 'time_format')) if self.stime else None,
-            'ftime': self.ftime.format(config.get('main', 'time_format')) if self.ftime else None,
+            'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
+            'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
             'status': self.status,
             'diff_url': self.diff_url,
-            'timezone': self.timezone,
         }
 
 
