@@ -54,7 +54,10 @@ def run_server(args):
           "for production, we recommend running under gunicorn.")
 
     from sponge import app
-    app.run(debug=True, use_reloader=False)
+    app.config['DEBUG'] = True
+    app.config['TRAP_HTTP_EXCEPTIONS'] = True
+    app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
+    app.run(debug=True, use_reloader=True)
 
 
 if __name__ == '__main__':
