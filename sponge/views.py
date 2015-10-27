@@ -222,12 +222,15 @@ def post_packages_stop(release_id, package_id):
 
 
 @app.route('/releases', methods=['GET'])
-def get_releases():
+@app.route('/releases/<release_id>', methods=['GET'])
+def get_releases(release_id=None):
     """
     Return a list of releases to the client, filters optional
     """
     query = db.session.query(DbRelease).order_by(DbRelease.stime.asc())
 
+    if release_id:
+        query = query.filter(DbRelease.id == release_id)
     if 'package_name' in request.args:
         query = query.join(DbPackage).filter(DbPackage.name == request.args['package_name'])
     if 'user' in request.args:

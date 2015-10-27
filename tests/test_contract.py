@@ -237,12 +237,14 @@ class GetContractTest(SpongeTest):
     Test the HTTP GET contract
     """
 
-    def _get_releases(self, filters=None):
+    def _get_releases(self, release_id=None, filters=None):
         """
         Perform a GET to /releases with optional filters
         """
 
-        if filters:
+        if release_id:
+            path = '/releases/{}'.format(release_id)
+        elif filters:
             path = '/releases?{}'.format('&'.join(filters))
         else:
             path = '/releases'
@@ -263,7 +265,17 @@ class GetContractTest(SpongeTest):
         self.assert200(response)
         self.assertEqual(response.data, 'pong')
 
-    def test_get_release(self):
+    def test_get_single_release(self):
+        """
+        Fetch a single release
+        """
+        release_id = self._create_release()
+        r = self._get_releases(release_id=release_id)
+
+        self.assertEqual(1, len(r['releases']))
+        self.assertEqual(release_id, r['releases'][0]['id'])
+
+    def test_get_releases(self):
         """
         Test the list of releases
         """
