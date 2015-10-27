@@ -66,8 +66,8 @@ class DbRelease(db.Model):
             'packages': [p.to_dict() for p in self.packages],
             'platforms': string_to_list(self.platforms),
             'references': string_to_list(self.references),
-            'stime': self.stime.format(config.get('main', 'time_format')) if self.stime else None,
-            'ftime': self.ftime.format(config.get('main', 'time_format')) if self.ftime else None,
+            'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
+            'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
             'user': self.user,
             'team': self.team,
@@ -100,13 +100,11 @@ class DbPackage(db.Model):
     ftime = db.Column(ArrowType)
     duration = db.Column(db.Interval)
     status = db.Column(
-        db.Enum('NOT_STARTED', 'IN_PROGRESS', 'SUCCESSFUL', 'FAILED'),
+        db.Enum('NOT_STARTED', 'IN_PROGRESS', 'SUCCESSFUL', 'FAILED',
+                name='status_types'),
         default='NOT_STARTED')
     version = db.Column(db.String(16), nullable=False)
     diff_url = db.Column(db.String)
-    timezone = db.Column(db.String, default=config.get('main', 'time_zone'),
-                         nullable=False)
-
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',
                                                               order_by=stime))
@@ -143,12 +141,11 @@ class DbPackage(db.Model):
             'id': self.id,
             'name': self.name,
             'version': self.version,
-            'stime': self.stime.format(config.get('main', 'time_format')) if self.stime else None,
-            'ftime': self.ftime.format(config.get('main', 'time_format')) if self.ftime else None,
+            'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
+            'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
             'status': self.status,
             'diff_url': self.diff_url,
-            'timezone': self.timezone,
         }
 
 
@@ -158,13 +155,14 @@ class DbResults(db.Model):
     """
     __tablename__ = 'results'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(UUIDType, primary_key=True, unique=True)
     content = db.Column(db.Text)
 
-    package_id = db.Column(db.Integer, db.ForeignKey("package.id"))
+    package_id = db.Column(UUIDType, db.ForeignKey("package.id"))
     package = db.relationship("DbPackage", backref=db.backref('results',
                                                               order_by=id))
 
     def __init__(self, package_id, content):
+        self.id = uuid.uuid4()
         self.package_id = package_id
         self.content = content

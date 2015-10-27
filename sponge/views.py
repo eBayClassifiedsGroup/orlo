@@ -80,20 +80,37 @@ def _fetch_package(release_id, package_id):
     return dbPackage
 
 
-def _validate_release_input(request):
+def _validate_request_json(request):
+    try:
+        request.json
+    except Exception:
+        # This is pretty ugly, but we want something more user friendly than "Bad Request"
+        raise InvalidUsage("Could not parse JSON document")
+
     if not request.json:
-        raise(InvalidUsage('Missing application/json header', status_code=400))
+        raise InvalidUsage('Missing application/json header', status_code=400)
+
+
+def _validate_release_input(request):
+    _validate_request_json(request)
     if 'platforms' not in request.json:
-        raise(InvalidUsage('JSON doc missing platforms field', status_code=400))
+        raise InvalidUsage('JSON doc missing platforms field', status_code=400)
     return True
 
 
 def _validate_package_input(request, id):
-    if not request.json:
-        raise InvalidUsage("Missing JSON body")
+    _validate_request_json(request)
+
     if not 'name' in request.json or not 'version' in request.json:
         raise InvalidUsage("Missing name / version in request body.")
+    app.logger.debug("Request validated, id {}".format(id))
     return True
+
+
+def _validate_package_stop_input(request):
+    _validate_request_json(request)
+    if 'success' not in request.json:
+        raise InvalidUsage("Missing success key in JSON doc")
 
 
 @app.route('/ping', methods=['GET'])
@@ -162,8 +179,10 @@ def post_releases_stop(release_id):
     dbRelease = _fetch_release(release_id)
     # TODO check that all packages have been finished
     app.logger.info("Release stop, release {}".format(release_id))
-
     dbRelease.stop()
+
+    db.session.add(dbRelease)
+    db.session.commit()
     return '', 204
 
 
@@ -189,7 +208,9 @@ def post_packages_stop(release_id, package_id):
     """
     Indicate that a package has finished deploying
     """
+    _validate_request_json(request)
     success = request.json['success']
+
     dbPackage = _fetch_package(release_id, package_id)
     app.logger.info("Package stop, release {}, package {}, success {}".format(
         release_id, package_id, success))
@@ -201,12 +222,15 @@ def post_packages_stop(release_id, package_id):
 
 
 @app.route('/releases', methods=['GET'])
-def get_releases():
+@app.route('/releases/<release_id>', methods=['GET'])
+def get_releases(release_id=None):
     """
     Return a list of releases to the client, filters optional
     """
     query = db.session.query(DbRelease).order_by(DbRelease.stime.asc())
 
+    if release_id:
+        query = query.filter(DbRelease.id == release_id)
     if 'package_name' in request.args:
         query = query.join(DbPackage).filter(DbPackage.name == request.args['package_name'])
     if 'user' in request.args:

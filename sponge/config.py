@@ -13,7 +13,7 @@ config.add_section('db')
 config.set('db', 'uri', 'sqlite://')
 
 config.add_section('logging')
-config.set('logging', 'debug', 'true')
+config.set('logging', 'debug', 'false')
 config.set('logging', 'file', 'disabled')
 
-config.read('/etc/sponge.ini')
+config.read('/etc/sponge.conf')
