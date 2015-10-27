@@ -11,7 +11,7 @@ sdist:
 clean:
 	debuild clean
 
-debian: test
+debian:
 	debuild -us -uc
 
 changelog:
