@@ -179,8 +179,10 @@ def post_releases_stop(release_id):
     dbRelease = _fetch_release(release_id)
     # TODO check that all packages have been finished
     app.logger.info("Release stop, release {}".format(release_id))
-
     dbRelease.stop()
+
+    db.session.add(dbRelease)
+    db.session.commit()
     return '', 204
 
 
