@@ -1,10 +1,11 @@
 from sponge import app
+from sponge.config import config
 from sponge.exceptions import InvalidUsage
 from flask import jsonify, request, abort
-import uuid
-from collections import OrderedDict
-from datetime import datetime
+import arrow
+import datetime
 from orm import db, DbRelease, DbPackage, DbResults
+from sponge.util import list_to_string
 
 
 @app.errorhandler(InvalidUsage)
@@ -19,14 +20,22 @@ def _create_release(request):
     Create a DbRelease object from a request
     """
 
+    references = request.json.get('references', [])
+    if references and type(references) is list:
+        references = list_to_string(references)
+
+    platforms = request.json['platforms']
+    if platforms and type(platforms) is list:
+        platforms = list_to_string(platforms)
+
     return DbRelease(
         # Required attributes
-        platforms=request.json['platforms'],
+        platforms=platforms,
         user=request.json['user'],
         # Not required
         notes=request.json.get('notes'),
         team=request.json.get('team'),
-        references=request.json.get('references', []),
+        references=references,
     )
 
 
@@ -200,8 +209,35 @@ def get_releases():
 
     if 'package_name' in request.args:
         query = query.join(DbPackage).filter(DbPackage.name == request.args['package_name'])
+    if 'user' in request.args:
+        query = query.filter(DbRelease.user == request.args['user'])
+    if 'platform' in request.args:
+        query = query.filter(
+            DbRelease.platforms.like('%{}%'.format(request.args['platform']))
+        )
+    if 'stime_before' in request.args:
+        t = arrow.get(request.args['stime_before'])
+        query = query.filter(DbRelease.stime <= t)
+    if 'stime_after' in request.args:
+        t = arrow.get(request.args['stime_after'])
+        query = query.filter(DbRelease.stime >= t)
+    if 'ftime_before' in request.args:
+        t = arrow.get(request.args['ftime_before'])
+        query = query.filter(DbRelease.ftime <= t)
+    if 'ftime_after' in request.args:
+        t = arrow.get(request.args['ftime_after'])
+        query = query.filter(DbRelease.ftime >= t)
+    if 'duration_less' in request.args:
+        td = datetime.timedelta(seconds=int(request.args['duration_less']))
+        query = query.filter(DbRelease.duration < td)
+    if 'duration_greater' in request.args:
+        td = datetime.timedelta(seconds=int(request.args['duration_greater']))
+        query = query.filter(DbRelease.duration > td)
+    if 'team' in request.args:
+        query = query.filter(DbRelease.team == request.args['team'])
 
     releases = query.all()
+    app.logger.debug("Returning {} releases".format(len(releases)))
     output = []
     for r in releases:
         output.append(r.to_dict())

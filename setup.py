@@ -15,6 +15,7 @@ setup(name='sponge',
       packages=find_packages(),
       include_package_data=True,
       install_requires=[
+              'arrow',
               'Flask',
               'Flask-SQLAlchemy',
               'Flask-Testing',

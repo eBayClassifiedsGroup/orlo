@@ -1,9 +1,11 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+from datetime import datetime, timedelta
 import sponge
 import json
 import uuid
 from flask.ext.testing import TestCase
 from sponge.orm import db
+from sponge.config import config
 
 
 class SpongeTest(TestCase):
@@ -32,15 +34,15 @@ class SpongeTest(TestCase):
     def _create_release(self,
                         user='testuser',
                         team='test team',
-                        platform='test_platform',
-                        reference='TestTicket-123',
+                        platforms='test_platform',
+                        references='TestTicket-123',
                         ):
         """
         Create a release using the REST API
 
         :param user:
         :param team:
-        :param platform:
+        :param platforms:
         :param reference:
         :return: the release ID
         """
@@ -49,8 +51,8 @@ class SpongeTest(TestCase):
             '/releases',
             data=json.dumps({
                 'note': 'test note lorem ipsum',
-                'platforms': [platform],
-                'references': [reference],
+                'platforms': platforms,
+                'references': references,
                 'team': team,
                 'user': user,
             }),
@@ -235,7 +237,7 @@ class GetContractTest(SpongeTest):
     Test the HTTP GET contract
     """
 
-    def _get_release(self, filters=None):
+    def _get_releases(self, filters=None):
         """
         Perform a GET to /releases with optional filters
         """
@@ -245,6 +247,7 @@ class GetContractTest(SpongeTest):
         else:
             path = '/releases'
 
+        print("GET {}".format(path))
         results_response = self.client.get(
             path, content_type='application/json',
         )
@@ -266,7 +269,7 @@ class GetContractTest(SpongeTest):
         """
         for _ in range(0, 3):
             self._create_finished_release()
-        results = self._get_release()
+        results = self._get_releases()
         self.assertEqual(len(results['releases']), 3)
 
     def test_get_release_filter_package(self):
@@ -278,7 +281,7 @@ class GetContractTest(SpongeTest):
 
         release_id = self._create_release()
         package_id = self._create_package(release_id, name='specific-package')
-        results = self._get_release(filters=[
+        results = self._get_releases(filters=[
             'package_name=specific-package'
             ])
 
@@ -293,52 +296,153 @@ class GetContractTest(SpongeTest):
         """
         Filter on releases that were performed by a user
         """
-        pass
+        for _ in range(0, 3):
+            self._create_release(user='firstUser')
+
+        for _ in range(0, 2):
+            self._create_release(user='secondUser')
+
+        first_results = self._get_releases(filters=['user=firstUser'])
+        second_results = self._get_releases(filters=['user=secondUser'])
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 2)
+
+        for r in first_results['releases']:
+            self.assertEqual(r['user'], 'firstUser')
+        for r in second_results['releases']:
+            self.assertEqual(r['user'], 'secondUser')
 
     def test_get_release_filter_platform(self):
         """
         Filter on releases that were on a particular platform
         """
-        pass
+        for _ in range(0, 3):
+            self._create_release(platforms='firstPlatform')
+
+        for _ in range(0, 2):
+            self._create_release(platforms=['firstPlatform', 'secondPlatform'])
+
+        first_results = self._get_releases(filters=['platform=firstPlatform'])
+        second_results = self._get_releases(filters=['platform=secondPlatform'])
+
+        # Should be all releases
+        self.assertEqual(len(first_results['releases']), 5)
+        # Just those that contain "secondPlatform"
+        self.assertEqual(len(second_results['releases']), 2)
+
+        for r in first_results['releases']:
+            self.assertIn('firstPlatform', r['platforms'])
+        for r in second_results['releases']:
+            self.assertIn('secondPlatform', r['platforms'])
+
+    def _get_releases_time_filter(self, field, finished=False):
+        """
+        Return releases given the time-based filter field
+
+        Abstracts a bit of common code in the stime/ftime tests
+        """
+        for _ in range(0, 3):
+            if finished:
+                self._create_finished_release()
+            else:
+                self._create_release()
+
+        t_format = config.get('main', 'time_format')
+        now = datetime.utcnow()
+
+        yesterday = (now - timedelta(days=1)).strftime(t_format)
+        tomorrow = (now + timedelta(days=1)).strftime(t_format)
+
+        r_yesterday = self._get_releases(filters=['{}={}'.format(field, yesterday)])
+        r_tomorrow = self._get_releases(filters=['{}={}'.format(field, tomorrow)])
+
+        return r_yesterday, r_tomorrow
 
     def test_get_release_filter_stime_before(self):
         """
         Filter on releases that started before a particular time
         """
-        pass
+        r_yesterday, r_tomorrow = self._get_releases_time_filter('stime_before')
+
+        self.assertEqual(3, len(r_tomorrow['releases']))
+        self.assertEqual(0, len(r_yesterday['releases']))
 
     def test_get_release_filter_stime_after(self):
         """
         Filter on releases that started after a particular time
         """
-        pass
+        r_yesterday, r_tomorrow = self._get_releases_time_filter('stime_after')
+
+        self.assertEqual(0, len(r_tomorrow['releases']))
+        self.assertEqual(3, len(r_yesterday['releases']))
 
     def test_get_release_filter_ftime_before(self):
         """
         Filter on releases that finished before a particular time
         """
-        pass
+        r_yesterday, r_tomorrow = self._get_releases_time_filter(
+            'ftime_before', finished=True)
+
+        self.assertEqual(3, len(r_tomorrow['releases']))
+        self.assertEqual(0, len(r_yesterday['releases']))
 
     def test_get_release_filter_ftime_after(self):
         """
         Filter on releases that finished after a particular time
         """
-        pass
+        r_yesterday, r_tomorrow = self._get_releases_time_filter(
+            'ftime_after', finished=True)
+
+        self.assertEqual(0, len(r_tomorrow['releases']))
+        self.assertEqual(3, len(r_yesterday['releases']))
 
     def test_get_release_filter_duration_less(self):
         """
         Filter on releases that took less than x seconds
+
+        All releases take a very small amount of time in our tests,
+        but all should be <10 and >0 at least!
         """
-        pass
+        for _ in range(0, 3):
+            self._create_finished_release()
+
+        r = self._get_releases(filters=['duration_less=10'])
+        self.assertEqual(3, len(r['releases']))
+
+        r = self._get_releases(filters=['duration_less=0'])
+        self.assertEqual(0, len(r['releases']))
 
     def test_get_release_filter_duration_greater(self):
         """
         Filter on releases that took greater than x seconds
         """
-        pass
+        for _ in range(0, 3):
+            self._create_finished_release()
+
+        r = self._get_releases(filters=['duration_greater=10'])
+        self.assertEqual(0, len(r['releases']))
+
+        r = self._get_releases(filters=['duration_greater=0'])
+        self.assertEqual(3, len(r['releases']))
 
     def test_get_release_filter_team(self):
         """
         Filter on releases that a team was responsible for
         """
-        pass
+        for _ in range(0, 3):
+            self._create_release(team='firstTeam')
+
+        for _ in range(0, 2):
+            self._create_release(team='secondTeam')
+
+        first_results = self._get_releases(filters=['team=firstTeam'])
+        second_results = self._get_releases(filters=['team=secondTeam'])
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 2)
+
+        for r in first_results['releases']:
+            self.assertEqual(r['team'], 'firstTeam')
+        for r in second_results['releases']:
+            self.assertEqual(r['team'], 'secondTeam')
