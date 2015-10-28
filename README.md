@@ -3,28 +3,20 @@
 
 An API for tracking deployments, written with Python, Flask and SqlAlchemy.
 
-## Introduction
+## About
 
-Sponge originated as part of a siteops hackathon at eBay classifieds, and is currently in development by staff at gumtree.com, kijiji.ca, mobile.de and 2dehands.be (all part of eBay Classifieds).
+Sponge originated as part of a siteops hackathon at eBay classifieds, and is currently in development by staff at gumtree.com, kijiji.ca, mobile.de and 2dehands.be (all part of eBay Classifieds). 
+It aims to cover the needs of all eCG platforms with respect to gathering information about deployments, while being simple to integrate with existing deployment software and scripts. This currently includes:
 
-It is in a very early stage of development, but eventually we hope that it will be used more broadly within ECG and possibly elsewhere.
-
-The goal is to build an API specification in Python, which covers the needs of all platforms with respect to gathering information about deployments, while being simple to integrate with existing deployment software and scripts.
-This might include, but is not limited to:
-- Release information and metrics, such as:
   - Person who performed the release
   - Dev team responsible
-  - Overall release duration
-  - Package release duration
+  - Platforms deployed to
+  - Start time, finish time, and duration by package
   - Versions of packages released
-  - Hosts deployed to
-  - Logs
-  - Ticket / external reference of some kind
-- Returning release information for use in UIs and other tools
-  - Current deployed version of a package
-  - Information on past releases
-  - Information on any ongoing releases
-  - Hosts involved in a release
+  - External references such as issue tracking tickets
+  - Output such as logs
+
+With this information, it will be possible to build dashboards and more intelligent release tooling.
 
 The API should also be agnostic to release process, server container or packaging format - all platforms do things differently. It should be forgiving and "do the right thing" in the case of missing data, as not all platforms will use every field.
 
@@ -43,30 +35,6 @@ In future:
  - UI to display and consume the data
  - Control API for performing deployments
 
-## Endpoints
+## Documentation
 
-`/release`
-
-Method: POST
-Example:
-```
-curl -i -H "Content-Type: application/json" -X POST -d \
-'{
-   "notes":    "My first milestone",
-   "references":     ["ACBC-1234"],
-   "platforms":     ["My_Platform"]
- }' \
- http://localhost:5000/release
-```
-
-
-`/relase/{id}/packages`
-
-Method: POST
-Example:
-
-
-`/results`
-
-Method: POST
-Example:
+This is a work in progress, but the API is already documented with Sphinx. See the docs/ directory. Documentation can be compiled with `make html`.
