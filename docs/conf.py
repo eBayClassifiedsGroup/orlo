@@ -15,6 +15,7 @@
 import sys
 import os
 import shlex
+import alabaster
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -30,6 +31,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'alabaster',
     'sphinx.ext.autodoc',
     'sphinxcontrib.httpdomain',
     'sphinxcontrib.autohttp.flask',
@@ -286,3 +288,25 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+
+# Alabaster Theme options
+html_theme_path = [alabaster.get_path()]
+html_theme = 'alabaster'
+html_sidebars = {
+    '**': [
+        'about.html',
+        'navigation.html',
+        'relations.html',
+        'links.html',
+        'searchbox.html',
+    ]
+}
+
+html_theme_options = {
+    'description': 'REST API for tracking code deployments',
+    'github_user': 'eBayClassifiedsGroup',
+    'github_repo': 'sponge',
+    'github_button': True,
+    'travis_button': True,
+}
