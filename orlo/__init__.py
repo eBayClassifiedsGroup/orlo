@@ -1,7 +1,7 @@
 from flask import Flask
 from logging.handlers import RotatingFileHandler
 
-from sponge.config import config
+from orlo.config import config
 
 app = Flask(__name__)
 
@@ -24,4 +24,4 @@ if logfile != 'disabled':
     app.logger.addHandler(handler)
 
 # Must be imported last
-import sponge.views
+import orlo.views

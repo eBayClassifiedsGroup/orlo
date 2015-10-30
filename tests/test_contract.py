@@ -1,28 +1,28 @@
 from __future__ import print_function, unicode_literals
 from datetime import datetime, timedelta
-import sponge
+import orlo
 import json
 import uuid
 from flask.ext.testing import TestCase
-from sponge.orm import db
-from sponge.config import config
+from orlo.orm import db
+from orlo.config import config
 
 
-class SpongeTest(TestCase):
+class OrloTest(TestCase):
     """
     Base class for tests which contains the methods required to move
     releases and packages through the workflow
     """
 
     def create_app(self):
-        app = sponge.app
+        app = orlo.app
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
         app.config['TESTING'] = True
         app.config['DEBUG'] = True
         app.config['TRAP_HTTP_EXCEPTIONS'] = True
         app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
 
-        return sponge.app
+        return orlo.app
 
     def setUp(self):
         db.create_all()
@@ -150,7 +150,7 @@ class SpongeTest(TestCase):
         return release_id
 
 
-class PostContractTest(SpongeTest):
+class PostContractTest(OrloTest):
     """
     Test the HTTP POST contract
     """
@@ -232,7 +232,7 @@ class PostContractTest(SpongeTest):
         self.assert200(response)
 
 
-class GetContractTest(SpongeTest):
+class GetContractTest(OrloTest):
     """
     Test the HTTP GET contract
     """

@@ -60,6 +60,6 @@ target/
 
 # Created by .ignore support plugin (hsz.mobi)
 .idea/
-sponge/sponge.db
+orlo/orlo.db
 .vagrant
 *.swp

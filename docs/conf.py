@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# sponge documentation build configuration file, created by
+# orlo documentation build configuration file, created by
 # sphinx-quickstart on Tue Oct 27 17:16:14 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -52,7 +52,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'sponge'
+project = u'orlo'
 copyright = u'2015, Alex Forbes'
 author = u'Alex Forbes'
 
@@ -206,7 +206,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'spongedoc'
+htmlhelp_basename = 'orlodoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -228,7 +228,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'sponge.tex', u'sponge Documentation',
+  (master_doc, 'orlo.tex', u'orlo Documentation',
    u'Alex Forbes', 'manual'),
 ]
 
@@ -258,7 +258,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'sponge', u'sponge Documentation',
+    (master_doc, 'orlo', u'orlo Documentation',
      [author], 1)
 ]
 
@@ -272,8 +272,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'sponge', u'sponge Documentation',
-   author, 'sponge', 'One line description of project.',
+  (master_doc, 'orlo', u'orlo Documentation',
+   author, 'orlo', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -306,7 +306,7 @@ html_sidebars = {
 html_theme_options = {
     'description': 'REST API for tracking code deployments',
     'github_user': 'eBayClassifiedsGroup',
-    'github_repo': 'sponge',
+    'github_repo': 'orlo',
     'github_button': True,
     'travis_button': True,
 }

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-if grep -q "^sponge" /etc/passwd; then
+if grep -q "^orlo" /etc/passwd; then
     :
 else
-    useradd sponge -s /bin/false -U
+    useradd orlo -s /bin/false -U
 fi
 
-mkdir -p /var/lib/sponge
-chown sponge:sponge /var/lib/sponge
-chmod 755 /var/lib/sponge
+mkdir -p /var/lib/orlo
+chown orlo:orlo /var/lib/orlo
+chmod 755 /var/lib/orlo
