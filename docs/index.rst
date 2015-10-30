@@ -44,7 +44,7 @@ The API should also be agnostic to release process, server container or packagin
 Why "orlo"?
 -------------
 
-Orlos are very absorbent. Orlo absorbs data. Also, it provides a good set of analogies by way of a popular children's TV show...
+Originally this project was called "Sponge", because sponges are absorbent. But it turns out that name was already in use on readthedocs.org, so it was renamed. In English, orlo means "a plinth supporting the base of a column", which seems like a pretty good analogy for this project.
 
 Roadmap
 -------
