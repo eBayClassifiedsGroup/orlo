@@ -1,8 +1,8 @@
 from __future__ import print_function
-from tests.test_contract import SpongeTest
+from tests.test_contract import OrloTest
 from random import randrange
 from tests.test_contract import db
-from sponge.orm import DbRelease, DbPackage, DbResults
+from orlo.orm import DbRelease, DbPackage, DbResults
 import arrow
 import datetime
 import uuid
@@ -14,9 +14,9 @@ Tests for the database / orm layer
 '''
 
 
-class SpongeDbTest(SpongeTest):
+class OrloDbTest(OrloTest):
     def setUp(self):
-        super(SpongeDbTest, self).setUp()
+        super(OrloDbTest, self).setUp()
 
         # Add 10 releases
         for _ in range(10):

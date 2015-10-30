@@ -16,4 +16,4 @@ config.add_section('logging')
 config.set('logging', 'debug', 'false')
 config.set('logging', 'file', 'disabled')
 
-config.read('/etc/sponge.conf')
+config.read('/etc/orlo.conf')

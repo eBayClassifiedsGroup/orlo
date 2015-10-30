@@ -1,4 +1,4 @@
-#!/usr/share/python/python-sponge/bin/python
+#!/usr/share/python/python-orlo/bin/python
 
 import argparse
 
@@ -8,7 +8,7 @@ def parse_args():
 
     p_config = argparse.ArgumentParser(add_help=False)
     p_config.add_argument('--file', '-f', dest='filepath', help="File to write to",
-                          default='/etc/sponge.conf')
+                          default='/etc/orlo.conf')
 
     p_database = argparse.ArgumentParser(add_help=False)
     p_server = argparse.ArgumentParser(add_help=False)
@@ -33,19 +33,19 @@ def parse_args():
 
 
 def write_config(args):
-    from sponge import config
+    from orlo import config
     config_file = open(args.filepath, 'w')
     config.write(config_file)
 
 
 def setup_database(args):
-    from sponge.orm import db
-    from sponge.config import config
+    from orlo.orm import db
+    from orlo.config import config
 
     if config.get('db', 'uri') == 'sqlite://':
         print("Warning: setting up in-memory database, this is "
               "probably not what you want!\n"
-              "Please configure db:uri in /etc/sponge.conf")
+              "Please configure db:uri in /etc/orlo.conf")
     db.create_all()
 
 
@@ -53,7 +53,7 @@ def run_server(args):
     print("Warning: this is a development server and not suitable "
           "for production, we recommend running under gunicorn.")
 
-    from sponge import app
+    from orlo import app
     app.config['DEBUG'] = True
     app.config['TRAP_HTTP_EXCEPTIONS'] = True
     app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False

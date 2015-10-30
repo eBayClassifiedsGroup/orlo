@@ -1,12 +1,12 @@
-.. sponge documentation master file, created by
+.. orlo documentation master file, created by
    sphinx-quickstart on Tue Oct 27 17:16:14 2015.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Sponge
+Orlo
 ======
 
-Sponge is an API for tracking deployments, written with Python, Flask and SqlAlchemy.
+Orlo is an API for tracking deployments, written with Python, Flask and SqlAlchemy.
 
 It originated as part of a siteops hackathon at eBay classifieds, and is currently in development by staff at gumtree.com, kijiji.ca, mobile.de and 2dehands.be (all part of eBay Classifieds).
 
@@ -24,10 +24,10 @@ Contents
     rest
 
 
-About Sponge
+About Orlo
 ------------
 
-Sponge aims to cover the needs of all eCG platforms with respect to gathering information about deployments, while being simple to integrate with existing deployment software and scripts. This currently includes:
+Orlo aims to cover the needs of all eCG platforms with respect to gathering information about deployments, while being simple to integrate with existing deployment software and scripts. This currently includes:
 
   - Person who performed the release
   - Dev team responsible
@@ -41,10 +41,10 @@ With this information, it will be possible to build dashboards and more intellig
 
 The API should also be agnostic to release process, server container or packaging format - all platforms do things differently. It should be forgiving and "do the right thing" in the case of missing data, as not all platforms will use every field.
 
-Why "sponge"?
+Why "orlo"?
 -------------
 
-Sponges are very absorbent. Sponge absorbs data. Also, it provides a good set of analogies by way of a popular children's TV show...
+Orlos are very absorbent. Orlo absorbs data. Also, it provides a good set of analogies by way of a popular children's TV show...
 
 Roadmap
 -------

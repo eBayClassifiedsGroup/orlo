@@ -1,0 +1,15 @@
+# Systemd unit file for orlo
+
+[Unit]
+Description=orlo
+After=network.target
+ConditionPathExists=/usr/share/python/python-orlo/bin/gunicorn
+
+[Service]
+Type=simple
+User=orlo
+Group=orlo
+ExecStart=/usr/share/python/python-orlo/bin/gunicorn -w 4 -b 127.0.0.1:8080 orlo:app
+
+[Install]
+WantedBy=multi-user.target

@@ -1,5 +1,5 @@
-from sponge import app
-from sponge.orm import db
+from orlo import app
+from orlo.orm import db
 import os
 from flask import Flask, abort, request, jsonify, g, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -11,7 +11,7 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
 # initialization
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Who lives in a pineapple under the sea?'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sponge.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///orlo.db'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.debug = True
 

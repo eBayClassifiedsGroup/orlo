@@ -1,11 +1,11 @@
-from sponge import app
-from sponge.config import config
-from sponge.exceptions import InvalidUsage
+from orlo import app
+from orlo.config import config
+from orlo.exceptions import InvalidUsage
 from flask import jsonify, request, abort
 import arrow
 import datetime
 from orm import db, DbRelease, DbPackage, DbResults
-from sponge.util import list_to_string
+from orlo.util import list_to_string
 
 
 @app.errorhandler(InvalidUsage)
@@ -321,7 +321,7 @@ def get_releases(release_id=None):
     :query string team: Filter releases by team
 
     **Note for time arguments**:
-        The timestamp format you must use is specified in /etc/sponge.conf. All times are UTC.
+        The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.
 
     .. versionadded:: 0.0.1
     """
