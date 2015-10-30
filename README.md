@@ -1,5 +1,6 @@
 # Orlo
-[![Build Status](https://travis-ci.org/eBayClassifiedsGroup/orlo.svg?branch=master)](https://travis-ci.org/eBayClassifiedsGroup/orlo/)
+[![Build Status](https://travis-ci.org/eBayClassifiedsGroup/orlo.svg?branch=master)](https://travis-ci.org/eBayClassifiedsGroup/orlo/) [![Documentation Status](https://readthedocs.org/projects/orlo/badge/?version=latest)](http://orlo.readthedocs.org/en/latest/?badge=latest)
+
 
 An API for tracking deployments, written with Python, Flask and SqlAlchemy.
 
