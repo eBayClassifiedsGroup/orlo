@@ -71,12 +71,19 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", inline: <<-SHELL
     # sudo sed -i 's/archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
     sudo apt-get update
-    sudo apt-get -y install python-pip python-dev
+    sudo apt-get -y install python-pip python-dev postgresql postgresql-server-dev-all
+
+    # Build tools
+    sudo apt-get -y install build-essential git-buildpackages debhelper python-dev
+
     sudo pip install --upgrade pip
+    sudo pip install sphinx sphinxcontrib-httpdomain
+
     cd /vagrant/
     # why do we need to do this twice?
     sudo python /vagrant/setup.py install
     sudo python /vagrant/setup.py install
+
     python /vagrant/create_db.py
   SHELL
 end

@@ -1,0 +1,45 @@
+python-sponge (0.0.1) stable; urgency=medium
+
+  [ Alex Forbes ]
+  * Initial commit
+  * Add .gitignore
+  * Add Vagrantfile
+  * Remove elasticsearch dependency
+  * Refactor tests to use TestCase, add config.py
+
+  [ sielaq ]
+  * Add travis
+
+  [ Wojciech Sielski ]
+  * Update README.md
+
+  [ Alex Forbes ]
+  * Fix tests
+  * Improvements to data/orm layer
+  * Add Travis widget to readme
+  * Fix duplicate if statement
+  * Add skeleton tests for missing api endpoints, misc tidy up
+  * No point in iterating over all in types test
+  * Add package/{start,stop} endpoints
+  * Create exceptions.py and move InvalidUsage to it
+  * Rename _package_input_is_valid and change how it is called
+  * Rename "release" endpoint to "releases"
+  * Add GET /releases endpoint
+  * Fixes to ORM
+  * Change all "now" times to utcnow()
+  * Store timezone in DbRelease and DbPackage
+  * Add skeleton tests for our release filters
+  * Add to_dict for DbPackage, and add packages to to_dict for DbRelease
+  * Implement the release/package and start/stop methods in the base class
+  * Implement package_name filter
+  * Change default time format to match ISO 8601
+  * Implement user filter
+  * Implement release platform filter
+  * Change stime and ftime to Arrow objects
+  * Implement stime_before filter
+  * Implement stime_after filter
+  * Implement ftime before and after filters
+  * Implement duration filters
+  * Implement team filter
+
+ -- Alex Forbes <alforbes@ebay.com>  Mon, 26 Oct 2015 17:07:03 +0000

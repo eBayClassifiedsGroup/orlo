@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if grep -q "^sponge" /etc/passwd; then
+    :
+else
+    useradd sponge -s /bin/false -U
+fi
+
+mkdir -p /var/lib/sponge
+chown sponge:sponge /var/lib/sponge
+chmod 755 /var/lib/sponge

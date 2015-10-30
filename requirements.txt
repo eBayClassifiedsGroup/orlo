@@ -1,3 +1,4 @@
+gunicorn
 Flask==0.10.1
 Flask-SQLAlchemy==2.0
 Flask-Migrate==1.5.1
@@ -9,3 +10,4 @@ MarkupSafe==0.18
 Werkzeug==0.9.4
 itsdangerous==0.23
 passlib==1.6.1
+psycopg2==2.6.1
