@@ -12,6 +12,8 @@ def parse_args():
 
     p_database = argparse.ArgumentParser(add_help=False)
     p_server = argparse.ArgumentParser(add_help=False)
+    p_server.add_argument('--host', '-H', dest='host', default='127.0.0.1', help="Address to listen on")
+    p_server.add_argument('--port', '-P', dest='port', type=int, default=5000, help="Port to listen on")
 
     subparsers = parser.add_subparsers(dest='action')
     sp_config = subparsers.add_parser(
@@ -57,7 +59,7 @@ def run_server(args):
     app.config['DEBUG'] = True
     app.config['TRAP_HTTP_EXCEPTIONS'] = True
     app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
-    app.run(debug=True, use_reloader=True)
+    app.run(host=args.host, port=args.port, debug=True, use_reloader=True)
 
 
 if __name__ == '__main__':
