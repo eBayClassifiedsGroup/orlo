@@ -65,6 +65,7 @@ class OrloTest(TestCase):
                         name='test-package',
                         version='1.2.3',
                         diff_url=None,
+                        rollback=False,
                         ):
         """
         Create a package using the REST API
@@ -72,6 +73,8 @@ class OrloTest(TestCase):
         :param release_id: release id to create the package for
         :param name:
         :param version:
+        :param diff_url:
+        :param rollback:
         :return: package id
         """
         doc = {
@@ -81,6 +84,8 @@ class OrloTest(TestCase):
 
         if diff_url:
             doc['diff_url'] = diff_url
+        if rollback:
+            doc['rollback'] = rollback
 
         response = self.client.post(
             '/releases/{}/packages'.format(release_id),
@@ -248,6 +253,18 @@ class PostContractTest(OrloTest):
         q = db.session.query(DbPackage).filter(DbPackage.id == package_id)
         pkg = q.first()
         self.assertEqual(pkg.diff_url, test_url)
+
+    def test_rollback_present(self):
+        """
+        Test that that rollback parameter is stored
+        """
+        release_id = self._create_release()
+        package_id = self._create_package(release_id, rollback=True)
+
+        q = db.session.query(DbPackage).filter(DbPackage.id == package_id)
+        pkg = q.first()
+
+        self.assertEqual(pkg.rollback, True)
 
 
 class GetContractTest(OrloTest):

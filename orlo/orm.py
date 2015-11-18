@@ -106,16 +106,18 @@ class DbPackage(db.Model):
         default='NOT_STARTED')
     version = db.Column(db.String(16), nullable=False)
     diff_url = db.Column(db.String)
+    rollback = db.Column(db.Boolean(create_constraint=True))
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
     release = db.relationship("DbRelease", backref=db.backref('packages',
                                                               order_by=stime))
 
-    def __init__(self, release_id, name, version, diff_url=None):
+    def __init__(self, release_id, name, version, diff_url=None, rollback=False):
         self.id = uuid.uuid4()
         self.name = name
         self.version = version
         self.release_id = release_id
         self.diff_url = diff_url
+        self.rollback = rollback
 
     def start(self):
         """
