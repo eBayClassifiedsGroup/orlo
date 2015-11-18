@@ -46,8 +46,9 @@ def _create_package(release_id, request):
 
     return DbPackage(
         release_id,
-        request.json['name'],
-        request.json['version'],
+        request.json.get('name'),
+        request.json.get('version'),
+        diff_url=request.json.get('diff_url', None)
     )
 
 
