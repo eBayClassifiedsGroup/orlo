@@ -1,6 +1,5 @@
 from __future__ import print_function, unicode_literals
 
-__author__ = 'alforbes'
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.types.uuid import UUIDType
 from sqlalchemy_utils.types.arrow import ArrowType
@@ -11,6 +10,8 @@ from datetime import datetime, timedelta
 import pytz
 import uuid
 import arrow
+
+__author__ = 'alforbes'
 
 db = SQLAlchemy(app)
 
@@ -109,11 +110,12 @@ class DbPackage(db.Model):
     release = db.relationship("DbRelease", backref=db.backref('packages',
                                                               order_by=stime))
 
-    def __init__(self, release_id, name, version):
+    def __init__(self, release_id, name, version, diff_url=None):
         self.id = uuid.uuid4()
         self.name = name
         self.version = version
         self.release_id = release_id
+        self.diff_url = diff_url
 
     def start(self):
         """
