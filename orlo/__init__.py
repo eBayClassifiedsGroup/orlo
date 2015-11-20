@@ -25,3 +25,4 @@ if logfile != 'disabled':
 
 # Must be imported last
 import orlo.views
+import orlo.route_import

@@ -46,8 +46,10 @@ def _create_package(release_id, request):
 
     return DbPackage(
         release_id,
-        request.json['name'],
-        request.json['version'],
+        request.json.get('name'),
+        request.json.get('version'),
+        diff_url=request.json.get('diff_url', None),
+        rollback=request.json.get('rollback', False),
     )
 
 
@@ -98,12 +100,12 @@ def _validate_release_input(request):
     return True
 
 
-def _validate_package_input(request, id):
+def _validate_package_input(request, release_id):
     _validate_request_json(request)
 
     if not 'name' in request.json or not 'version' in request.json:
         raise InvalidUsage("Missing name / version in request body.")
-    app.logger.debug("Request validated, id {}".format(id))
+    app.logger.debug("Package request validated, release_id {}".format(release_id))
     return True
 
 
@@ -174,6 +176,7 @@ def post_packages(release_id):
     :param string release_id: UUID of the release to add the package to
     :<json string name: Name of the package
     :<json string version: Version of the package
+    :<json boolean rollback: Whether this package deploy is a rollback
     :>json string id: UUID reference to the created package
     :reqheader Content-Type: Must be application/json
     :status 200: Package was added to the release successfully
@@ -187,7 +190,7 @@ def post_packages(release_id):
         http://127.0.0.1/releases/${RELEASE_ID}/packages \\
         -d '{"name": "test-package", "version": "1.0.1"}'
     """
-    _validate_package_input(request, id)
+    _validate_package_input(request, release_id)
 
     dbRelease = _fetch_release(release_id)
     dbPackage = _create_package(dbRelease.id, request)
