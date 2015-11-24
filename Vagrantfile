@@ -74,7 +74,7 @@ Vagrant.configure(2) do |config|
     sudo apt-get -y install python-pip python-dev postgresql postgresql-server-dev-all
 
     # Build tools
-    sudo apt-get -y install build-essential git-buildpackages debhelper python-dev
+    sudo apt-get -y install build-essential git-buildpackage debhelper python-dev
 
     sudo pip install --upgrade pip
     sudo pip install sphinx sphinxcontrib-httpdomain
