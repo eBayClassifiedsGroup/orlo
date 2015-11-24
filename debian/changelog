@@ -1,3 +1,24 @@
+python-orlo (0.0.2) stable; urgency=medium
+
+  * Update readme post-rename
+  * Update documentation post-rename
+  * Add sphinxcontrib-httpdomain for readthedocs build
+  * Add requirements for readthedocs
+  * Add docs badge
+  * Remove circular reference
+  * Add host and port arguments to run_server
+  * Add diff_url to DbPackage initialisation
+  * Move Flask-Testing to tests_require
+  * Remove binary test db file
+  * Add /import endpoint for importing historical data
+  * Add rollback parameter to package
+  * Remove runserver command from travis, not needed
+  * Remove binary test db
+  * Fix runserver port type
+  * Bump version to 0.0.2
+
+ -- Alex Forbes <alforbes@ebay.com>  Tue, 24 Nov 2015 20:00:56 +0000
+
 python-orlo (0.0.1) stable; urgency=medium
 
   [ Alex Forbes ]
