@@ -2,7 +2,7 @@ from __future__ import print_function
 from tests.test_contract import OrloTest
 from random import randrange
 from tests.test_contract import db
-from orlo.orm import Release, Package, PackageResult
+from orlo.orm import Release, Package, PackageResult, Platform
 import arrow
 import datetime
 import uuid
@@ -22,9 +22,14 @@ class OrloDbTest(OrloTest):
         for _ in range(10):
             self._add_release()
 
+    def _add_platform(self):
+        p = Platform('PLATFORM1')
+        db.session.add(p)
+        return p
+
     def _add_release(self):
         r = Release(
-            platforms=['PLATFORM1', 'PLATFORM2'],
+            platforms=[self._add_platform()],
             user='TEST USER',
             references=['REF-{}'.format(randrange(99, 1000)) * 2],
             team='TEST TEAM',
@@ -57,7 +62,7 @@ class OrloDbTest(OrloTest):
         r = db.session.query(Release).first()
         self.assertIs(type(r.id), uuid.UUID)
         self.assertIs(hasattr(r.notes, '__iter__'), True)
-        self.assertIs(type(r.platforms), unicode)
+        self.assertIs(hasattr(r.platforms, '__iter__'), True)
         self.assertIs(type(r.references), unicode)
         self.assertIs(type(list(r.references)), list)
         self.assertIs(type(r.stime), arrow.arrow.Arrow)

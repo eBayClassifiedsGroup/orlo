@@ -3,8 +3,9 @@ from orlo.exceptions import InvalidUsage
 from flask import jsonify, request, abort
 import arrow
 import datetime
-from orm import db, Release, Package, PackageResult, ReleaseNote
+from orm import db, Release, Package, PackageResult, ReleaseNote, Platform
 from orlo.util import list_to_string
+from sqlalchemy.orm import exc
 
 
 @app.errorhandler(InvalidUsage)
@@ -30,9 +31,23 @@ def _create_release(request):
     if references and type(references) is list:
         references = list_to_string(references)
 
-    platforms = request.json['platforms']
-    if platforms and type(platforms) is list:
-        platforms = list_to_string(platforms)
+    # If given a single string, make it a list
+    request_platforms = request.json.get('platforms')
+    if request_platforms and type(request_platforms) is not list:
+        request_platforms = [request_platforms]
+
+    # Get the platforms
+    platforms = []
+    for p in request_platforms:
+        try:
+            query = db.session.query(Platform).filter(Platform.name == p)
+            platform = query.one()
+            app.logger.debug("Found platform {}".format(platform))
+        except exc.NoResultFound:
+            app.logger.info("Creating platform {}".format(p))
+            platform = Platform(p)
+            db.session.add(platform)
+        platforms.append(platform)
 
     release = Release(
         # Required attributes
@@ -371,8 +386,9 @@ def get_releases(release_id=None):
     if 'user' in request.args:
         query = query.filter(Release.user == request.args['user'])
     if 'platform' in request.args:
+        # Fetch the platform
         query = query.filter(
-            Release.platforms.like('%{}%'.format(request.args['platform']))
+            Release.platforms.any(Platform.name == request.args['platform'])
         )
     if 'stime_before' in request.args:
         t = arrow.get(request.args['stime_before'])

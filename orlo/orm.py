@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import pytz
 import uuid
 import arrow
+import json
 
 __author__ = 'alforbes'
 
@@ -24,6 +25,14 @@ except pytz.exceptions.UnknownTimeZoneError:
         ))
 
 
+# Map releases to platforms
+release_platform = db.Table(
+    'release_platform', db.Model.metadata,
+    db.Column('release_id', UUIDType, db.ForeignKey('release.id')),
+    db.Column('platform_id', UUIDType, db.ForeignKey('platform.id'))
+)
+
+
 class Release(db.Model):
     """
     The main Release object
@@ -31,7 +40,7 @@ class Release(db.Model):
     __tablename__ = 'release'
 
     id = db.Column(UUIDType, primary_key=True, unique=True, nullable=False)
-    platforms = db.Column(db.String, nullable=False)
+    platforms = db.relationship('Platform', secondary=release_platform)
     references = db.Column(db.String)
     stime = db.Column(ArrowType)
     ftime = db.Column(ArrowType)
@@ -42,7 +51,7 @@ class Release(db.Model):
     def __init__(self, platforms, user, team=None, references=None):
         # platforms and references are stored as strings in DB but really are lists
         self.id = uuid.uuid4()
-        self.platforms = str(platforms)
+        self.platforms = platforms
         self.user = user
 
         if team:
@@ -61,7 +70,7 @@ class Release(db.Model):
         return {
             'id': unicode(self.id),
             'packages': [p.to_dict() for p in self.packages],
-            'platforms': string_to_list(self.platforms),
+            'platforms': [platform.name for platform in self.platforms],
             'references': string_to_list(self.references),
             'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
             'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
@@ -184,3 +193,17 @@ class ReleaseNote(db.Model):
         self.id = uuid.uuid4()
         self.release_id = release_id
         self.content = content
+
+
+class Platform(db.Model):
+    """
+    A platform that is released to
+    """
+    __tablename__ = 'platform'
+
+    id = db.Column(UUIDType, primary_key=True, unique=True)
+    name = db.Column(db.Text, nullable=False)
+
+    def __init__(self, name):
+        self.id = uuid.uuid4()
+        self.name = name
