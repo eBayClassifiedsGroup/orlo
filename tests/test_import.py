@@ -59,7 +59,7 @@ class ImportTest(OrloTest):
         Import our test document
         """
         response = self.client.post(
-            '/import/release',
+            '/releases/import',
             data=self.doc,
             content_type='application/json',
         )

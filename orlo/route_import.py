@@ -24,34 +24,37 @@ def get_import():
     return jsonify(message=msg), 200
 
 
-@app.route('/import/release', methods=['POST'])
+@app.route('/releases/import', methods=['POST'])
 def post_import():
     """
     Import a release
 
-    The document must describe a full release, example:
-    {
-        'notes': ['note1', 'note2'],
-        'platforms': ['test_platform'],
-        'ftime': '2015-11-18T19:21:12Z',
-        'stime': '2015-11-18T19:21:12Z',
-        'team': 'test team',
-        'references': ['TestTicket-123'],
-        'packages': [
-            {
-                'status': 'SUCCESSFUL',
-                'name': 'test-package',
-                'version': '1.2.3',
-                'ftime': '2015-11-18T19:21:12Z',
-                'stime': '2015-11-18T19:21:12Z',
-                'rollback': 'false',
-                'diff_url': None,
-            }
-        ],
-        'user': 'testuser'
-    }
+    The document must contain a list of full releases, example:
+    [
+        {
+            'ftime': '2015-11-18T19:21:12Z',
+            'notes': ['note1', 'note2'],
+            'packages': [
+                {
+                    'diff_url': None,
+                    'ftime': '2015-11-18T19:21:12Z',
+                    'name': 'test-package',
+                    'rollback': 'false',
+                    'status': 'SUCCESSFUL',
+                    'stime': '2015-11-18T19:21:12Z',
+                    'version': '1.2.3',
+                }
+            ],
+            'platforms': ['test_platform'],
+            'references': ['TestTicket-123'],
+            'stime': '2015-11-18T19:21:12Z',
+            'team': 'test team',
+            'user': 'testuser'
+        },
+        {...}
+    ]
 
-    :status 200: The release was accepted
+    :status 200: The document was accepted
     """
 
     _validate_request_json(request)
@@ -110,5 +113,4 @@ def post_import():
         releases.append(release.id)
 
     return jsonify({'releases': [str(x) for x in releases]}), 200
-
 
