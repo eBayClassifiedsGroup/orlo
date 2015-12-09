@@ -4,7 +4,7 @@ import orlo
 import json
 import uuid
 from flask.ext.testing import TestCase
-from orlo.orm import db, DbPackage, DbRelease
+from orlo.orm import db, Package, Release
 from orlo.config import config
 
 
@@ -43,7 +43,7 @@ class OrloTest(TestCase):
         :param user:
         :param team:
         :param platforms:
-        :param reference:
+        :param references:
         :return: the release ID
         """
 
@@ -159,6 +159,20 @@ class OrloTest(TestCase):
 
         return release_id
 
+    def _post_releases_notes(self, release_id, text):
+        """
+        Add a note to a release
+        """
+
+        doc = {'text': text}
+        response = self.client.post(
+            '/releases/{}/notes'.format(release_id, text),
+            data=json.dumps(doc),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 204)
+        return response
+
 
 class PostContractTest(OrloTest):
     """
@@ -228,6 +242,14 @@ class PostContractTest(OrloTest):
         self._stop_package(release_id, package_id)
         self._stop_release(release_id)
 
+    def test_post_note(self):
+        """
+        Test adding a release
+        """
+        release_id = self._create_release()
+        response = self._post_releases_notes(release_id, "this is a test message")
+        self.assertEqual(204, response.status_code)
+
     def test_create_release_minimal(self):
         """
         Create a release, omitting all optional parameters
@@ -250,7 +272,7 @@ class PostContractTest(OrloTest):
         release_id = self._create_release()
         package_id = self._create_package(release_id, diff_url=test_url)
 
-        q = db.session.query(DbPackage).filter(DbPackage.id == package_id)
+        q = db.session.query(Package).filter(Package.id == package_id)
         pkg = q.first()
         self.assertEqual(pkg.diff_url, test_url)
 
@@ -261,7 +283,7 @@ class PostContractTest(OrloTest):
         release_id = self._create_release()
         package_id = self._create_package(release_id, rollback=True)
 
-        q = db.session.query(DbPackage).filter(DbPackage.id == package_id)
+        q = db.session.query(Package).filter(Package.id == package_id)
         pkg = q.first()
 
         self.assertEqual(pkg.rollback, True)

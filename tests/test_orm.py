@@ -2,7 +2,7 @@ from __future__ import print_function
 from tests.test_contract import OrloTest
 from random import randrange
 from tests.test_contract import db
-from orlo.orm import DbRelease, DbPackage, DbResults
+from orlo.orm import Release, Package, PackageResult
 import arrow
 import datetime
 import uuid
@@ -23,10 +23,9 @@ class OrloDbTest(OrloTest):
             self._add_release()
 
     def _add_release(self):
-        r = DbRelease(
+        r = Release(
             platforms=['PLATFORM1', 'PLATFORM2'],
             user='TEST USER',
-            notes='Random note {}'.format(randrange(0, 1000)),
             references=['REF-{}'.format(randrange(99, 1000)) * 2],
             team='TEST TEAM',
         )
@@ -42,7 +41,7 @@ class OrloDbTest(OrloTest):
         """
         Add a package to a release
         """
-        p = DbPackage(
+        p = Package(
             release_id=release_id,
             name='TestPackage-{}'.format(randrange(0, 10)),
             version=str(randrange(0, 1000)),
@@ -53,11 +52,11 @@ class OrloDbTest(OrloTest):
 
     def test_release_types(self):
         """
-        Test the types returned by DbRelease objects are OK
+        Test the types returned by Release objects are OK
         """
-        r = db.session.query(DbRelease).first()
+        r = db.session.query(Release).first()
         self.assertIs(type(r.id), uuid.UUID)
-        self.assertIs(type(r.notes), unicode)
+        self.assertIs(hasattr(r.notes, '__iter__'), True)
         self.assertIs(type(r.platforms), unicode)
         self.assertIs(type(r.references), unicode)
         self.assertIs(type(list(r.references)), list)
@@ -68,9 +67,9 @@ class OrloDbTest(OrloTest):
 
     def test_package_types(self):
         """
-        Test the types returned by DbPackage objects are OK
+        Test the types returned by Package objects are OK
         """
-        p = db.session.query(DbPackage).first()
+        p = db.session.query(Package).first()
         self.assertIs(type(p.id), uuid.UUID)
         self.assertIs(type(p.name), unicode)
         self.assertIs(type(p.stime), arrow.arrow.Arrow)

@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 import json
-from orlo.orm import DbRelease, DbPackage, db
+from orlo.orm import Release, Package, db
 from orlo.config import config
 from orlo.util import string_to_list
 from tests.test_contract import OrloTest
@@ -23,6 +23,7 @@ class ImportTest(OrloTest):
                 'ftime': '2015-11-18T19:21:12Z',
                 'stime': '2015-11-18T19:21:12Z',
                 'diff_url': None,
+                'rollback': False,
             }
         ],
         'user': 'testuser'
@@ -51,8 +52,8 @@ class ImportTest(OrloTest):
         )
 
         self.assert200(response)
-        self.release = db.session.query(DbRelease).first()
-        self.package = db.session.query(DbPackage).first()
+        self.release = db.session.query(Release).first()
+        self.package = db.session.query(Package).first()
 
     def test_import_param_platforms(self):
         """

@@ -2,7 +2,7 @@ from __future__ import print_function
 import arrow
 from flask import jsonify, request
 from orlo import app
-from orlo.orm import db, DbPackage, DbRelease, DbResults
+from orlo.orm import db, Package, Release, PackageResult, ReleaseNote
 from orlo.views import _validate_request_json
 from orlo.util import list_to_string
 
@@ -29,6 +29,7 @@ def post_import():
 
     The document must describe a full release, example:
     {
+        'notes': ['note1', 'note2'],
         'platforms': ['test_platform'],
         'ftime': '2015-11-18T19:21:12Z',
         'stime': '2015-11-18T19:21:12Z',
@@ -41,6 +42,7 @@ def post_import():
                 'version': '1.2.3',
                 'ftime': '2015-11-18T19:21:12Z',
                 'stime': '2015-11-18T19:21:12Z',
+                'rollback': 'false',
                 'diff_url': None,
             }
         ],
@@ -52,10 +54,9 @@ def post_import():
 
     _validate_request_json(request)
 
-    release = DbRelease(
+    release = Release(
         platforms=request.json.get('platforms'),
         user=request.json.get('user'),
-        notes=request.json.get('notes', None),
         team=request.json.get('team', None),
         references=request.json.get('references'),
     )
@@ -66,8 +67,13 @@ def post_import():
 
     db.session.add(release)
 
+    if request.json.get('notes'):
+        for n in request.json.get('notes'):
+            note = ReleaseNote(release.id, n)
+            db.session.add(note)
+
     for p in request.json.get('packages'):
-        package = DbPackage(
+        package = Package(
             release_id=release.id,
             name=p['name'],
             version=p['version'],
@@ -75,6 +81,7 @@ def post_import():
         package.stime = arrow.get(p['stime'])
         package.ftime = arrow.get(p['ftime'])
         package.duration = package.ftime - package.stime
+        package.rollback = p['rollback']
         package.status = p['status']
         package.diff_url = p['diff_url']
 
