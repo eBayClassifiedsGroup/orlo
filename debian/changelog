@@ -1,3 +1,11 @@
+python-orlo (0.0.3) stable; urgency=medium
+
+  * Multiple changes
+  * Convert platforms field to table reference, make import accept list
+  * Make platform.name unique
+
+ -- Alex Forbes <alforbes@gumtree.com>  Wed, 09 Dec 2015 16:13:44 +0000
+
 python-orlo (0.0.2) stable; urgency=medium
 
   * Update readme post-rename
