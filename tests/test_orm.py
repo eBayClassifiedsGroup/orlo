@@ -18,18 +18,16 @@ class OrloDbTest(OrloTest):
     def setUp(self):
         super(OrloDbTest, self).setUp()
 
+        # Setup a platform
+        self.platform = Platform('TEST-PLATFORM')
+
         # Add 10 releases
-        for _ in range(10):
-            self._add_release()
+        for i in range(10):
+            self._add_release(i)
 
-    def _add_platform(self):
-        p = Platform('PLATFORM1')
-        db.session.add(p)
-        return p
-
-    def _add_release(self):
+    def _add_release(self, i):
         r = Release(
-            platforms=[self._add_platform()],
+            platforms=[self.platform],
             user='TEST USER',
             references=['REF-{}'.format(randrange(99, 1000)) * 2],
             team='TEST TEAM',

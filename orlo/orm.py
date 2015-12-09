@@ -202,7 +202,7 @@ class Platform(db.Model):
     __tablename__ = 'platform'
 
     id = db.Column(UUIDType, primary_key=True, unique=True)
-    name = db.Column(db.Text, nullable=False)
+    name = db.Column(db.Text, nullable=False, unique=True)
 
     def __init__(self, name):
         self.id = uuid.uuid4()
