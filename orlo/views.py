@@ -1,11 +1,11 @@
 from orlo import app
-from orlo.config import config
 from orlo.exceptions import InvalidUsage
 from flask import jsonify, request, abort
 import arrow
 import datetime
-from orm import db, DbRelease, DbPackage, DbResults
+from orm import db, Release, Package, PackageResult, ReleaseNote, Platform
 from orlo.util import list_to_string
+from sqlalchemy.orm import exc
 
 
 @app.errorhandler(InvalidUsage)
@@ -15,28 +15,49 @@ def handle_invalid_usage(error):
     return response
 
 
+@app.errorhandler(400)
+def handle_400(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
+
+
 def _create_release(request):
     """
-    Create a DbRelease object from a request
+    Create a Release object from a request
     """
 
     references = request.json.get('references', [])
     if references and type(references) is list:
         references = list_to_string(references)
 
-    platforms = request.json['platforms']
-    if platforms and type(platforms) is list:
-        platforms = list_to_string(platforms)
+    # If given a single string, make it a list
+    request_platforms = request.json.get('platforms')
+    if request_platforms and type(request_platforms) is not list:
+        request_platforms = [request_platforms]
 
-    return DbRelease(
+    # Get the platforms
+    platforms = []
+    for p in request_platforms:
+        try:
+            query = db.session.query(Platform).filter(Platform.name == p)
+            platform = query.one()
+            app.logger.debug("Found platform {}".format(platform))
+        except exc.NoResultFound:
+            app.logger.info("Creating platform {}".format(p))
+            platform = Platform(p)
+            db.session.add(platform)
+        platforms.append(platform)
+
+    release = Release(
         # Required attributes
         platforms=platforms,
         user=request.json['user'],
         # Not required
-        notes=request.json.get('notes'),
         team=request.json.get('team'),
         references=references,
     )
+    return release
 
 
 def _create_package(release_id, request):
@@ -44,7 +65,7 @@ def _create_package(release_id, request):
     Create a package object for a release
     """
 
-    return DbPackage(
+    return Package(
         release_id,
         request.json.get('name'),
         request.json.get('version'),
@@ -57,11 +78,11 @@ def _fetch_release(release_id):
     """
     Fetch a release by ID
     """
-    rq = db.session.query(DbRelease).filter(DbRelease.id == release_id)
-    dbRelease = rq.first()
-    if not dbRelease:
+    rq = db.session.query(Release).filter(Release.id == release_id)
+    release = rq.first()
+    if not release:
         raise InvalidUsage("Release does not exist")
-    return dbRelease
+    return release
 
 
 def _fetch_package(release_id, package_id):
@@ -71,15 +92,15 @@ def _fetch_package(release_id, package_id):
 
     # Fetch release first, as it is a good sanity check
     _fetch_release(release_id)
-    pq = db.session.query(DbPackage).filter(DbPackage.id == package_id)
-    dbPackage = pq.first()
+    pq = db.session.query(Package).filter(Package.id == package_id)
+    package = pq.first()
 
-    if not dbPackage:
+    if not package:
         raise InvalidUsage("Package does not exist")
-    if str(dbPackage.release_id) != release_id:
+    if str(package.release_id) != release_id:
         raise InvalidUsage("This package does not belong to this release")
 
-    return dbPackage
+    return package
 
 
 def _validate_request_json(request):
@@ -155,6 +176,10 @@ def post_releases():
     _validate_release_input(request)
     release = _create_release(request)
 
+    if request.json.get('note'):
+        release_note = ReleaseNote(release.id, request.json.get('note'))
+        db.session.add(release_note)
+
     app.logger.info(
         'Create release {}, references: {}, platforms: {}'.format(
             release.id, release.notes, release.references, release.platforms)
@@ -192,18 +217,18 @@ def post_packages(release_id):
     """
     _validate_package_input(request, release_id)
 
-    dbRelease = _fetch_release(release_id)
-    dbPackage = _create_package(dbRelease.id, request)
+    release = _fetch_release(release_id)
+    package = _create_package(release.id, request)
 
     app.logger.info(
         'Create package {}, release {}, name {}, version {}'.format(
-            dbPackage.id, dbRelease.id, request.json['name'],
+            package.id, release.id, request.json['name'],
             request.json['version']))
 
-    db.session.add(dbPackage)
+    db.session.add(package)
     db.session.commit()
 
-    return jsonify(id=dbPackage.id)
+    return jsonify(id=package.id)
 
 
 @app.route('/releases/<release_id>/packages/<package_id>/results',
@@ -217,10 +242,10 @@ def post_results(release_id, package_id):
     :<json string content: Free text field to store what you wish
     :status 204: Package results added successfully
     """
-    dbResults = DbResults(package_id, str(request.json))
+    results = PackageResult(package_id, str(request.json))
     app.logger.info("Post results, release {}, package {}".format(
         release_id, package_id))
-    db.session.add(dbResults)
+    db.session.add(results)
     db.session.commit()
     return '', 204
 
@@ -242,12 +267,12 @@ def post_releases_stop(release_id):
         curl -H "Content-Type: application/json" \\
         -X POST http://127.0.0.1/releases/${RELEASE_ID}/stop
     """
-    dbRelease = _fetch_release(release_id)
+    release = _fetch_release(release_id)
     # TODO check that all packages have been finished
     app.logger.info("Release stop, release {}".format(release_id))
-    dbRelease.stop()
+    release.stop()
 
-    db.session.add(dbRelease)
+    db.session.add(release)
     db.session.commit()
     return '', 204
 
@@ -268,12 +293,12 @@ def post_packages_start(release_id, package_id):
 
         curl -X POST http://127.0.0.1/releases/${RELEASE_ID}/packages/${PACKAGE_ID}/start
     """
-    dbPackage = _fetch_package(release_id, package_id)
+    package = _fetch_package(release_id, package_id)
     app.logger.info("Package start, release {}, package {}".format(
         release_id, package_id))
-    dbPackage.start()
+    package.start()
 
-    db.session.add(dbPackage)
+    db.session.add(package)
     db.session.commit()
     return '', 204
 
@@ -291,16 +316,40 @@ def post_packages_stop(release_id, package_id):
         curl -H "Content-Type: application/json" \\
         -X POST http://127.0.0.1/releases/${RELEASE_ID}/packages/${PACKAGE_ID}/stop \\
         -d '{"success": "true"}'
+
+    :param string package_id: Package UUID
+    :param string release_id: Release UUID
     """
     _validate_request_json(request)
     success = request.json['success']
 
-    dbPackage = _fetch_package(release_id, package_id)
+    package = _fetch_package(release_id, package_id)
     app.logger.info("Package stop, release {}, package {}, success {}".format(
         release_id, package_id, success))
-    dbPackage.stop(success=success)
+    package.stop(success=success)
 
-    db.session.add(dbPackage)
+    db.session.add(package)
+    db.session.commit()
+    return '', 204
+
+
+@app.route('/releases/<release_id>/notes', methods=['POST'])
+def post_releases_notes(release_id):
+    """
+    Add a note to a release
+
+    :param string release_id: Release UUID
+    :param string text: Text
+    :return:
+    """
+    _validate_request_json(request)
+    text = request.json.get('text')
+    if not text:
+        raise InvalidUsage("Must include text in posted document")
+
+    note = ReleaseNote(release_id, text)
+    app.logger.info("Adding note to release {}".format(release_id))
+    db.session.add(note)
     db.session.commit()
     return '', 204
 
@@ -328,38 +377,39 @@ def get_releases(release_id=None):
 
     .. versionadded:: 0.0.1
     """
-    query = db.session.query(DbRelease).order_by(DbRelease.stime.asc())
+    query = db.session.query(Release).order_by(Release.stime.asc())
 
     if release_id:
-        query = query.filter(DbRelease.id == release_id)
+        query = query.filter(Release.id == release_id)
     if 'package_name' in request.args:
-        query = query.join(DbPackage).filter(DbPackage.name == request.args['package_name'])
+        query = query.join(Package).filter(Package.name == request.args['package_name'])
     if 'user' in request.args:
-        query = query.filter(DbRelease.user == request.args['user'])
+        query = query.filter(Release.user == request.args['user'])
     if 'platform' in request.args:
+        # Fetch the platform
         query = query.filter(
-            DbRelease.platforms.like('%{}%'.format(request.args['platform']))
+            Release.platforms.any(Platform.name == request.args['platform'])
         )
     if 'stime_before' in request.args:
         t = arrow.get(request.args['stime_before'])
-        query = query.filter(DbRelease.stime <= t)
+        query = query.filter(Release.stime <= t)
     if 'stime_after' in request.args:
         t = arrow.get(request.args['stime_after'])
-        query = query.filter(DbRelease.stime >= t)
+        query = query.filter(Release.stime >= t)
     if 'ftime_before' in request.args:
         t = arrow.get(request.args['ftime_before'])
-        query = query.filter(DbRelease.ftime <= t)
+        query = query.filter(Release.ftime <= t)
     if 'ftime_after' in request.args:
         t = arrow.get(request.args['ftime_after'])
-        query = query.filter(DbRelease.ftime >= t)
+        query = query.filter(Release.ftime >= t)
     if 'duration_less' in request.args:
         td = datetime.timedelta(seconds=int(request.args['duration_less']))
-        query = query.filter(DbRelease.duration < td)
+        query = query.filter(Release.duration < td)
     if 'duration_greater' in request.args:
         td = datetime.timedelta(seconds=int(request.args['duration_greater']))
-        query = query.filter(DbRelease.duration > td)
+        query = query.filter(Release.duration > td)
     if 'team' in request.args:
-        query = query.filter(DbRelease.team == request.args['team'])
+        query = query.filter(Release.team == request.args['team'])
 
     releases = query.all()
     app.logger.debug("Returning {} releases".format(len(releases)))

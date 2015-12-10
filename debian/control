@@ -8,6 +8,6 @@ Standards-Version: 3.9.5
 Package: python-orlo
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends}
-Description: A simple Flask app that can listen on any port and return arbitrary strings
+Description: An API for tracking deployments, written with Python, Flask and SqlAlchemy.
 
 

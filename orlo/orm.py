@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import pytz
 import uuid
 import arrow
+import json
 
 __author__ = 'alforbes'
 
@@ -24,15 +25,22 @@ except pytz.exceptions.UnknownTimeZoneError:
         ))
 
 
-class DbRelease(db.Model):
+# Map releases to platforms
+release_platform = db.Table(
+    'release_platform', db.Model.metadata,
+    db.Column('release_id', UUIDType, db.ForeignKey('release.id')),
+    db.Column('platform_id', UUIDType, db.ForeignKey('platform.id'))
+)
+
+
+class Release(db.Model):
     """
     The main Release object
     """
     __tablename__ = 'release'
 
     id = db.Column(UUIDType, primary_key=True, unique=True, nullable=False)
-    notes = db.Column(db.String)
-    platforms = db.Column(db.String, nullable=False)
+    platforms = db.relationship('Platform', secondary=release_platform)
     references = db.Column(db.String)
     stime = db.Column(ArrowType)
     ftime = db.Column(ArrowType)
@@ -40,15 +48,12 @@ class DbRelease(db.Model):
     user = db.Column(db.String, nullable=False)
     team = db.Column(db.String)
 
-    def __init__(self, platforms, user,
-                 notes=None, team=None, references=None):
+    def __init__(self, platforms, user, team=None, references=None):
         # platforms and references are stored as strings in DB but really are lists
         self.id = uuid.uuid4()
-        self.platforms = str(platforms)
+        self.platforms = platforms
         self.user = user
 
-        if notes:
-            self.notes = str(notes)
         if team:
             self.team = team
         if references:
@@ -65,7 +70,7 @@ class DbRelease(db.Model):
         return {
             'id': unicode(self.id),
             'packages': [p.to_dict() for p in self.packages],
-            'platforms': string_to_list(self.platforms),
+            'platforms': [platform.name for platform in self.platforms],
             'references': string_to_list(self.references),
             'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
             'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
@@ -89,7 +94,7 @@ class DbRelease(db.Model):
         self.duration = td
 
 
-class DbPackage(db.Model):
+class Package(db.Model):
     """
     A deployed instance of a package
     """
@@ -108,7 +113,7 @@ class DbPackage(db.Model):
     diff_url = db.Column(db.String)
     rollback = db.Column(db.Boolean(create_constraint=True))
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
-    release = db.relationship("DbRelease", backref=db.backref('packages',
+    release = db.relationship("Release", backref=db.backref('packages',
                                                               order_by=stime))
 
     def __init__(self, release_id, name, version, diff_url=None, rollback=False):
@@ -153,20 +158,52 @@ class DbPackage(db.Model):
         }
 
 
-class DbResults(db.Model):
+class PackageResult(db.Model):
     """
-    The results of a package.
+    The results of a package
     """
-    __tablename__ = 'results'
+    __tablename__ = 'package_result'
 
     id = db.Column(UUIDType, primary_key=True, unique=True)
     content = db.Column(db.Text)
 
     package_id = db.Column(UUIDType, db.ForeignKey("package.id"))
-    package = db.relationship("DbPackage", backref=db.backref('results',
-                                                              order_by=id))
+    package = db.relationship("Package", backref=db.backref('results',
+                                                            order_by=id))
 
     def __init__(self, package_id, content):
         self.id = uuid.uuid4()
         self.package_id = package_id
         self.content = content
+
+
+class ReleaseNote(db.Model):
+    """
+    Notes added to a release
+    """
+    __tablename__ = 'release_note'
+
+    id = db.Column(UUIDType, primary_key=True, unique=True)
+    content = db.Column(db.Text, nullable=False)
+
+    release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
+    release = db.relationship("Release", backref=db.backref('notes', order_by=id))
+
+    def __init__(self, release_id, content):
+        self.id = uuid.uuid4()
+        self.release_id = release_id
+        self.content = content
+
+
+class Platform(db.Model):
+    """
+    A platform that is released to
+    """
+    __tablename__ = 'platform'
+
+    id = db.Column(UUIDType, primary_key=True, unique=True)
+    name = db.Column(db.Text, nullable=False, unique=True)
+
+    def __init__(self, name):
+        self.id = uuid.uuid4()
+        self.name = name

@@ -6,7 +6,7 @@ import multiprocessing  # nopep8
 
 setup(
     name='orlo',
-    version='0.0.2',
+    version='0.0.3',
     description='Deployment data capture API',
     author='Alex Forbes',
     author_email='alforbes@ebay.com',
