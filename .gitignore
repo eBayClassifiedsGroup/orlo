@@ -63,3 +63,4 @@ target/
 orlo/orlo.db
 .vagrant
 *.swp
+*.deb
