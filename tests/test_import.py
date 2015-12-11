@@ -134,7 +134,11 @@ class NormalImportTest(ImportTest):
               "diff_url": null
             }
           ],
-          "user": "bob"
+          "user": "bob",
+          "notes": [
+            "note 1",
+            "note 2"
+          ]
         }
     ]
     """
@@ -196,6 +200,13 @@ class NormalImportTest(ImportTest):
         self.assertEqual(
             self.package.stime.strftime(config.get('main', 'time_format')),
             self.doc_dict[0]['packages'][0]['stime'])
+
+    def test_import_param_notes(self):
+        """
+        Test that notes are imported successfully
+        """
+        for note in self.release.notes:
+            self.assertIn(note.content, self.doc_dict[0]['notes'])
 
 
 class NullTimeTest(ImportTest):

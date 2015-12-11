@@ -86,13 +86,11 @@ def post_import():
         if release.ftime and release.stime:
             release.duration = release.ftime - release.stime
 
-        try:
-            notes = r['notes']
+        notes = r.get('notes')
+        if notes:
             for n in notes:
                 note = ReleaseNote(release.id, n)
                 db.session.add(note)
-        except KeyError:
-            pass
 
         for p in r['packages']:
             package = Package(
