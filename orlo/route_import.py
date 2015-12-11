@@ -77,13 +77,14 @@ def post_import():
         release = Release(
             platforms=platforms,
             user=r['user'],
-            team=r['team'],
-            references=json.dumps(r['references']),
+            team=r.get('team'),
+            references=json.dumps(r.get('references')),
         )
 
-        release.stime = arrow.get(r['stime']) if r['stime'] else None
-        release.ftime = arrow.get(r['ftime']) if r['ftime'] else None
-        release.duration = release.ftime - release.stime
+        release.stime = arrow.get(r['stime']) if r.get('stime') else None
+        release.ftime = arrow.get(r['ftime']) if r.get('ftime') else None
+        if release.ftime and release.stime:
+            release.duration = release.ftime - release.stime
 
         try:
             notes = r['notes']
@@ -99,12 +100,18 @@ def post_import():
                 name=p['name'],
                 version=p['version'],
             )
-            package.stime = arrow.get(p['stime']) if p['stime'] else None
-            package.ftime = arrow.get(p['ftime']) if p['ftime'] else None
-            package.duration = package.ftime - package.stime
-            package.rollback = p['rollback']
-            package.status = p['status']
-            package.diff_url = p['diff_url']
+
+            package.rollback = p.get('rollback')
+            package.status = p.get('status')
+            package.diff_url = p.get('diff_url')
+
+            if p.get('stime'):
+                package.stime = arrow.get(p['stime'])
+            else:
+                package.stime = arrow.get(r['stime'])
+            package.ftime = arrow.get(p['ftime']) if p.get('ftime') else None
+            if package.stime and package.ftime:
+                package.duration = package.ftime - package.stime
 
             db.session.add(package)
 
@@ -113,5 +120,5 @@ def post_import():
 
         releases.append(release.id)
 
-    return jsonify({'releases': [str(x) for x in releases]}), 200
+    return jsonify({'releases': [unicode(x) for x in releases]}), 200
 
