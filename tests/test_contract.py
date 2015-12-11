@@ -288,6 +288,17 @@ class PostContractTest(OrloTest):
 
         self.assertEqual(pkg.rollback, True)
 
+    def test_references_json_conversion(self):
+        """
+        Test that the references parameter results in valid json in the database
+        """
+        release_id = self._create_release(references=['ticket1', 'ticket2'])
+        q = db.session.query(Release).filter(Release.id == release_id)
+        release = q.first()
+
+        doc = json.loads(release.references)
+        self.assertIsInstance(doc, list)
+
 
 class GetContractTest(OrloTest):
     """

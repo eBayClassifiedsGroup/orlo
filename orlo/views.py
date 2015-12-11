@@ -171,7 +171,8 @@ def post_releases():
         curl -H "Content-Type: application/json" \\
         -X POST \\
         http://127.0.0.1/releases \\
-        -d '{"note": "lorem ipsum", "platforms": ["site1"], "references": ["test-ticket"], "team": "A-Team", "user": "aforbes"}'
+        -d '{"note": "blah", "platforms": ["site1"], "references": ["ticket"], "team": "A-Team",
+        "user": "aforbes"}'
     """
     _validate_release_input(request)
     release = _create_release(request)
@@ -360,7 +361,8 @@ def get_releases(release_id=None):
     """
     Return a list of releases to the client, filters optional
 
-    :param string release_id: Optionally specify a single release UUID to fetch. This does not disable filters.
+    :param string release_id: Optionally specify a single release UUID to fetch. This does not
+    disable filters.
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform

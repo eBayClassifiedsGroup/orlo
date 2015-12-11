@@ -1,5 +1,6 @@
 from __future__ import print_function
 import arrow
+import json
 from flask import jsonify, request
 from orlo import app
 from orlo.orm import db, Package, Release, PackageResult, ReleaseNote, Platform
@@ -12,7 +13,7 @@ __author__ = 'alforbes'
 
 
 @app.route('/import', methods=['GET'])
-@app.route('/import/release', methods=['GET'])
+@app.route('/releases/import', methods=['GET'])
 def get_import():
     """
     Display a useful message on how to import
@@ -77,11 +78,11 @@ def post_import():
             platforms=platforms,
             user=r['user'],
             team=r['team'],
-            references=r['references'],
+            references=json.dumps(r['references']),
         )
 
-        release.ftime = arrow.get(r['ftime'])
-        release.stime = arrow.get(r['stime'])
+        release.stime = arrow.get(r['stime']) if r['stime'] else None
+        release.ftime = arrow.get(r['ftime']) if r['ftime'] else None
         release.duration = release.ftime - release.stime
 
         try:
@@ -98,8 +99,8 @@ def post_import():
                 name=p['name'],
                 version=p['version'],
             )
-            package.stime = arrow.get(p['stime'])
-            package.ftime = arrow.get(p['ftime'])
+            package.stime = arrow.get(p['stime']) if p['stime'] else None
+            package.ftime = arrow.get(p['ftime']) if p['ftime'] else None
             package.duration = package.ftime - package.stime
             package.rollback = p['rollback']
             package.status = p['status']

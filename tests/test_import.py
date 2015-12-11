@@ -51,7 +51,7 @@ class ImportTest(OrloTest):
         """
         Test that GET /import returns 200
         """
-        response = self.client.get('/import')
+        response = self.client.get('/releases/import')
         self.assert200(response)
 
     def _import_doc(self):
@@ -64,10 +64,20 @@ class ImportTest(OrloTest):
             content_type='application/json',
         )
 
-        # self.assert200(response)
+        self.assert200(response)
         self.release = db.session.query(Release).first()
         self.package = db.session.query(Package).first()
         self.platform = db.session.query(Platform).first()
+
+    def test_import_get(self):
+        """
+        Test a GET /releases after import
+
+        Crude. If only this test fails, consider adding a more specific test for the cause of
+        the failure.
+        """
+        response = self.client.get('/releases')
+        self.assert200(response)
 
     def test_import_param_platforms(self):
         """
@@ -102,7 +112,15 @@ class ImportTest(OrloTest):
         """
         Test imported references match
         """
-        self.assertEqual(self.release.references, unicode(self.doc_dict[0]['references']))
+        doc = json.loads(self.release.references)
+        self.assertEqual(doc, self.doc_dict[0]['references'])
+
+    def test_import_param_references_valid_json(self):
+        """
+        Test the reference field results in valid json
+        """
+        doc = json.loads(self.release.references)
+        self.assertIsInstance(doc, list)
 
     def test_import_param_user(self):
         """
