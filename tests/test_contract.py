@@ -552,3 +552,115 @@ class GetContractTest(OrloTest):
         for r in second_results['releases']:
             for p in r['packages']:
                 self.assertIs(p['rollback'], False)
+
+    def test_get_release_first(self):
+        """
+        Should return only one release
+        """
+
+        for _ in range(0, 3):
+            rid = self._create_release()
+
+        r = self._get_releases(filters=['latest=True'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_name(self):
+        """
+        Filter on releases which have a particular package name
+        """
+        rid = self._create_release()
+        self._create_package(rid, name='particular-name')
+        self._create_package(rid, name='another-name')
+
+        rid2 = self._create_release()
+        self._create_package(rid2, name='another-name')
+
+        r = self._get_releases(filters=['package_name=particular-name'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_version(self):
+        """
+        Filter on releases which have a particular version
+        """
+        rid = self._create_release()
+        self._create_package(rid, version='4.9.9')
+        self._create_package(rid, version='3.5.6')
+
+        rid2 = self._create_release()
+        self._create_package(rid2, version='1.2.3')
+
+        r = self._get_releases(filters=['package_version=4.9.9'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_status_not_started(self):
+        """
+        Filter on releases which have package status NOT_STARTED
+        """
+        rid = self._create_release()
+        self._create_package(rid)
+
+        self._create_release()  # extra, should be filtered out
+
+        r = self._get_releases(filters=['package_status=NOT_STARTED'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_status_in_progress(self):
+        """
+        Filter on releases which have package status IN_PROGRESS
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+
+        self._create_release()  # extra, should be filtered out
+
+        r = self._get_releases(filters=['package_status=IN_PROGRESS'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_status_successful(self):
+        """
+        Filter on releases which have package status SUCCESSFUL
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+        self._stop_package(rid, pid, success=True)
+
+        self._create_release()  # extra, should be filtered out
+
+        r = self._get_releases(filters=['package_status=SUCCESSFUL'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_status_failed(self):
+        """
+        Filter on releases which have package status FAILED
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+        self._stop_package(rid, pid, success=False)
+
+        self._create_release()  # extra, should be filtered out
+
+        r = self._get_releases(filters=['package_status=FAILED'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_duration_gt(self):
+        """
+        Filter on releases with a package of duration greater than X
+        """
+        pass  # TODO
+
+    def test_get_release_package_duration_lt(self):
+        """
+        Filter on releases with a package of duration less than X
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+        self._stop_package(rid, pid, success=False)
+
+        r = self._get_releases(filters=['package_duration_gt=10'])
+        self.assertEqual(len(r['releases']), 1)
+
+        # TODO need control release

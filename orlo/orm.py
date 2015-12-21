@@ -134,6 +134,8 @@ class Package(db.Model):
     def stop(self, success):
         """
         Mark a package deployment as stopped
+
+        :param success: Whether or not the package deploy succeeded
         """
         self.ftime = arrow.now(config.get('main', 'time_zone'))
         td = self.ftime - self.stime

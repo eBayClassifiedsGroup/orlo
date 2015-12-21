@@ -322,7 +322,7 @@ def post_packages_stop(release_id, package_id):
     :param string release_id: Release UUID
     """
     _validate_request_json(request)
-    success = request.json['success']
+    success = request.json.get('success') in ['True', 'true', '1']
 
     package = _fetch_package(release_id, package_id)
     app.logger.info("Package stop, release {}, package {}, success {}".format(
@@ -363,10 +363,11 @@ def get_releases(release_id=None):
 
     :param string release_id: Optionally specify a single release UUID to fetch. This does not
     disable filters.
+    :query boolean last: Return only the last matching release (the latest)
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform
-    :query boolean rollback: Filter on whether or not a release contained a rollback
+    :query boolean rollback: Filter on whether or not the releases contain a rollback
     :query string stime_before: Only include releases that started before timestamp given
     :query string stime_after: Only include releases that started after timestamp given
     :query string ftime_before: Only include releases that finished before timestamp given
@@ -374,19 +375,27 @@ def get_releases(release_id=None):
     :query int duration_less: Only include releases that took less than (int) seconds
     :query int duration_greater: Only include releases that took more than (int) seconds
     :query string team: Filter releases by team
+    :query string package_name: Filter by package name
+    :query string package_version: Filter by package version
+    :query int package_duration_gt: Filter by packages of duration greater than
+    :query int package_duration_lt: Filter by packages of duration less than
+    :query string package_status: Filter by package status. Valid statuses are "NOT_STARTED",
+    "IN_PROGRESS", "SUCCESSFUL", "FAILED"
 
     **Note for time arguments**:
         The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.
 
     .. versionadded:: 0.0.1
     """
-    query = db.session.query(Release).order_by(Release.stime.asc())
-    pkg_query = db.session.query(Package)
+
+    if request.args.get('last', False):
+        # sort descending so we can use .first()
+        query = db.session.query(Release).order_by(Release.stime.desc())
+    else:  # ascending
+        query = db.session.query(Release).order_by(Release.stime.asc())
 
     if release_id:
         query = query.filter(Release.id == release_id)
-    if 'package_name' in request.args:
-        query = query.join(Package).filter(Package.name == request.args['package_name'])
     if 'user' in request.args:
         query = query.filter(Release.user == request.args['user'])
     if 'platform' in request.args:
@@ -417,8 +426,24 @@ def get_releases(release_id=None):
     if 'rollback' in request.args:
         rollback = request.args['rollback'] in ['true', 'True', '1']
         query = query.join(Package).filter(Package.rollback == rollback)
+    if 'package_name' in request.args:
+        query = query.join(Package).filter(Package.name == request.args['package_name'])
+    if 'package_version' in request.args:
+        query = query.join(Package).filter(Package.version == request.args['package_version'])
+    if 'package_status' in request.args:
+        query = query.join(Package).filter(Package.status == request.args['package_status'])
+    if 'package_duration_gt' in request.args:
+        query = query.join(Package).filter(
+            Package.duration > int(request.args['package_duration_gt']))
+    if 'package_duration_lt' in request.args:
+        query = query.join(Package).filter(
+            Package.duration < int(request.args['package_duration_lt']))
 
-    releases = query.all()
+    if request.args.get('latest'):
+        releases = [query.first()]
+    else:
+        releases = query.all()
+
     app.logger.debug("Returning {} releases".format(len(releases)))
     output = []
     for r in releases:
