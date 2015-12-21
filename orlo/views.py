@@ -366,6 +366,7 @@ def get_releases(release_id=None):
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform
+    :query boolean rollback: Filter on whether or not a release contained a rollback
     :query string stime_before: Only include releases that started before timestamp given
     :query string stime_after: Only include releases that started after timestamp given
     :query string ftime_before: Only include releases that finished before timestamp given
@@ -380,6 +381,7 @@ def get_releases(release_id=None):
     .. versionadded:: 0.0.1
     """
     query = db.session.query(Release).order_by(Release.stime.asc())
+    pkg_query = db.session.query(Package)
 
     if release_id:
         query = query.filter(Release.id == release_id)
@@ -412,6 +414,9 @@ def get_releases(release_id=None):
         query = query.filter(Release.duration > td)
     if 'team' in request.args:
         query = query.filter(Release.team == request.args['team'])
+    if 'rollback' in request.args:
+        rollback = request.args['rollback'] in ['true', 'True', '1']
+        query = query.join(Package).filter(Package.rollback == rollback)
 
     releases = query.all()
     app.logger.debug("Returning {} releases".format(len(releases)))

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import orlo
 import json
 import uuid
+import unittest
 from flask.ext.testing import TestCase
 from orlo.orm import db, Package, Release
 from orlo.config import config
@@ -526,3 +527,28 @@ class GetContractTest(OrloTest):
             self.assertEqual(r['team'], 'firstTeam')
         for r in second_results['releases']:
             self.assertEqual(r['team'], 'secondTeam')
+
+    def test_get_release_filter_rollback(self):
+        """
+        Filter on releases that contain a rollback
+        """
+        for _ in range(0, 3):
+            rid = self._create_release()
+            self._create_package(rid, rollback=True)
+
+        for _ in range(0, 2):
+            rid = self._create_release()
+            self._create_package(rid, rollback=False)
+
+        first_results = self._get_releases(filters=['rollback=True'])
+        second_results = self._get_releases(filters=['rollback=False'])
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 2)
+
+        for r in first_results['releases']:
+            for p in r['packages']:
+                self.assertIs(p['rollback'], True)
+        for r in second_results['releases']:
+            for p in r['packages']:
+                self.assertIs(p['rollback'], False)

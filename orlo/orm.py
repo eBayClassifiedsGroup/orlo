@@ -113,8 +113,8 @@ class Package(db.Model):
     diff_url = db.Column(db.String)
     rollback = db.Column(db.Boolean(create_constraint=True))
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
-    release = db.relationship("Release", backref=db.backref('packages',
-                                                              order_by=stime))
+    release = db.relationship("Release",
+                              backref=db.backref('packages', order_by=stime))
 
     def __init__(self, release_id, name, version, diff_url=None, rollback=False):
         self.id = uuid.uuid4()
@@ -153,6 +153,7 @@ class Package(db.Model):
             'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
             'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
+            'rollback': self.rollback,
             'status': self.status,
             'diff_url': self.diff_url,
         }
