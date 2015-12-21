@@ -1,9 +1,7 @@
 from __future__ import print_function, unicode_literals
-import copy
 import json
 from orlo.orm import Release, Package, Platform, db
 from orlo.config import config
-from orlo.util import string_to_list
 from tests.test_contract import OrloTest
 
 __author__ = 'alforbes'
