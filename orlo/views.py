@@ -370,7 +370,7 @@ def get_releases(release_id=None):
 
     :param string release_id: Optionally specify a single release UUID to fetch. This does not
     disable filters.
-    :query boolean last: Return only the last matching release (the latest)
+    :query boolean latest: Return only the last matching release (the latest)
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform
@@ -401,7 +401,7 @@ def get_releases(release_id=None):
         # No need to join on package if none of our params need it
         query = db.session.query(Release)
 
-    if request.args.get('last', False):
+    if request.args.get('latest', False):
         # sort descending so we can use .first()
         query = query.order_by(Release.stime.desc())
     else:  # ascending
