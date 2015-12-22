@@ -5,7 +5,7 @@ import arrow
 import datetime
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
 from orlo.util import validate_request_json, create_release, validate_release_input, \
-    validate_package_input, fetch_release, create_package, fetch_package
+    validate_package_input, fetch_release, create_package, fetch_package, apply_filters
 
 
 @app.route('/ping', methods=['GET'])
@@ -294,81 +294,3 @@ def get_releases(release_id=None):
     return jsonify(releases=output), 200
 
 
-def apply_filters(query, args):
-    """
-    Apply filters to a query
-
-    :param query: Query object to apply filters to
-    :param args: Dictionary of arguments, usually request.args
-
-    :return: filtered query object
-    """
-
-    for field, value in args.iteritems():
-        if field == 'latest':  # this is not a comparison
-            continue
-
-        if field.startswith('package_'):
-            # Package attribute
-            db_table = Package
-            field = '_'.join(field.split('_')[1:])
-        else:
-            db_table = Release
-
-        comparison = '=='
-        time_absolute = False
-        time_delta = False
-        strip_last = False
-        sub_field = None
-
-        if field.endswith('_gt'):
-            strip_last = True
-            comparison = '>'
-        if field.endswith('_lt'):
-            strip_last = True
-            comparison = '<'
-        if field.endswith('_before'):
-            strip_last = True
-            comparison = '<'
-            time_absolute = True
-        if field.endswith('_after'):
-            strip_last = True
-            comparison = '>'
-            time_absolute = True
-        if 'duration' in field.split('_'):
-            time_delta = True
-        if field == 'platform':
-            field = 'platforms'
-            comparison = 'any'
-            sub_field = Platform.name
-
-        if strip_last:
-            # Strip anything after the last underscore inclusive
-            field = '_'.join(field.split('_')[:-1])
-
-        filter_field = getattr(db_table, field)
-
-        # Booleans
-        if value in ('True', 'true'):
-            value = True
-        if value in ('False', 'false'):
-            value = False
-
-        # Time related
-        if time_delta:
-            value = datetime.timedelta(seconds=int(value))
-        if time_absolute:
-            value = arrow.get(value)
-
-        # Do comparisons
-        app.logger.debug("Filtering: {} {} {}".format(filter_field, comparison, value))
-        if comparison == '==':
-            query = query.filter(filter_field == value)
-        if comparison == '<':
-            query = query.filter(filter_field < value)
-        if comparison == '>':
-            query = query.filter(filter_field > value)
-        if comparison == 'any':
-            query = query.filter(filter_field.any(sub_field == value))
-
-    return query
