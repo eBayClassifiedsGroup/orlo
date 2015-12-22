@@ -410,7 +410,10 @@ def get_releases(release_id=None):
     if release_id:
         query = query.filter(Release.id == release_id)
     elif request.args:
-        query = apply_filters(query, request.args)
+        try:
+            query = apply_filters(query, request.args)
+        except AttributeError as e:
+            raise InvalidUsage("An invalid field was specified: {}".format(e.message))
 
     if request.args.get('latest'):
         releases = [query.first()]

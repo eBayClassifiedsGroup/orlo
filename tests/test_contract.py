@@ -306,7 +306,7 @@ class GetContractTest(OrloTest):
     Test the HTTP GET contract
     """
 
-    def _get_releases(self, release_id=None, filters=None):
+    def _get_releases(self, release_id=None, filters=None, expected_status=200):
         """
         Perform a GET to /releases with optional filters
         """
@@ -322,7 +322,7 @@ class GetContractTest(OrloTest):
         results_response = self.client.get(
             path, content_type='application/json',
         )
-        self.assertEqual(results_response.status_code, 200)
+        self.assertEqual(results_response.status_code, expected_status)
         r_json = json.loads(results_response.data)
         return r_json
 
@@ -701,3 +701,11 @@ class GetContractTest(OrloTest):
         for r in second_results['releases']:
             for p in r['packages']:
                 self.assertIs(p['rollback'], False)
+
+    def test_get_release_bad_attribute(self):
+        """
+        Test that we get the appropriate status code and a message when sending a bad attribute
+        """
+
+        r = self._get_releases(filters=['foo=bar'], expected_status=400)
+        self.assertIn('message', r)
