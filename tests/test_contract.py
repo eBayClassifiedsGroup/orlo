@@ -478,7 +478,7 @@ class GetContractTest(OrloTest):
         self.assertEqual(0, len(r_tomorrow['releases']))
         self.assertEqual(3, len(r_yesterday['releases']))
 
-    def test_get_release_filter_duration_less(self):
+    def test_get_release_filter_duration_lt(self):
         """
         Filter on releases that took less than x seconds
 
@@ -488,23 +488,23 @@ class GetContractTest(OrloTest):
         for _ in range(0, 3):
             self._create_finished_release()
 
-        r = self._get_releases(filters=['duration_less=10'])
+        r = self._get_releases(filters=['duration_lt=10'])
         self.assertEqual(3, len(r['releases']))
 
-        r = self._get_releases(filters=['duration_less=0'])
+        r = self._get_releases(filters=['duration_lt=0'])
         self.assertEqual(0, len(r['releases']))
 
-    def test_get_release_filter_duration_greater(self):
+    def test_get_release_filter_duration_gt(self):
         """
         Filter on releases that took greater than x seconds
         """
         for _ in range(0, 3):
             self._create_finished_release()
 
-        r = self._get_releases(filters=['duration_greater=10'])
+        r = self._get_releases(filters=['duration_gt=10'])
         self.assertEqual(0, len(r['releases']))
 
-        r = self._get_releases(filters=['duration_greater=0'])
+        r = self._get_releases(filters=['duration_gt=0'])
         self.assertEqual(3, len(r['releases']))
 
     def test_get_release_filter_team(self):
@@ -540,8 +540,8 @@ class GetContractTest(OrloTest):
             rid = self._create_release()
             self._create_package(rid, rollback=False)
 
-        first_results = self._get_releases(filters=['rollback=True'])
-        second_results = self._get_releases(filters=['rollback=False'])
+        first_results = self._get_releases(filters=['package_rollback=True'])
+        second_results = self._get_releases(filters=['package_rollback=False'])
 
         self.assertEqual(len(first_results['releases']), 3)
         self.assertEqual(len(second_results['releases']), 2)
@@ -649,7 +649,13 @@ class GetContractTest(OrloTest):
         """
         Filter on releases with a package of duration greater than X
         """
-        pass  # TODO
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+        self._stop_package(rid, pid, success=False)
+
+        r = self._get_releases(filters=['package_duration_gt=0'])
+        self.assertEqual(len(r['releases']), 1)
 
     def test_get_release_package_duration_lt(self):
         """
@@ -660,7 +666,38 @@ class GetContractTest(OrloTest):
         self._start_package(rid, pid)
         self._stop_package(rid, pid, success=False)
 
-        r = self._get_releases(filters=['package_duration_gt=10'])
+        r = self._get_releases(filters=['package_duration_lt=10'])
         self.assertEqual(len(r['releases']), 1)
 
         # TODO need control release
+
+    def test_get_release_filter_rollback_and_status(self):
+        """
+        Filter on rollback and status
+        """
+        for _ in range(0, 3):
+            rid = self._create_release()
+            self._create_package(rid, rollback=True)
+
+        for _ in range(0, 2):
+            rid = self._create_release()
+            self._create_package(rid, rollback=False)
+
+        first_results = self._get_releases(filters=['package_rollback=True',
+                                                    'package_status=NOT_STARTED'])
+        second_results = self._get_releases(filters=['package_rollback=False',
+                                                     'package_status=NOT_STARTED'])
+        # should be zero
+        third_results = self._get_releases(filters=['package_rollback=FALSE',
+                                                    'package_status=SUCCESSFUL'])
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 2)
+        self.assertEqual(len(third_results['releases']), 0)
+
+        for r in first_results['releases']:
+            for p in r['packages']:
+                self.assertIs(p['rollback'], True)
+        for r in second_results['releases']:
+            for p in r['packages']:
+                self.assertIs(p['rollback'], False)

@@ -5,7 +5,6 @@ from flask import jsonify, request
 from orlo import app
 from orlo.orm import db, Package, Release, PackageResult, ReleaseNote, Platform
 from orlo.views import _validate_request_json
-from orlo.util import list_to_string
 from sqlalchemy.orm import exc
 
 

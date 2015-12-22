@@ -8,6 +8,13 @@ from orlo.util import list_to_string
 from sqlalchemy.orm import exc
 
 
+@app.errorhandler(404)
+def page_not_found(error):
+    d = error.to_dict()
+    d['url'] = request.url
+    return jsonify(d), 404
+
+
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
     response = jsonify(error.to_dict())
@@ -367,77 +374,43 @@ def get_releases(release_id=None):
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform
-    :query boolean rollback: Filter on whether or not the releases contain a rollback
     :query string stime_before: Only include releases that started before timestamp given
     :query string stime_after: Only include releases that started after timestamp given
     :query string ftime_before: Only include releases that finished before timestamp given
     :query string ftime_after: Only include releases that finished after timestamp given
-    :query int duration_less: Only include releases that took less than (int) seconds
-    :query int duration_greater: Only include releases that took more than (int) seconds
     :query string team: Filter releases by team
+
+    **Note for time arguments**:
+        The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.
+
+    .. versionadded:: 0.0.4
+    :query int duration_lt: Only include releases that took less than (int) seconds
+    :query int duration_gt: Only include releases that took more than (int) seconds
+    :query boolean package_rollback: Filter on whether or not the releases contain a rollback
     :query string package_name: Filter by package name
     :query string package_version: Filter by package version
     :query int package_duration_gt: Filter by packages of duration greater than
     :query int package_duration_lt: Filter by packages of duration less than
     :query string package_status: Filter by package status. Valid statuses are "NOT_STARTED",
     "IN_PROGRESS", "SUCCESSFUL", "FAILED"
-
-    **Note for time arguments**:
-        The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.
-
-    .. versionadded:: 0.0.1
     """
+
+    if any(field.startswith('package_') for field in request.args.keys()):
+        query = db.session.query(Release).join(Package)
+    else:
+        # No need to join on package if none of our params need it
+        query = db.session.query(Release)
 
     if request.args.get('last', False):
         # sort descending so we can use .first()
-        query = db.session.query(Release).order_by(Release.stime.desc())
+        query = query.order_by(Release.stime.desc())
     else:  # ascending
-        query = db.session.query(Release).order_by(Release.stime.asc())
+        query = query.order_by(Release.stime.asc())
 
     if release_id:
         query = query.filter(Release.id == release_id)
-    if 'user' in request.args:
-        query = query.filter(Release.user == request.args['user'])
-    if 'platform' in request.args:
-        # Fetch the platform
-        query = query.filter(
-            Release.platforms.any(Platform.name == request.args['platform'])
-        )
-    if 'stime_before' in request.args:
-        t = arrow.get(request.args['stime_before'])
-        query = query.filter(Release.stime <= t)
-    if 'stime_after' in request.args:
-        t = arrow.get(request.args['stime_after'])
-        query = query.filter(Release.stime >= t)
-    if 'ftime_before' in request.args:
-        t = arrow.get(request.args['ftime_before'])
-        query = query.filter(Release.ftime <= t)
-    if 'ftime_after' in request.args:
-        t = arrow.get(request.args['ftime_after'])
-        query = query.filter(Release.ftime >= t)
-    if 'duration_less' in request.args:
-        td = datetime.timedelta(seconds=int(request.args['duration_less']))
-        query = query.filter(Release.duration < td)
-    if 'duration_greater' in request.args:
-        td = datetime.timedelta(seconds=int(request.args['duration_greater']))
-        query = query.filter(Release.duration > td)
-    if 'team' in request.args:
-        query = query.filter(Release.team == request.args['team'])
-    if 'rollback' in request.args:
-        rollback = request.args['rollback'] in ['true', 'True', '1']
-        query = query.join(Package).filter(Package.rollback == rollback)
-    if 'package_name' in request.args:
-        query = query.join(Package).filter(Package.name == request.args['package_name'])
-    if 'package_version' in request.args:
-        query = query.join(Package).filter(Package.version == request.args['package_version'])
-    if 'package_status' in request.args:
-        query = query.join(Package).filter(Package.status == request.args['package_status'])
-    if 'package_duration_gt' in request.args:
-        query = query.join(Package).filter(
-            Package.duration > int(request.args['package_duration_gt']))
-    if 'package_duration_lt' in request.args:
-        query = query.join(Package).filter(
-            Package.duration < int(request.args['package_duration_lt']))
+    elif request.args:
+        query = apply_filters(query, request.args)
 
     if request.args.get('latest'):
         releases = [query.first()]
@@ -450,3 +423,86 @@ def get_releases(release_id=None):
         output.append(r.to_dict())
 
     return jsonify(releases=output), 200
+
+
+def apply_filters(query, args):
+    """
+    Apply filters to a query
+
+    :param query: Query object to apply filters to
+    :param args: Dictionary of arguments, usually request.args
+
+    :return: filtered query object
+    """
+
+    for field, value in args.iteritems():
+        if field == 'latest':  # this is not a comparison
+            continue
+
+        if field.startswith('package_'):
+            # Package attribute
+            db_table = Package
+            field = '_'.join(field.split('_')[1:])
+        else:
+            db_table = Release
+
+        comparison = '=='
+        time_absolute = False
+        time_delta = False
+        strip_last = False
+        sub_field = None
+
+        if field.endswith('_gt'):
+            strip_last = True
+            comparison = '>'
+        if field.endswith('_lt'):
+            strip_last = True
+            comparison = '<'
+        if field.endswith('_before'):
+            strip_last = True
+            comparison = '<'
+            time_absolute = True
+        if field.endswith('_after'):
+            strip_last = True
+            comparison = '>'
+            time_absolute = True
+        if 'duration' in field.split('_'):
+            time_delta = True
+        if field == 'platform':
+            field = 'platforms'
+            comparison = 'any'
+            sub_field = Platform.name
+
+        if strip_last:
+            # Strip anything after the last underscore inclusive
+            field = '_'.join(field.split('_')[:-1])
+
+        filter_field = getattr(db_table, field)
+
+        # Booleans
+        if value in ('True', 'true'):
+            value = True
+        if value in ('False', 'false'):
+            value = False
+
+        # Time related
+        if time_delta:
+            value = datetime.timedelta(seconds=int(value))
+        if time_absolute:
+            value = arrow.get(value)
+
+        # Do comparisons
+        app.logger.debug("Filtering: {} {} {}".format(filter_field, comparison, value))
+        if comparison == '==':
+            query = query.filter(filter_field == value)
+        if comparison == '<':
+            query = query.filter(filter_field < value)
+        if comparison == '>':
+            query = query.filter(filter_field > value)
+        if comparison == 'any':
+            query = query.filter(filter_field.any(sub_field == value))
+
+    return query
+
+
+

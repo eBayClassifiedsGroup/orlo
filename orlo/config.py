@@ -8,6 +8,7 @@ config.add_section('main')
 config.set('main', 'propagate_exceptions', 'true')
 config.set('main', 'time_format', '%Y-%m-%dT%H:%M:%SZ')
 config.set('main', 'time_zone', 'UTC')
+config.set('main', 'strict_slashes', 'false')
 
 config.add_section('db')
 config.set('db', 'uri', 'sqlite://')

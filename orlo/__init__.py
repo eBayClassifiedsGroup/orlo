@@ -14,6 +14,9 @@ if config.getboolean('logging', 'debug'):
     app.debug = True
 app.logger.debug('Debug enabled')
 
+if not config.getboolean('main', 'strict_slashes'):
+    app.url_map.strict_slashes = False
+
 logfile = config.get('logging', 'file')
 if logfile != 'disabled':
     handler = RotatingFileHandler(
@@ -26,3 +29,4 @@ if logfile != 'disabled':
 # Must be imported last
 import orlo.views
 import orlo.route_import
+
