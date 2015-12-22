@@ -15,7 +15,7 @@ __author__ = 'alforbes'
 db = SQLAlchemy(app)
 
 try:
-   TIMEZONE = pytz.timezone(config.get('main', 'time_zone'))
+    TIMEZONE = pytz.timezone(config.get('main', 'time_zone'))
 except pytz.exceptions.UnknownTimeZoneError:
     app.logger.critical(
         'Unknown time zone "{}", see pytz docs for valid values'.format(

@@ -151,7 +151,7 @@ def apply_filters(query, args):
             continue
 
         if field.startswith('package_'):
-            # Package attribute
+            # Package attribute. Ensure source query does a join on Package.
             db_table = Package
             field = '_'.join(field.split('_')[1:])
         else:
