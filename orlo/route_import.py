@@ -4,7 +4,7 @@ import json
 from flask import jsonify, request
 from orlo import app
 from orlo.orm import db, Package, Release, PackageResult, ReleaseNote, Platform
-from orlo.views import _validate_request_json
+from orlo.views import validate_request_json
 from sqlalchemy.orm import exc
 
 
@@ -57,7 +57,7 @@ def post_import():
     :status 200: The document was accepted
     """
 
-    _validate_request_json(request)
+    validate_request_json(request)
 
     releases = []
     for r in request.json:

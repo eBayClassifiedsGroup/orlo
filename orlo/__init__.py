@@ -27,6 +27,7 @@ if logfile != 'disabled':
     app.logger.addHandler(handler)
 
 # Must be imported last
+import orlo.error_handlers
 import orlo.views
 import orlo.route_import
 

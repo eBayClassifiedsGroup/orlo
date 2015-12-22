@@ -5,8 +5,6 @@ from sqlalchemy_utils.types.uuid import UUIDType
 from sqlalchemy_utils.types.arrow import ArrowType
 
 from orlo import app, config
-from orlo.util import string_to_list
-from datetime import datetime, timedelta
 import pytz
 import uuid
 import arrow
@@ -31,6 +29,25 @@ release_platform = db.Table(
     db.Column('release_id', UUIDType, db.ForeignKey('release.id')),
     db.Column('platform_id', UUIDType, db.ForeignKey('platform.id'))
 )
+
+
+def string_to_list(string):
+    """
+    Load a list from a string
+
+    :param string:
+    :return:
+    """
+    if string is None:
+        return []
+
+    if '[' in string and ']' in string and ('"' in string or "'" in string):
+        # Valid list syntax, presumably...
+        # TODO a regex would be better here
+        return json.loads(string.replace("'", '"'))
+    else:
+        # assume just one item
+        return [string]
 
 
 class Release(db.Model):

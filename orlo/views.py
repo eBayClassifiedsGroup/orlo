@@ -1,146 +1,11 @@
 from orlo import app
 from orlo.exceptions import InvalidUsage
-from flask import jsonify, request, abort
+from flask import jsonify, request
 import arrow
 import datetime
-from orm import db, Release, Package, PackageResult, ReleaseNote, Platform
-from orlo.util import list_to_string
-from sqlalchemy.orm import exc
-
-
-@app.errorhandler(404)
-def page_not_found(error):
-    d = error.to_dict()
-    d['url'] = request.url
-    return jsonify(d), 404
-
-
-@app.errorhandler(InvalidUsage)
-def handle_invalid_usage(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
-
-
-@app.errorhandler(400)
-def handle_400(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
-
-
-def _create_release(request):
-    """
-    Create a Release object from a request
-    """
-
-    references = request.json.get('references', [])
-    if references and type(references) is list:
-        references = list_to_string(references)
-
-    # If given a single string, make it a list
-    request_platforms = request.json.get('platforms')
-    if request_platforms and type(request_platforms) is not list:
-        request_platforms = [request_platforms]
-
-    # Get the platforms
-    platforms = []
-    for p in request_platforms:
-        try:
-            query = db.session.query(Platform).filter(Platform.name == p)
-            platform = query.one()
-            app.logger.debug("Found platform {}".format(platform))
-        except exc.NoResultFound:
-            app.logger.info("Creating platform {}".format(p))
-            platform = Platform(p)
-            db.session.add(platform)
-        platforms.append(platform)
-
-    release = Release(
-        # Required attributes
-        platforms=platforms,
-        user=request.json['user'],
-        # Not required
-        team=request.json.get('team'),
-        references=references,
-    )
-    return release
-
-
-def _create_package(release_id, request):
-    """
-    Create a package object for a release
-    """
-
-    return Package(
-        release_id,
-        request.json.get('name'),
-        request.json.get('version'),
-        diff_url=request.json.get('diff_url', None),
-        rollback=request.json.get('rollback', False),
-    )
-
-
-def _fetch_release(release_id):
-    """
-    Fetch a release by ID
-    """
-    rq = db.session.query(Release).filter(Release.id == release_id)
-    release = rq.first()
-    if not release:
-        raise InvalidUsage("Release does not exist")
-    return release
-
-
-def _fetch_package(release_id, package_id):
-    """
-    Fetch a package, and validate it is part of the release
-    """
-
-    # Fetch release first, as it is a good sanity check
-    _fetch_release(release_id)
-    pq = db.session.query(Package).filter(Package.id == package_id)
-    package = pq.first()
-
-    if not package:
-        raise InvalidUsage("Package does not exist")
-    if str(package.release_id) != release_id:
-        raise InvalidUsage("This package does not belong to this release")
-
-    return package
-
-
-def _validate_request_json(request):
-    try:
-        request.json
-    except Exception:
-        # This is pretty ugly, but we want something more user friendly than "Bad Request"
-        raise InvalidUsage("Could not parse JSON document")
-
-    if not request.json:
-        raise InvalidUsage('Missing application/json header', status_code=400)
-
-
-def _validate_release_input(request):
-    _validate_request_json(request)
-    if 'platforms' not in request.json:
-        raise InvalidUsage('JSON doc missing platforms field', status_code=400)
-    return True
-
-
-def _validate_package_input(request, release_id):
-    _validate_request_json(request)
-
-    if not 'name' in request.json or not 'version' in request.json:
-        raise InvalidUsage("Missing name / version in request body.")
-    app.logger.debug("Package request validated, release_id {}".format(release_id))
-    return True
-
-
-def _validate_package_stop_input(request):
-    _validate_request_json(request)
-    if 'success' not in request.json:
-        raise InvalidUsage("Missing success key in JSON doc")
+from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
+from orlo.util import validate_request_json, create_release, validate_release_input, \
+    validate_package_input, fetch_release, create_package, fetch_package
 
 
 @app.route('/ping', methods=['GET'])
@@ -181,16 +46,16 @@ def post_releases():
         -d '{"note": "blah", "platforms": ["site1"], "references": ["ticket"], "team": "A-Team",
         "user": "aforbes"}'
     """
-    _validate_release_input(request)
-    release = _create_release(request)
+    validate_release_input(request)
+    release = create_release(request)
 
     if request.json.get('note'):
         release_note = ReleaseNote(release.id, request.json.get('note'))
         db.session.add(release_note)
 
     app.logger.info(
-        'Create release {}, references: {}, platforms: {}'.format(
-            release.id, release.notes, release.references, release.platforms)
+            'Create release {}, references: {}, platforms: {}'.format(
+                    release.id, release.notes, release.references, release.platforms)
     )
 
     release.start()
@@ -223,15 +88,15 @@ def post_packages(release_id):
         http://127.0.0.1/releases/${RELEASE_ID}/packages \\
         -d '{"name": "test-package", "version": "1.0.1"}'
     """
-    _validate_package_input(request, release_id)
+    validate_package_input(request, release_id)
 
-    release = _fetch_release(release_id)
-    package = _create_package(release.id, request)
+    release = fetch_release(release_id)
+    package = create_package(release.id, request)
 
     app.logger.info(
-        'Create package {}, release {}, name {}, version {}'.format(
-            package.id, release.id, request.json['name'],
-            request.json['version']))
+            'Create package {}, release {}, name {}, version {}'.format(
+                    package.id, release.id, request.json['name'],
+                    request.json['version']))
 
     db.session.add(package)
     db.session.commit()
@@ -252,7 +117,7 @@ def post_results(release_id, package_id):
     """
     results = PackageResult(package_id, str(request.json))
     app.logger.info("Post results, release {}, package {}".format(
-        release_id, package_id))
+            release_id, package_id))
     db.session.add(results)
     db.session.commit()
     return '', 204
@@ -275,7 +140,7 @@ def post_releases_stop(release_id):
         curl -H "Content-Type: application/json" \\
         -X POST http://127.0.0.1/releases/${RELEASE_ID}/stop
     """
-    release = _fetch_release(release_id)
+    release = fetch_release(release_id)
     # TODO check that all packages have been finished
     app.logger.info("Release stop, release {}".format(release_id))
     release.stop()
@@ -301,9 +166,9 @@ def post_packages_start(release_id, package_id):
 
         curl -X POST http://127.0.0.1/releases/${RELEASE_ID}/packages/${PACKAGE_ID}/start
     """
-    package = _fetch_package(release_id, package_id)
+    package = fetch_package(release_id, package_id)
     app.logger.info("Package start, release {}, package {}".format(
-        release_id, package_id))
+            release_id, package_id))
     package.start()
 
     db.session.add(package)
@@ -328,12 +193,12 @@ def post_packages_stop(release_id, package_id):
     :param string package_id: Package UUID
     :param string release_id: Release UUID
     """
-    _validate_request_json(request)
+    validate_request_json(request)
     success = request.json.get('success') in ['True', 'true', '1']
 
-    package = _fetch_package(release_id, package_id)
+    package = fetch_package(release_id, package_id)
     app.logger.info("Package stop, release {}, package {}, success {}".format(
-        release_id, package_id, success))
+            release_id, package_id, success))
     package.stop(success=success)
 
     db.session.add(package)
@@ -347,10 +212,10 @@ def post_releases_notes(release_id):
     Add a note to a release
 
     :param string release_id: Release UUID
-    :param string text: Text
+    :query string text: Text
     :return:
     """
-    _validate_request_json(request)
+    validate_request_json(request)
     text = request.json.get('text')
     if not text:
         raise InvalidUsage("Must include text in posted document")
@@ -507,4 +372,3 @@ def apply_filters(query, args):
             query = query.filter(filter_field.any(sub_field == value))
 
     return query
-
