@@ -7,6 +7,7 @@ import unittest
 from flask.ext.testing import TestCase
 from orlo.orm import db, Package, Release
 from orlo.config import config
+from time import sleep
 
 
 class OrloTest(TestCase):
@@ -553,16 +554,19 @@ class GetContractTest(OrloTest):
             for p in r['packages']:
                 self.assertIs(p['rollback'], False)
 
-    def test_get_release_first(self):
+    def test_get_release_latest(self):
         """
         Should return only one release
         """
 
+        rid = None
         for _ in range(0, 3):
             rid = self._create_release()
+            sleep(0.1)
 
         r = self._get_releases(filters=['latest=True'])
         self.assertEqual(len(r['releases']), 1)
+        self.assertEqual(r['releases'][0]['id'], rid)
 
     def test_get_release_package_name(self):
         """

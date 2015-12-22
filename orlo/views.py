@@ -416,9 +416,10 @@ def get_releases(release_id=None):
             raise InvalidUsage("An invalid field was specified: {}".format(e.message))
 
     if request.args.get('latest'):
-        releases = [query.first()]
-    else:
-        releases = query.all()
+        query = query.limit(1)
+
+    app.logger.debug("Query: {}".format(str(query)))
+    releases = query.all()
 
     app.logger.debug("Returning {} releases".format(len(releases)))
     output = []
@@ -506,6 +507,4 @@ def apply_filters(query, args):
             query = query.filter(filter_field.any(sub_field == value))
 
     return query
-
-
 
