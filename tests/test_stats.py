@@ -9,11 +9,16 @@ __author__ = 'alforbes'
 
 
 """
-Test the /stats, /info urls and associated functions
+Test the query functions in queries.py
+
+These tests rely on creating releases via the endpoints (inheriting OrloTest), but this should
+really be done directly with the ORM classes. #TODO
+
+They work for now, but breaking the API urls will cause these to fail which could be confusing.
 """
 
 
-class OrloStatsFunctionTest(OrloTest):
+class OrloQueryTest(OrloTest):
     def test_user_summary(self):
         """
         Test that user_summary returns the expected output
@@ -287,24 +292,3 @@ class OrloStatsFunctionTest(OrloTest):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 'packageOne')
-
-
-class OrloStatsUrlTest(OrloTest):
-    def test_info_users(self):
-        """
-        Test /info/users returns 200
-        """
-        self._create_release(user='userOne')
-        response = self.client.get('/info/users')
-        self.assert200(response)
-        self.assertIn('userOne', response.json)
-
-    def test_info_platforms(self):
-        """
-        Test /info/platforms returns 200
-        """
-        self._create_release(platforms=['platformOne'])
-        response = self.client.get('/info/platforms')
-        self.assert200(response)
-        self.assertIn('platformOne', response.json)
-
