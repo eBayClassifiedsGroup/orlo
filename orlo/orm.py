@@ -59,7 +59,7 @@ class Release(db.Model):
     id = db.Column(UUIDType, primary_key=True, unique=True, nullable=False)
     platforms = db.relationship('Platform', secondary=release_platform)
     references = db.Column(db.String)
-    stime = db.Column(ArrowType)
+    stime = db.Column(ArrowType, index=True)
     ftime = db.Column(ArrowType)
     duration = db.Column(db.Interval)
     user = db.Column(db.String, nullable=False)
