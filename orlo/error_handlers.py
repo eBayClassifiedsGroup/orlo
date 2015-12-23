@@ -8,8 +8,7 @@ __author__ = 'alforbes'
 
 @app.errorhandler(404)
 def page_not_found(error):
-    d = error.to_dict()
-    d['url'] = request.url
+    d = {'message': "404 Not Found", 'url': request.url}
     return jsonify(d), 404
 
 

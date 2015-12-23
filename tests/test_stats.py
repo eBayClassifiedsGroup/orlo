@@ -1,24 +1,29 @@
 from __future__ import print_function, unicode_literals
+import arrow
 import json
-from orlo.orm import Release, Package, Platform, db
-from orlo.config import config
 from tests.test_contract import OrloTest
-from orlo.route_stats import get_summary_users, get_summary_platforms, get_successful_releases
+import orlo.queries
+from time import sleep
 
 __author__ = 'alforbes'
 
 
+"""
+Test the /stats, /info urls and associated functions
+"""
+
+
 class OrloStatsFunctionTest(OrloTest):
-    def test_get_summary_users(self):
+    def test_user_summary(self):
         """
-        Test that get_summary_users returns the expected output
+        Test that user_summary returns the expected output
         """
         for _ in range(0, 3):
             self._create_release(user='userOne')
         for _ in range(0, 2):
             self._create_release(user='userTwo')
 
-        result = get_summary_users()
+        result = orlo.queries.user_summary().all()
         self.assertEqual(len(result), 2)
 
         for user, count in result:
@@ -29,16 +34,16 @@ class OrloStatsFunctionTest(OrloTest):
             else:
                 raise Exception('Unexpected user: {}'.format(str(user)))
 
-    def test_get_summary_users_with_platform(self):
+    def test_user_summary_with_platform(self):
         """
-        Test get_summary_users with a platform filter
+        Test user_summary with a platform filter
         """
         for _ in range(0, 3):
             self._create_release(user='userOne', platforms=['platformOne'])
         for _ in range(0, 2):
             self._create_release(user='userTwo', platforms=['platformTwo'])
 
-        result = get_summary_users(platform='platformOne')
+        result = orlo.queries.user_summary(platform='platformOne').all()
         self.assertEqual(len(result), 1)
 
         for user, count in result:
@@ -47,9 +52,9 @@ class OrloStatsFunctionTest(OrloTest):
             else:
                 raise Exception('Unexpected user: {}'.format(str(user)))
 
-    def test_get_summary_platforms(self):
+    def test_platform_summary(self):
         """
-        Test get_summary_platforms returns a summary
+        Test platform_summary returns a summary
         """
 
         for _ in range(0, 3):
@@ -57,7 +62,7 @@ class OrloStatsFunctionTest(OrloTest):
         for _ in range(0, 2):
             self._create_release(platforms=['platformTwo', 'platformThree'])
 
-        results = get_summary_platforms()
+        results = orlo.queries.platform_summary().all()
         for platform, count in results:
             if platform == 'platformOne':
                 self.assertEqual(count, 3)
@@ -68,35 +73,35 @@ class OrloStatsFunctionTest(OrloTest):
             else:
                 raise Exception('Unexpected platform: {}'.format(str(platform)))
 
-    def test_get_successful_releases(self):
+    def test_releases_successful(self):
         """
-        Test get_successful_releases in the simplest case
+        Test releases_successful in the simplest case
         """
         rid = self._create_finished_release()
-        results = get_successful_releases()
+        results = orlo.queries.releases_successful().all()
         ids = [str(u) for u, _ in results]
         self.assertIn(rid, ids)
 
-    def test_get_successful_releases_with_platform(self):
+    def test_releases_successful_with_platform(self):
         """
-        Test get_successful_releases with a platform filter
+        Test releases_successful with a platform filter
         """
         rid = self._create_finished_release()
-        results = get_successful_releases(platform='test_platform')
+        results = orlo.queries.releases_successful(platform='test_platform').all()
         ids = [str(u) for u, _ in results]
         self.assertIn(rid, ids)
 
-    def test_get_successful_releases_with_platform_excluded(self):
+    def test_releases_successful_with_platform_excluded(self):
         """
-        Test get_successful_releases with a platform filter excluding
+        Test releases_successful with a platform filter excluding
         """
         rid = self._create_finished_release()
-        results = get_successful_releases(platform='bogus_platform')
+        results = orlo.queries.releases_successful(platform='bogus_platform').all()
         self.assertEqual(len(results), 0)
 
-    def test_get_successful_releases_excludes_failed(self):
+    def test_releases_successful_excludes_failed(self):
         """
-        Test that get_successful_releases only returns successful releases by adding a failed one
+        Test that releases_successful only returns successful releases by adding a failed one
         """
 
         for _ in range(0, 3):
@@ -114,10 +119,174 @@ class OrloStatsFunctionTest(OrloTest):
         self._stop_package(rid, pid2, success=False)
         self._stop_release(rid)
 
-        results = get_successful_releases()
+        results = orlo.queries.releases_successful().all()
         ids = [str(u) for u, _ in results]
 
         self.assertNotIn(rid, ids)
+
+    def test_package_list(self):
+        """
+        Test that package_list returns a list of all packages released
+        """
+        for _ in range(0, 3):
+            rid = self._create_release()
+            self._create_package(rid, name='packageOne')
+            self._create_package(rid, name='packageTwo')
+
+        result = orlo.queries.package_list().all()
+        self.assertEqual(len(result), 2)
+        packages = [r[0] for r in result]
+        self.assertIn('packageOne', packages)
+        self.assertIn('packageTwo', packages)
+
+    def test_package_list_with_platform(self):
+        """
+        Test package_list with a platform filter
+        """
+        rid1 = self._create_release(platforms='platformOne')
+        self._create_package(rid1, name='packageOne')
+
+        rid2 = self._create_release(platforms='platformTwo')
+        self._create_package(rid2, name='packageTwo')
+
+        result = orlo.queries.package_list(platform='platformOne').all()
+        self.assertEqual(len(result), 1)
+        packages = [r[0] for r in result]
+        self.assertIn('packageOne', packages)
+        self.assertNotIn('packageTwo', packages)
+
+    def test_package_summary(self):
+        """
+        Test package_summary
+        """
+        rid1 = self._create_release()
+        self._create_package(rid1, name='packageOne')
+        self._create_package(rid1, name='packageTwo')
+
+        rid2 = self._create_release()
+        self._create_package(rid2, name='packageOne')
+        self._create_package(rid2, name='packageTwo')
+
+        result = orlo.queries.package_summary().all()
+
+        self.assertEqual(len(result), 2)
+        packages = [r[0] for r in result]
+        self.assertIn('packageOne', packages)
+        self.assertIn('packageTwo', packages)
+
+    def test_package_summary_with_platform(self):
+        """
+        Test package_summary
+        """
+        rid1 = self._create_release(platforms=['platformOne'])
+        self._create_package(rid1, name='packageOne')
+
+        rid2 = self._create_release(platforms=['platformTwo'])
+        self._create_package(rid2, name='packageTwo')
+
+        result = orlo.queries.package_summary(platform='platformOne').all()
+
+        self.assertEqual(len(result), 1)
+        packages = [r[0] for r in result]
+        self.assertIn('packageOne', packages)
+
+    def test_package_summary_with_stime(self):
+        """
+        Test package_summary with stime filter inclusive (hour in past)
+        """
+        rid1 = self._create_release()
+        self._create_package(rid1, name='packageOne')
+
+        hour_ago = arrow.utcnow().replace(hours=-1)
+        result = orlo.queries.package_summary(stime=hour_ago).all()
+
+        self.assertEqual(len(result), 1)
+        packages = [r[0] for r in result]
+        self.assertIn('packageOne', packages)
+
+    def test_package_summary_with_stime_negative(self):
+        """
+        Test package_summary with stime filter exclusive (hour in future)
+        """
+        rid1 = self._create_release()
+        self._create_package(rid1, name='packageOne')
+
+        hour_future = arrow.utcnow().replace(hours=+1)
+        result = orlo.queries.package_summary(stime=hour_future).all()
+
+        self.assertEqual(len(result), 0)
+
+    def test_package_summary_with_ftime(self):
+        """
+        Test package_summary with ftime filter inclusive (hour in future)
+        """
+        rid1 = self._create_release()
+        self._create_package(rid1, name='packageOne')
+
+        hour_future = arrow.utcnow().replace(hours=+1)
+        result = orlo.queries.package_summary(ftime=hour_future).all()
+
+        self.assertEqual(len(result), 1)
+        packages = [r[0] for r in result]
+        self.assertIn('packageOne', packages)
+
+    def test_package_summary_with_ftime_negative(self):
+        """
+        Test package_summary with ftime filter exclusive (hour in past)
+        """
+        rid1 = self._create_release()
+        self._create_package(rid1, name='packageOne')
+
+        hour_past = arrow.utcnow().replace(hours=-1)
+        result = orlo.queries.package_summary(ftime=hour_past).all()
+
+        self.assertEqual(len(result), 0)
+
+    def test_package_versions(self):
+        """
+        Test package_versions
+
+        In this test, we create two releases. packageOne succeeds in both but packageTwo fails
+        in the second, therefore the current version for packageOne should be the second release,
+        but packageTwo should remain with the first version
+        """
+        rid1 = self._create_release(platforms=['foo'])
+        pid1 = self._create_package(rid1, name='packageOne', version='1.0.1')
+        pid2 = self._create_package(rid1, name='packageTwo', version='2.0.1')
+        self._start_package(rid1, pid1)
+        self._stop_package(rid1, pid1)
+        self._start_package(rid1, pid2)
+        self._stop_package(rid1, pid2)
+        sleep(0.1)  # To ensure some time separation
+        rid2 = self._create_release(platforms=['foo'])
+        pid1 = self._create_package(rid2, name='packageOne', version='1.0.2')
+        pid2 = self._create_package(rid2, name='packageTwo', version='2.0.2')
+        self._start_package(rid2, pid1)
+        self._stop_package(rid2, pid1)
+        self._start_package(rid2, pid2)
+        self._stop_package(rid2, pid2, success=False)
+
+        result = orlo.queries.package_versions().all()
+        self.assertEqual(len(result), 2)  # Two entries, packageOne/Two
+        versions = [(p, v) for p, v, t in result]  # strip out the time
+        # Correct versions:
+        self.assertIn(('packageOne', '1.0.2'), versions)
+        self.assertIn(('packageTwo', '2.0.1'), versions)
+
+    def test_package_versions_with_platform(self):
+        """
+        Test package_versions excludes non-specified platforms
+        """
+        self._create_finished_release()  # this release should not appear in result
+        rid1 = self._create_release(platforms=['foo'])
+        pid1 = self._create_package(rid1, name='packageOne', version='1.0.1')
+        self._start_package(rid1, pid1)
+        self._stop_package(rid1, pid1)
+
+        result = orlo.queries.package_versions(platform='foo').all()
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0][0], 'packageOne')
 
 
 class OrloStatsUrlTest(OrloTest):
@@ -129,4 +298,13 @@ class OrloStatsUrlTest(OrloTest):
         response = self.client.get('/info/users')
         self.assert200(response)
         self.assertIn('userOne', response.json)
+
+    def test_info_platforms(self):
+        """
+        Test /info/platforms returns 200
+        """
+        self._create_release(platforms=['platformOne'])
+        response = self.client.get('/info/platforms')
+        self.assert200(response)
+        self.assertIn('platformOne', response.json)
 
