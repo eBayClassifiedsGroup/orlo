@@ -61,6 +61,7 @@ target/
 # Created by .ignore support plugin (hsz.mobi)
 .idea/
 orlo/orlo.db
+orlo/_version.py
 .vagrant
 *.swp
 *.deb
