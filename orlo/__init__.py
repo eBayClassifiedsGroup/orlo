@@ -2,6 +2,7 @@ from flask import Flask
 from logging.handlers import RotatingFileHandler
 
 from orlo.config import config
+from orlo._version import __version__
 
 app = Flask(__name__)
 

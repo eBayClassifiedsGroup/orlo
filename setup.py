@@ -1,12 +1,19 @@
 #!/usr/bin/env python
 
 # from distutils.core import setup
-from setuptools import setup, find_packages
+from setuptools import setup
 import multiprocessing  # nopep8
+
+
+VERSION = '0.0.4-12'
+version_file = open('./orlo/_version.py', 'w')
+version_file.write("__version__ = '{}'".format(VERSION))
+version_file.close()
+
 
 setup(
     name='orlo',
-    version='0.0.4',
+    version=VERSION,
     description='Deployment data capture API',
     author='Alex Forbes',
     author_email='alforbes@ebay.com',
