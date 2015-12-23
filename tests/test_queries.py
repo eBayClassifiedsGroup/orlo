@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 import arrow
 import json
-from tests.test_contract import OrloTest
+from tests.test_orm import OrloDbTest
 import orlo.queries
 from time import sleep
 
@@ -11,14 +11,15 @@ __author__ = 'alforbes'
 """
 Test the query functions in queries.py
 
-These tests rely on creating releases via the endpoints (inheriting OrloTest), but this should
-really be done directly with the ORM classes. #TODO
-
 They work for now, but breaking the API urls will cause these to fail which could be confusing.
 """
 
 
-class OrloQueryTest(OrloTest):
+class OrloQueryTest(OrloDbTest):
+    pass
+
+
+class SummaryTest(OrloQueryTest):
     def test_user_summary(self):
         """
         Test that user_summary returns the expected output
@@ -67,8 +68,8 @@ class OrloQueryTest(OrloTest):
         for _ in range(0, 2):
             self._create_release(platforms=['platformTwo', 'platformThree'])
 
-        results = orlo.queries.platform_summary().all()
-        for platform, count in results:
+        result = orlo.queries.platform_summary().all()
+        for platform, count in result:
             if platform == 'platformOne':
                 self.assertEqual(count, 3)
             elif platform == 'platformTwo':
@@ -77,57 +78,6 @@ class OrloQueryTest(OrloTest):
                 self.assertEqual(count, 2)
             else:
                 raise Exception('Unexpected platform: {}'.format(str(platform)))
-
-    def test_releases_successful(self):
-        """
-        Test releases_successful in the simplest case
-        """
-        rid = self._create_finished_release()
-        results = orlo.queries.releases_successful().all()
-        ids = [str(u) for u, _ in results]
-        self.assertIn(rid, ids)
-
-    def test_releases_successful_with_platform(self):
-        """
-        Test releases_successful with a platform filter
-        """
-        rid = self._create_finished_release()
-        results = orlo.queries.releases_successful(platform='test_platform').all()
-        ids = [str(u) for u, _ in results]
-        self.assertIn(rid, ids)
-
-    def test_releases_successful_with_platform_excluded(self):
-        """
-        Test releases_successful with a platform filter excluding
-        """
-        rid = self._create_finished_release()
-        results = orlo.queries.releases_successful(platform='bogus_platform').all()
-        self.assertEqual(len(results), 0)
-
-    def test_releases_successful_excludes_failed(self):
-        """
-        Test that releases_successful only returns successful releases by adding a failed one
-        """
-
-        for _ in range(0, 3):
-            # 3 complete, successful releases
-            self._create_finished_release()
-
-        # And a fourth with one incomplete package (should not be present)
-        rid = self._create_release()
-        pid1 = self._create_package(rid)
-        pid2 = self._create_package(rid)
-        # Just complete the last one
-        self._start_package(rid, pid1)
-        self._start_package(rid, pid2)
-        self._stop_package(rid, pid1, success=True)
-        self._stop_package(rid, pid2, success=False)
-        self._stop_release(rid)
-
-        results = orlo.queries.releases_successful().all()
-        ids = [str(u) for u, _ in results]
-
-        self.assertNotIn(rid, ids)
 
     def test_package_list(self):
         """
@@ -148,10 +98,10 @@ class OrloQueryTest(OrloTest):
         """
         Test package_list with a platform filter
         """
-        rid1 = self._create_release(platforms='platformOne')
+        rid1 = self._create_release(platforms=['platformOne'])
         self._create_package(rid1, name='packageOne')
 
-        rid2 = self._create_release(platforms='platformTwo')
+        rid2 = self._create_release(platforms=['platformTwo'])
         self._create_package(rid2, name='packageTwo')
 
         result = orlo.queries.package_list(platform='platformOne').all()
@@ -258,18 +208,18 @@ class OrloQueryTest(OrloTest):
         rid1 = self._create_release(platforms=['foo'])
         pid1 = self._create_package(rid1, name='packageOne', version='1.0.1')
         pid2 = self._create_package(rid1, name='packageTwo', version='2.0.1')
-        self._start_package(rid1, pid1)
-        self._stop_package(rid1, pid1)
-        self._start_package(rid1, pid2)
-        self._stop_package(rid1, pid2)
+        self._start_package(pid1)
+        self._stop_package(pid1)
+        self._start_package(pid2)
+        self._stop_package(pid2)
         sleep(0.1)  # To ensure some time separation
         rid2 = self._create_release(platforms=['foo'])
         pid1 = self._create_package(rid2, name='packageOne', version='1.0.2')
         pid2 = self._create_package(rid2, name='packageTwo', version='2.0.2')
-        self._start_package(rid2, pid1)
-        self._stop_package(rid2, pid1)
-        self._start_package(rid2, pid2)
-        self._stop_package(rid2, pid2, success=False)
+        self._start_package(pid1)
+        self._stop_package(pid1)
+        self._start_package(pid2)
+        self._stop_package(pid2, success=False)
 
         result = orlo.queries.package_versions().all()
         self.assertEqual(len(result), 2)  # Two entries, packageOne/Two
@@ -285,10 +235,119 @@ class OrloQueryTest(OrloTest):
         self._create_finished_release()  # this release should not appear in result
         rid1 = self._create_release(platforms=['foo'])
         pid1 = self._create_package(rid1, name='packageOne', version='1.0.1')
-        self._start_package(rid1, pid1)
-        self._stop_package(rid1, pid1)
+        self._start_package(pid1)
+        self._stop_package(pid1)
 
         result = orlo.queries.package_versions(platform='foo').all()
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 'packageOne')
+
+
+class ReleasesSuccessful(OrloQueryTest):
+    def setUp(self):
+        super(OrloDbTest, self).setUp()
+
+    def test_releases_successful(self):
+        """
+        Test count_releases_successful in the simplest case
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_releases_successful().all()
+        self.assertEqual(1, result[0][0])
+
+    def test_releases_successful_length(self):
+        """
+        Test that the function returns the correct number of items
+        """
+        for _ in range(0, 3):
+            self._create_finished_release()
+        result = orlo.queries.count_releases_successful().all()
+        self.assertEqual(1, len(result))
+
+    def test_releases_successful_with_user(self):
+        """
+        Test count_releases_successful with a user
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_releases_successful(user='testuser').all()
+        self.assertEqual(1, result[0][0])
+
+    def test_releases_successful_with_user_excluded(self):
+        """
+        Test count_releases_successful with a user
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_releases_successful(user='bogus_user').all()
+        self.assertEqual(0, result[0][0])
+
+    def test_releases_successful_with_team(self):
+        """
+        Test count_releases_successful with a team
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_releases_successful(team='test team').all()
+        self.assertEqual(1, result[0][0])
+
+    def test_releases_successful_with_team_excluded(self):
+        """
+        Test count_releases_successful with a team excluded
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_releases_successful(team='bogus team').all()
+        self.assertEqual(0, result[0][0])
+
+    def test_releases_successful_with_package(self):
+        """
+        Test count_releases_successful with a package
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_releases_successful(package='test-package').all()
+        self.assertEqual(1, result[0][0])
+
+    def test_releases_successful_with_package_excluded(self):
+        """
+        Test count_releases_successful with a package
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_releases_successful(package='bogus-package').all()
+        self.assertEqual(0, result[0][0])
+
+    def test_releases_successful_with_platform(self):
+        """
+        Test count_releases_successful with a platform filter
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_releases_successful(platform='test_platform').all()
+        self.assertEqual(1, result[0][0])
+
+    def test_releases_successful_with_platform_excluded(self):
+        """
+        Test count_releases_successful with a platform filter excluding
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_releases_successful(platform='bogus_platform').all()
+        self.assertEqual(0, result[0][0])
+
+    def test_releases_successful_excludes_failed(self):
+        """
+        Test that count_releases_successful only returns successful releases by adding a failed one
+        """
+
+        for _ in range(0, 3):
+            # 3 complete, successful releases
+            self._create_finished_release()
+
+        # And a fourth with one failed package (should not be present)
+        rid = self._create_release()
+        pid1 = self._create_package(rid)
+        pid2 = self._create_package(rid)
+        self._start_package(pid1)
+        self._start_package(pid2)
+        self._stop_package(pid1, success=True)
+        self._stop_package(pid2, success=False)
+        self._stop_release(rid)
+
+        result = orlo.queries.count_releases_successful().all()
+        self.assertEqual(3, result[0][0])
+

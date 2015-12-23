@@ -41,3 +41,21 @@ def stats_user(username=None):
 
     sub_query = db.session.query()
 
+
+@app.route('/stats/team')
+@app.route('/stats/team/<teamname>')
+def stats_team(teamname=None):
+    """
+    Return a dictionary of statistics for teams
+
+    :param string teamname: The team name to report on, otherwise all teams are returned
+    """
+
+
+@app.route('/')
+def stats_platform(platformname=None):
+    """
+    Return a dictionary of statistics for platforms
+
+    :param string platformname:
+    """

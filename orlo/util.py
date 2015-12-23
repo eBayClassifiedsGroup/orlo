@@ -9,6 +9,26 @@ from sqlalchemy.orm import exc
 __author__ = 'alforbes'
 
 
+def append_or_create_platforms(request_platforms):
+    """
+    Create the platforms if they don't exist, and return a list of Platform objects
+
+    :param list request_platforms: List of strings denoting platform names
+    """
+    platforms = []
+    for p in request_platforms:
+        try:
+            query = db.session.query(Platform).filter(Platform.name == p)
+            platform = query.one()
+            app.logger.debug("Found platform {}".format(platform))
+        except exc.NoResultFound:
+            app.logger.info("Creating platform {}".format(p))
+            platform = Platform(p)
+            db.session.add(platform)
+        platforms.append(platform)
+    return platforms
+
+
 def create_release(request):
     """
     Create a Release object from a request
@@ -24,17 +44,7 @@ def create_release(request):
         request_platforms = [request_platforms]
 
     # Get the platforms
-    platforms = []
-    for p in request_platforms:
-        try:
-            query = db.session.query(Platform).filter(Platform.name == p)
-            platform = query.one()
-            app.logger.debug("Found platform {}".format(platform))
-        except exc.NoResultFound:
-            app.logger.info("Creating platform {}".format(p))
-            platform = Platform(p)
-            db.session.add(platform)
-        platforms.append(platform)
+    platforms = append_or_create_platforms(request_platforms)
 
     release = Release(
         # Required attributes

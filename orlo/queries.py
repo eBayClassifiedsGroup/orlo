@@ -98,7 +98,7 @@ def package_versions(platform=None):
     return q
 
 
-def releases_successful(platform=None):
+def count_releases_successful(user=None, package=None, team=None, platform=None):
     """
     Return the number of successful releases
 
@@ -110,14 +110,19 @@ def releases_successful(platform=None):
     :return: Int
     """
 
-    query = db.session.query(Release.id, db.func.count(Package.id)).join(Package)
+    query = db.session.query(db.func.count(Release.id)).join(Package)
 
     if platform:
         query = query.filter(Release.platforms.any(Platform.name == platform))
+    if user:
+        query = query.filter(Release.user == user)
+    if team:
+        query = query.filter(Release.team == team)
+    if package:
+        query = query.filter(Package.name == package)
 
     query = query.filter(~Release.packages.any(
-            db.or_(Package.status != "SUCCESSFUL"))) \
-        .group_by(Release.id)
+            db.or_(Package.status != "SUCCESSFUL")))
 
     return query
 

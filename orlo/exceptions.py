@@ -23,3 +23,7 @@ class InvalidUsage(OrloError):
 
 class DatabaseError(OrloError):
     status_code = 500
+
+
+class OrloWorkflowError(OrloError):
+    status_code = 400

@@ -1,37 +1,18 @@
 from __future__ import print_function, unicode_literals
 from datetime import datetime, timedelta
-import orlo
 import json
 import uuid
-import unittest
-from flask.ext.testing import TestCase
 from orlo.orm import db, Package, Release
 from orlo.config import config
 from time import sleep
+from tests import OrloTest
 
 
-class OrloTest(TestCase):
+class OrloHttpTest(OrloTest):
     """
     Base class for tests which contains the methods required to move
-    releases and packages through the workflow
+    releases and packages through the workflow via HTTP
     """
-
-    def create_app(self):
-        app = orlo.app
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
-        app.config['TESTING'] = True
-        app.config['DEBUG'] = True
-        app.config['TRAP_HTTP_EXCEPTIONS'] = True
-        app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
-
-        return orlo.app
-
-    def setUp(self):
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
 
     def _create_release(self,
                         user='testuser',
@@ -176,7 +157,7 @@ class OrloTest(TestCase):
         return response
 
 
-class PostContractTest(OrloTest):
+class PostContractTest(OrloHttpTest):
     """
     Test the HTTP POST contract
     """
@@ -302,7 +283,7 @@ class PostContractTest(OrloTest):
         self.assertIsInstance(doc, list)
 
 
-class GetContractTest(OrloTest):
+class GetContractTest(OrloHttpTest):
     """
     Test the HTTP GET contract
     """

@@ -5,6 +5,7 @@ from sqlalchemy_utils.types.uuid import UUIDType
 from sqlalchemy_utils.types.arrow import ArrowType
 
 from orlo import app, config
+from orlo.exceptions import OrloWorkflowError
 import pytz
 import uuid
 import arrow
@@ -154,7 +155,10 @@ class Package(db.Model):
 
         :param success: Whether or not the package deploy succeeded
         """
+        if self.stime is None:
+            raise OrloWorkflowError("Can not stop a package which has not been started")
         self.ftime = arrow.now(config.get('main', 'time_zone'))
+
         td = self.ftime - self.stime
         self.duration = td
 

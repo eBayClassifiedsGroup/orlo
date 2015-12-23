@@ -1,11 +1,10 @@
 from __future__ import print_function
-import unittest
-from tests.test_contract import OrloTest
+from tests.test_contract import OrloHttpTest
 
 __author__ = 'alforbes'
 
 
-class OrloStatsUrlTest(OrloTest):
+class OrloInfoUrlTest(OrloHttpTest):
     def test_info_root(self):
         """
         Test /info returns 200
