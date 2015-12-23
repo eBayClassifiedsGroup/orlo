@@ -244,10 +244,6 @@ def get_releases(release_id=None):
     :query string ftime_before: Only include releases that finished before timestamp given
     :query string ftime_after: Only include releases that finished after timestamp given
     :query string team: Filter releases by team
-
-    **Note for time arguments**:
-        The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.
-
     .. versionadded:: 0.0.4
     :query int duration_lt: Only include releases that took less than (int) seconds
     :query int duration_gt: Only include releases that took more than (int) seconds
@@ -258,6 +254,10 @@ def get_releases(release_id=None):
     :query int package_duration_lt: Filter by packages of duration less than
     :query string package_status: Filter by package status. Valid statuses are "NOT_STARTED",
     "IN_PROGRESS", "SUCCESSFUL", "FAILED"
+
+    **Note for time arguments**:
+        The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.
+
     """
 
     if any(field.startswith('package_') for field in request.args.keys()):
