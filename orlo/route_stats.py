@@ -35,11 +35,10 @@ def stats_user(username=None):
 
     if username:
         main_query = main_query.filter(Release.user == username)
+    else:
+        main_query = main_query.filter()
+    raise NotImplementedError
 
-    # Apply the orlo API filters from request.args
-    main_query = apply_filters(main_query, request.args)
-
-    sub_query = db.session.query()
 
 
 @app.route('/stats/team')
@@ -50,6 +49,7 @@ def stats_team(teamname=None):
 
     :param string teamname: The team name to report on, otherwise all teams are returned
     """
+    raise NotImplementedError
 
 
 @app.route('/')
@@ -59,3 +59,4 @@ def stats_platform(platformname=None):
 
     :param string platformname:
     """
+    raise NotImplementedError

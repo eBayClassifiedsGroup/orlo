@@ -3,6 +3,7 @@ import arrow
 import json
 from tests.test_orm import OrloDbTest
 import orlo.queries
+import orlo.exceptions
 from time import sleep
 
 __author__ = 'alforbes'
@@ -10,8 +11,6 @@ __author__ = 'alforbes'
 
 """
 Test the query functions in queries.py
-
-They work for now, but breaking the API urls will cause these to fail which could be confusing.
 """
 
 
@@ -244,94 +243,75 @@ class SummaryTest(OrloQueryTest):
         self.assertEqual(result[0][0], 'packageOne')
 
 
-class ReleasesSuccessful(OrloQueryTest):
-    def setUp(self):
-        super(OrloDbTest, self).setUp()
+class CountReleasesTest(OrloQueryTest):
+    """
+    Parent class for testing the CountReleases function
 
-    def test_releases_successful(self):
+    By subclassing it and overriding ARGS, we can test different combinations of arguments
+    with the same test code.
+
+    INCLUSIVE_ARGS represents a set of arguments that will match the releases created (see
+    the functions in OrloQueryTest for what those are)
+    EXCLUSIVE_ARGS represents a set of arguments that will not match any releases created,
+    i.e. should return a count of zero
+
+    This parent class has tests that should be the same result no matter what the arguments
+    (except the exclusive case which must always a count of zero so we define it here)
+    """
+
+    INCLUSIVE_ARGS = {}  # Args we are testing, result should include these
+    EXCLUSIVE_ARGS = {'user': 'non-existent'}  # Args which result in zero
+
+    def test_count_releases(self):
         """
-        Test count_releases_successful in the simplest case
+        Test count_releases in the simplest case
         """
         self._create_finished_release()
-        result = orlo.queries.count_releases_successful().all()
+        result = orlo.queries.count_releases(**self.INCLUSIVE_ARGS).all()
         self.assertEqual(1, result[0][0])
 
-    def test_releases_successful_length(self):
+    def test_count_releases_length(self):
         """
         Test that the function returns the correct number of items
         """
         for _ in range(0, 3):
             self._create_finished_release()
-        result = orlo.queries.count_releases_successful().all()
+        # Should still only return one result (a count)
+        result = orlo.queries.count_releases(**self.INCLUSIVE_ARGS).all()
         self.assertEqual(1, len(result))
 
-    def test_releases_successful_with_user(self):
+    def test_count_releases_inclusive(self):
         """
-        Test count_releases_successful with a user
+        Test count_releases returns a count of one when filtering on INCLUSIVE_ARGS
         """
         self._create_finished_release()
-        result = orlo.queries.count_releases_successful(user='testuser').all()
+        result = orlo.queries.count_releases(**self.INCLUSIVE_ARGS).all()
         self.assertEqual(1, result[0][0])
 
-    def test_releases_successful_with_user_excluded(self):
+    def test_count_releases_exclusive(self):
         """
-        Test count_releases_successful with a user
+        Test count_releases returns a count of zero when filtering on EXCLUSIVE_ARGS
         """
         self._create_finished_release()
-        result = orlo.queries.count_releases_successful(user='bogus_user').all()
+        result = orlo.queries.count_releases(**self.EXCLUSIVE_ARGS).all()
         self.assertEqual(0, result[0][0])
 
-    def test_releases_successful_with_team(self):
-        """
-        Test count_releases_successful with a team
-        """
-        self._create_finished_release()
-        result = orlo.queries.count_releases_successful(team='test team').all()
-        self.assertEqual(1, result[0][0])
 
-    def test_releases_successful_with_team_excluded(self):
-        """
-        Test count_releases_successful with a team excluded
-        """
-        self._create_finished_release()
-        result = orlo.queries.count_releases_successful(team='bogus team').all()
-        self.assertEqual(0, result[0][0])
+class CountReleasesStatus(CountReleasesTest):
+    """
+    Test count_releases when filtering on status
 
-    def test_releases_successful_with_package(self):
-        """
-        Test count_releases_successful with a package
-        """
-        self._create_finished_release()
-        result = orlo.queries.count_releases_successful(package='test-package').all()
-        self.assertEqual(1, result[0][0])
+    Note that this is a special case, as whether we consider a release successful or failed
+    depends on the _combination_ of the package statuses.
 
-    def test_releases_successful_with_package_excluded(self):
-        """
-        Test count_releases_successful with a package
-        """
-        self._create_finished_release()
-        result = orlo.queries.count_releases_successful(package='bogus-package').all()
-        self.assertEqual(0, result[0][0])
+    Will also run parent class tests with arguments below
+    """
+    INCLUSIVE_ARGS = {'status': 'SUCCESSFUL'}
+    EXCLUSIVE_ARGS = {'status': 'FAILED'}
 
-    def test_releases_successful_with_platform(self):
+    def test_count_releases_excludes_failed(self):
         """
-        Test count_releases_successful with a platform filter
-        """
-        self._create_finished_release()
-        result = orlo.queries.count_releases_successful(platform='test_platform').all()
-        self.assertEqual(1, result[0][0])
-
-    def test_releases_successful_with_platform_excluded(self):
-        """
-        Test count_releases_successful with a platform filter excluding
-        """
-        self._create_finished_release()
-        result = orlo.queries.count_releases_successful(platform='bogus_platform').all()
-        self.assertEqual(0, result[0][0])
-
-    def test_releases_successful_excludes_failed(self):
-        """
-        Test that count_releases_successful only returns successful releases by adding a failed one
+        Test that count_releases only returns successful releases by adding a failed one
         """
 
         for _ in range(0, 3):
@@ -348,6 +328,156 @@ class ReleasesSuccessful(OrloQueryTest):
         self._stop_package(pid2, success=False)
         self._stop_release(rid)
 
-        result = orlo.queries.count_releases_successful().all()
+        result = orlo.queries.count_releases(**self.INCLUSIVE_ARGS).all()
         self.assertEqual(3, result[0][0])
 
+    def test_count_releases_invalid_status(self):
+        """
+        Test that we raise OrloError when proving an invalid status
+
+        As this is an enum it's more useful to raise an error than simply return a zero count
+        """
+        with self.assertRaises(orlo.exceptions.OrloError):
+            query = orlo.queries.count_releases(status='BAD_STATUS_FOOBAR')
+            query.all()
+
+    def test_count_releases_in_progress(self):
+        """
+        Test that we correctly return the number of releases in progress
+        """
+        for _ in range(0, 3):
+            # 3 complete, successful releases
+            self._create_finished_release()
+
+        # And a fourth with the packages still in progress
+        rid = self._create_release()
+        pid1 = self._create_package(rid)
+        pid2 = self._create_package(rid)
+        self._start_package(pid1)
+        self._start_package(pid2)
+
+        result = orlo.queries.count_releases(status='IN_PROGRESS').all()
+        self.assertEqual(1, result[0][0])
+
+
+class CountReleasesUser(CountReleasesTest):
+    """
+    Test count_releases when filtering on user
+    """
+    INCLUSIVE_ARGS = {'user': 'testuser'}
+    EXCLUSIVE_ARGS = {'user': 'bad_foo_user'}
+
+
+class CountReleasesTeam(CountReleasesTest):
+    """
+    Test count_releases when filtering on team
+    """
+    INCLUSIVE_ARGS = {'team': 'test team'}
+    EXCLUSIVE_ARGS = {'team': 'bad team does not exist'}
+
+
+class CountReleasesPackage(CountReleasesTest):
+    """
+    Test count_releases when filtering on package
+    """
+    INCLUSIVE_ARGS = {'package': 'test-package'}
+    EXCLUSIVE_ARGS = {'package': 'non-existent-package'}
+
+
+class CountReleasesPlatform(CountReleasesTest):
+    """
+    Test count_releases when filtering on platform
+    """
+    INCLUSIVE_ARGS = {'platform': 'test_platform'}
+    EXCLUSIVE_ARGS = {'platform': 'non_existent_platform'}
+
+
+class CountPackagesTest(OrloQueryTest):
+    """
+    Parent class for testing the CountPackages function
+
+    By subclassing it and overriding ARGS, we can test different combinations of arguments
+    with the same test code.
+
+    INCLUSIVE_ARGS represents a set of arguments that will match the packages created (see
+    the functions in OrloQueryTest for what those are)
+    EXCLUSIVE_ARGS represents a set of arguments that will not match any packages created,
+    i.e. should return a count of zero
+
+    This parent class has tests that should be the same result no matter what the arguments
+    (except the exclusive case which must always a count of zero so we define it here)
+    """
+
+    INCLUSIVE_ARGS = {}  # Args we are testing, result should include these
+    EXCLUSIVE_ARGS = {'user': 'non-existent'}  # Args which result in zero
+
+    def test_count_packages(self):
+        """
+        Test count_packages in the simplest case
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_packages(**self.INCLUSIVE_ARGS).all()
+        self.assertEqual(1, result[0][0])
+
+    def test_count_packages_length(self):
+        """
+        Test that the function returns the correct number of items
+        """
+        for _ in range(0, 3):
+            self._create_finished_release()
+        # Should still only return one result (a count)
+        result = orlo.queries.count_packages(**self.INCLUSIVE_ARGS).all()
+        self.assertEqual(1, len(result))
+
+    def test_count_packages_inclusive(self):
+        """
+        Test count_packages returns a count of one when filtering on INCLUSIVE_ARGS
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_packages(**self.INCLUSIVE_ARGS).all()
+        self.assertEqual(1, result[0][0])
+
+    def test_count_packages_exclusive(self):
+        """
+        Test count_packages returns a count of zero when filtering on EXCLUSIVE_ARGS
+        """
+        self._create_finished_release()
+        result = orlo.queries.count_packages(**self.EXCLUSIVE_ARGS).all()
+        self.assertEqual(0, result[0][0])
+
+
+class CountPackagesStatus(CountPackagesTest):
+    """
+    Test count_packages when filtering on status
+
+    Note that this is a special case, as whether we consider a release successful or failed
+    depends on the _combination_ of the package statuses.
+
+    Will also run parent class tests with arguments below
+    """
+    INCLUSIVE_ARGS = {'status': 'SUCCESSFUL'}
+    EXCLUSIVE_ARGS = {'status': 'FAILED'}
+
+
+class CountPackagesUser(CountPackagesTest):
+    """
+    Test count_packages when filtering on user
+    """
+    INCLUSIVE_ARGS = {'user': 'testuser'}
+    EXCLUSIVE_ARGS = {'user': 'bad_foo_user'}
+
+
+class CountPackagesTeam(CountPackagesTest):
+    """
+    Test count_packages when filtering on team
+    """
+    INCLUSIVE_ARGS = {'team': 'test team'}
+    EXCLUSIVE_ARGS = {'team': 'bad team does not exist'}
+
+
+class CountPackagesPlatform(CountPackagesTest):
+    """
+    Test count_packages when filtering on platform
+    """
+    INCLUSIVE_ARGS = {'platform': 'test_platform'}
+    EXCLUSIVE_ARGS = {'platform': 'non_existent_platform'}

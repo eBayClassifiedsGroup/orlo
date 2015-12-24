@@ -1,5 +1,6 @@
 from __future__ import print_function
 from orlo.orm import db, Release, Platform, Package, release_platform
+from orlo.exceptions import OrloError
 
 __author__ = 'alforbes'
 
@@ -85,8 +86,7 @@ def package_versions(platform=None):
 
     q = db.session.query(
             Package.name,
-            Package.version,
-            db.func.max(Package.stime).label('last_release'),
+            Package.version, db.func.max(Package.stime).label('last_release'),
         )
     if platform:
         q = q.join(Release).filter(Release.platforms.any(Platform.name == platform))
@@ -98,19 +98,26 @@ def package_versions(platform=None):
     return q
 
 
-def count_releases_successful(user=None, package=None, team=None, platform=None):
+def count_releases(user=None, package=None, team=None, platform=None, status=None):
     """
-    Return the number of successful releases
+    Return the number of releases with the attributes specified
 
-    Note that a "successful" release is defined as a release where all packages are recorded as
-    successful, therefore the query below filters out any releases which contain a package which
-    is not successful.
-
+    :param user: Filter by username
+    :param package:  Filter by package
+    :param team:  Filter by team
+    :param status:  Filter by status
     :param platform: Platform to filter on
-    :return: Int
+    :return: Query
+
+    Note that status is a special field as it is technically a Package attribute.
+    A "successful" or "in progress" release is defined as a release where all packages match the
+    status. Conversely, a "failed" or "not started" release is defined as a release where any
+    package matches.
+
+    Implication of this is that a release can be both "failed" and "in progress".
     """
 
-    query = db.session.query(db.func.count(Release.id)).join(Package)
+    query = db.session.query(db.func.count(Release.id.distinct())).join(Package)
 
     if platform:
         query = query.filter(Release.platforms.any(Platform.name == platform))
@@ -121,8 +128,47 @@ def count_releases_successful(user=None, package=None, team=None, platform=None)
     if package:
         query = query.filter(Package.name == package)
 
-    query = query.filter(~Release.packages.any(
-            db.or_(Package.status != "SUCCESSFUL")))
+    if status:
+        enums = Package.status.property.columns[0].type.enums
+        if status not in enums:
+            raise OrloError("Invalid package status, {} is not in {}".format(
+                status, str(enums)))
+        if status in ["SUCCESSFUL", "NOT_STARTED"]:
+            # ALL packages must match this status for it to apply to the release
+            # Query logic translates to "Releases which do not have any packages which satisfy
+            # the condition 'Package.status != status'". I.E, all match.
+            query = query.filter(
+                    ~Release.packages.any(
+                        Package.status != status
+                    ))
+        elif status in ["FAILED", "IN_PROGRESS"]:
+            # ANY package can match for this status to apply to the release
+            query = query.filter(Release.packages.any(Package.status == status))
+
+    return query
+
+
+def count_packages(user=None, team=None, platform=None, status=None):
+    """
+    Return the number of packages with the attributes specified
+
+    :param user:
+    :param team:
+    :param platform:
+    :param status:
+    :return:
+    """
+
+    query = db.session.query(db.func.count(Package.id.distinct())).join(Release)
+
+    if platform:
+        query = query.filter(Release.platforms.any(Platform.name == platform))
+    if user:
+        query = query.filter(Release.user == user)
+    if team:
+        query = query.filter(Release.team == team)
+    if status:
+        query = query.filter(Package.status == status)
 
     return query
 
