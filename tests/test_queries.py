@@ -392,6 +392,69 @@ class CountReleasesPlatform(CountReleasesTest):
     EXCLUSIVE_ARGS = {'platform': 'non_existent_platform'}
 
 
+class CountReleasesRollback(CountReleasesTest):
+    """
+    Test count_releases when filtering on rollback
+
+    The args are a little counterintuitive here, but True is the exclusive case because the parent
+    class does not create releases with rollback set to True.
+    """
+    INCLUSIVE_ARGS = {'rollback': False}
+    EXCLUSIVE_ARGS = {'rollback': True}
+
+    def test_bad_rollback_param_raises_type_error(self):
+        """
+        Test that we get a TypeError when passing garbage to the rollback param
+        """
+        with self.assertRaises(TypeError):
+            orlo.queries.count_releases(rollback='foo')
+
+    def test_rollback_true(self):
+        """
+        Test that we correctly count rollback releases
+
+        The parent class creates only non-rollback releases
+        """
+        for _ in range(0, 3):
+            # 3 complete, non-rollback releases
+            self._create_finished_release()
+
+        # And a fourth with all packages rollbacks
+        rid = self._create_release()
+        self._create_package(rid, rollback=True)
+        self._create_package(rid, rollback=True)
+
+        result = orlo.queries.count_releases(rollback=True).all()
+        self.assertEqual(1, result[0][0])
+
+    def test_rollback_false(self):
+        """
+        Test that we exclude rollback releases when setting rollback = False
+        """
+        rid = self._create_release()
+        self._create_package(rid, rollback=True)
+        self._create_package(rid, rollback=False)
+
+        result = orlo.queries.count_releases(rollback=False).all()
+        self.assertEqual(0, result[0][0])
+
+    def test_partial_rollback(self):
+        """
+        Test that a release is still counted when some packages are not rollbacks
+        """
+        for _ in range(0, 3):
+            # 3 complete, non-rollback releases
+            self._create_finished_release()
+
+        # And a fourth with one package rollback, one not
+        rid = self._create_release()
+        self._create_package(rid, rollback=True)
+        self._create_package(rid, rollback=False)
+
+        result = orlo.queries.count_releases(rollback=True).all()
+        self.assertEqual(1, result[0][0])
+
+
 class CountPackagesTest(OrloQueryTest):
     """
     Parent class for testing the CountPackages function
@@ -481,3 +544,33 @@ class CountPackagesPlatform(CountPackagesTest):
     """
     INCLUSIVE_ARGS = {'platform': 'test_platform'}
     EXCLUSIVE_ARGS = {'platform': 'non_existent_platform'}
+
+
+class CountPackagesRollback(CountPackagesTest):
+    """
+    Test count_packages when filtering on rollback
+    """
+    INCLUSIVE_ARGS = {'rollback': False}
+    EXCLUSIVE_ARGS = {'rollback': True}
+
+    def test_rollback_true(self):
+        """
+        Test count_packages returns a count of one when filtering on INCLUSIVE_ARGS
+        """
+        rid = self._create_release()
+        self._create_package(rid, rollback=True)
+        self._create_package(rid, rollback=True)
+
+        result = orlo.queries.count_packages(rollback=True).all()
+        self.assertEqual(2, result[0][0])
+
+    def test_rollback_false(self):
+        """
+        Test count_packages returns a count of one when filtering on INCLUSIVE_ARGS
+        """
+        rid = self._create_release()
+        self._create_package(rid, rollback=True)
+        self._create_package(rid, rollback=False)
+
+        result = orlo.queries.count_packages(rollback=False).all()
+        self.assertEqual(1, result[0][0])

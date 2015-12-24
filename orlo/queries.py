@@ -98,21 +98,24 @@ def package_versions(platform=None):
     return q
 
 
-def count_releases(user=None, package=None, team=None, platform=None, status=None):
+def count_releases(user=None, package=None, team=None, platform=None, status=None, rollback=None):
     """
     Return the number of releases with the attributes specified
 
-    :param user: Filter by username
-    :param package:  Filter by package
-    :param team:  Filter by team
-    :param status:  Filter by status
-    :param platform: Platform to filter on
+    :param string user: Filter by username
+    :param string package:  Filter by package
+    :param string team:  Filter by team
+    :param string status:  Filter by status
+    :param string platform: Platform to filter on
+    :param boolean rollback: Filter on whether or not the release contains a rollback
     :return: Query
 
-    Note that status is a special field as it is technically a Package attribute.
+    Note that rollback and status are special fields as they are Package attributes.
     A "successful" or "in progress" release is defined as a release where all packages match the
     status. Conversely, a "failed" or "not started" release is defined as a release where any
     package matches.
+
+    For rollbacks, if any package is a rollback, the release is included, otherwise it is not.
 
     Implication of this is that a release can be both "failed" and "in progress".
     """
@@ -127,6 +130,21 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
         query = query.filter(Release.team == team)
     if package:
         query = query.filter(Package.name == package)
+
+    if rollback is not None:
+        if rollback is True:
+            # Only count release which have a rollback package
+            query = query.filter(
+                Release.packages.any(Package.rollback == True)
+            )
+        elif rollback is False:
+            # Only count releases which do not have any rollback packages
+            query = query.filter(
+                ~Release.packages.any(Package.rollback == True)
+            )
+        else:  # What the hell did you pass?
+            raise TypeError("Bad rollback parameter: '{}', type {}. Boolean expected.".format(
+                    rollback, type(rollback)))
 
     if status:
         enums = Package.status.property.columns[0].type.enums
@@ -148,15 +166,16 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
     return query
 
 
-def count_packages(user=None, team=None, platform=None, status=None):
+def count_packages(user=None, team=None, platform=None, status=None, rollback=None):
     """
     Return the number of packages with the attributes specified
 
-    :param user:
-    :param team:
-    :param platform:
-    :param status:
-    :return:
+    :param string user:
+    :param string team:
+    :param string platform:
+    :param string status:
+    :param boolean rollback:
+    :return: Query
     """
 
     query = db.session.query(db.func.count(Package.id.distinct())).join(Release)
@@ -169,6 +188,8 @@ def count_packages(user=None, team=None, platform=None, status=None):
         query = query.filter(Release.team == team)
     if status:
         query = query.filter(Package.status == status)
+    if rollback is not None:
+        query = query.filter(Package.rollback == rollback)
 
     return query
 
