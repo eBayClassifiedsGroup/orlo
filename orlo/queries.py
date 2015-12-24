@@ -87,12 +87,12 @@ def package_versions(platform=None):
     q = db.session.query(
             Package.name,
             Package.version, db.func.max(Package.stime).label('last_release'),
-        )
+    )
     if platform:
         q = q.join(Release).filter(Release.platforms.any(Platform.name == platform))
 
-    q = q\
-        .filter(Package.status == 'SUCCESSFUL')\
+    q = q \
+        .filter(Package.status == 'SUCCESSFUL') \
         .group_by(Package.name)
 
     return q
@@ -106,16 +106,19 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
     :param string package:  Filter by package
     :param string team:  Filter by team
     :param string status:  Filter by status
-    :param string platform: Platform to filter on
+    :param string platform: Filter by platform
     :param boolean rollback: Filter on whether or not the release contains a rollback
     :return: Query
 
-    Note that rollback and status are special fields as they are Package attributes.
+    Note that rollback and status are special fields when applied to a release, as they are
+    Package attributes.
+
     A "successful" or "in progress" release is defined as a release where all packages match the
     status. Conversely, a "failed" or "not started" release is defined as a release where any
     package matches.
 
-    For rollbacks, if any package is a rollback, the release is included, otherwise it is not.
+    For rollbacks, if any package is a rollback the release is included, otherwise if all
+    packages are not rollbacks the release obviously isn't either.
 
     Implication of this is that a release can be both "failed" and "in progress".
     """
@@ -133,14 +136,14 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
 
     if rollback is not None:
         if rollback is True:
-            # Only count release which have a rollback package
+            # Only count releases which have a rollback package
             query = query.filter(
-                Release.packages.any(Package.rollback == True)
+                    Release.packages.any(Package.rollback == True)
             )
         elif rollback is False:
             # Only count releases which do not have any rollback packages
             query = query.filter(
-                ~Release.packages.any(Package.rollback == True)
+                    ~Release.packages.any(Package.rollback == True)
             )
         else:  # What the hell did you pass?
             raise TypeError("Bad rollback parameter: '{}', type {}. Boolean expected.".format(
@@ -150,14 +153,14 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
         enums = Package.status.property.columns[0].type.enums
         if status not in enums:
             raise OrloError("Invalid package status, {} is not in {}".format(
-                status, str(enums)))
+                    status, str(enums)))
         if status in ["SUCCESSFUL", "NOT_STARTED"]:
             # ALL packages must match this status for it to apply to the release
             # Query logic translates to "Releases which do not have any packages which satisfy
             # the condition 'Package.status != status'". I.E, all match.
             query = query.filter(
                     ~Release.packages.any(
-                        Package.status != status
+                            Package.status != status
                     ))
         elif status in ["FAILED", "IN_PROGRESS"]:
             # ANY package can match for this status to apply to the release
