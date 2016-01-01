@@ -87,5 +87,7 @@ Vagrant.configure(2) do |config|
     sudo python /vagrant/setup.py install
 
     python /vagrant/create_db.py
+    sudo pip install -r /vagrant/requirements.txt
+    sudo pip install pytest Flask-Testing
   SHELL
 end
