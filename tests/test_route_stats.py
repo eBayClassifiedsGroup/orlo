@@ -63,6 +63,17 @@ class StatsTest(OrloDbTest):
             self.assertIn('total_successful', v['releases'])
             self.assertIn('total_failed', v['releases'])
 
+    def test_with_invalid_stime(self):
+        """
+        Test that an invalid start time is handled gracefully
+        """
+        if self.ENDPOINT == '/stats':
+            raise unittest.SkipTest('Not valid test for /stats url')
+
+        response = self.client.get(self.ENDPOINT + '?stime=foo')
+        self.assert400(response)
+        self.assertIn('message', response.json)
+
 
 class UserStatsTest(StatsTest):
     ENDPOINT = '/stats/user'

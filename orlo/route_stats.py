@@ -2,6 +2,7 @@ from __future__ import print_function
 import arrow
 from flask import request, jsonify
 from orlo import app
+from orlo.exceptions import InvalidUsage
 import orlo.queries as queries
 
 __author__ = 'alforbes'
@@ -85,10 +86,13 @@ def stats_user(username=None):
     s_ftime = request.args.get('ftime')
 
     stime, ftime = None, None
-    if s_stime:
-        stime = arrow.get(s_stime)
-    if s_ftime:
-        ftime = arrow.get(s_ftime)
+    try:
+        if s_stime:
+            stime = arrow.get(s_stime)
+        if s_ftime:
+            ftime = arrow.get(s_ftime)
+    except RuntimeError:  # super-class to arrows ParserError, which is not importable
+        raise InvalidUsage("A badly formatted datetime string was given")
 
     if username:
         user_list = [username]
@@ -119,10 +123,13 @@ def stats_team(team=None):
     s_ftime = request.args.get('ftime')
 
     stime, ftime = None, None
-    if s_stime:
-        stime = arrow.get(s_stime)
-    if s_ftime:
-        ftime = arrow.get(s_ftime)
+    try:
+        if s_stime:
+            stime = arrow.get(s_stime)
+        if s_ftime:
+            ftime = arrow.get(s_ftime)
+    except RuntimeError:  # super-class to arrows ParserError, which is not importable
+        raise InvalidUsage("A badly formatted datetime string was given")
 
     if team:
         team_list = [team]
@@ -152,11 +159,14 @@ def stats_platform(platform=None):
     s_stime = request.args.get('stime')
     s_ftime = request.args.get('ftime')
 
-    stime, ftime = None, None
-    if s_stime:
-        stime = arrow.get(s_stime)
-    if s_ftime:
-        ftime = arrow.get(s_ftime)
+    try:
+        stime, ftime = None, None
+        if s_stime:
+            stime = arrow.get(s_stime)
+        if s_ftime:
+            ftime = arrow.get(s_ftime)
+    except RuntimeError:  # super-class to arrows ParserError, which is not importable
+        raise InvalidUsage("A badly formatted datetime string was given")
 
     if platform:
         platform_list = [platform]
@@ -187,10 +197,13 @@ def stats_package(package=None):
     s_ftime = request.args.get('ftime')
 
     stime, ftime = None, None
-    if s_stime:
-        stime = arrow.get(s_stime)
-    if s_ftime:
-        ftime = arrow.get(s_ftime)
+    try:
+        if s_stime:
+            stime = arrow.get(s_stime)
+        if s_ftime:
+            ftime = arrow.get(s_ftime)
+    except RuntimeError:  # super-class to arrows ParserError, which is not importable
+        raise InvalidUsage("A badly formatted datetime string was given")
 
     if package:
         package_list = [package]
