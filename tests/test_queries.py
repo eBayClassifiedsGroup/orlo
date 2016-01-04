@@ -45,6 +45,20 @@ class ListTest(OrloQueryTest):
         self.assertIn('userOne', users)
         self.assertNotIn('userTwo', users)
 
+    def test_user_list_with_duplicates(self):
+        """
+        Test that user_list does returns distinct user names
+        """
+        self._create_release(user='userOne')
+        self._create_release(user='userOne')
+        self._create_release(user='userTwo')
+
+        result = orlo.queries.user_list().all()
+        self.assertEqual(len(result), 2)
+        users = [r[0] for r in result]
+        self.assertIn('userOne', users)
+        self.assertIn('userTwo', users)
+
     def test_package_list(self):
         """
         Test that package_list returns a list of all packages released

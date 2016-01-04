@@ -31,45 +31,33 @@ class StatsTest(OrloDbTest):
         """
         Test the result includes a 'normal' field
         """
-        if self.ENDPOINT == '/stats':
-            raise unittest.SkipTest('Not valid test for /stats url')
-
         response = self.client.get(self.ENDPOINT)
         for k, v in response.json.items():
-            self.assertIn('normal_successful', v['releases'])
-            self.assertIn('normal_failed', v['releases'])
+            self.assertIn('successful', v['releases']['normal'])
+            self.assertIn('failed', v['releases']['normal'])
 
     def test_result_includes_rollbacks(self):
         """
         Test the result includes a 'rollback' field
         """
-        if self.ENDPOINT == '/stats':
-            raise unittest.SkipTest('Not valid test for /stats url')
-
         response = self.client.get(self.ENDPOINT)
         for k, v in response.json.items():
-            self.assertIn('rollback_successful', v['releases'])
-            self.assertIn('rollback_failed', v['releases'])
+            self.assertIn('successful', v['releases']['rollback'])
+            self.assertIn('failed', v['releases']['rollback'])
 
     def test_result_includes_totals(self):
         """
         Test the result includes a 'successful' field
         """
-        if self.ENDPOINT == '/stats':
-            raise unittest.SkipTest('Not valid test for /stats url')
-
         response = self.client.get(self.ENDPOINT)
         for k, v in response.json.items():
-            self.assertIn('total_successful', v['releases'])
-            self.assertIn('total_failed', v['releases'])
+            self.assertIn('successful', v['releases']['total'])
+            self.assertIn('failed', v['releases']['total'])
 
     def test_with_invalid_stime(self):
         """
         Test that an invalid start time is handled gracefully
         """
-        if self.ENDPOINT == '/stats':
-            raise unittest.SkipTest('Not valid test for /stats url')
-
         response = self.client.get(self.ENDPOINT + '?stime=foo')
         self.assert400(response)
         self.assertIn('message', response.json)

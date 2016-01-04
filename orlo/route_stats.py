@@ -13,43 +13,40 @@ broken down a different way
 """
 
 
-@app.route('/stats')
-def stats():
-    msg = 'This is the orlo stats endpoint'
-    return jsonify(message=msg), 200
-
-
-def build_stats_dict(field, value_list, stime=None, ftime=None):
+def build_stats_dict(field, value_list, platform=None, stime=None, ftime=None):
     """
     Build a dictionary of our stats
 
     :param field: The field we are build stats for, i.e. user, package, team or platform
     :param value_list: The list of values for the field
+    :param platform: Filter by platform
     :param datetime ftime: Passed to count_releases
     :param datetime stime: Passed to count_releases
     :return:
     """
 
+    app.logger.debug("Entered build_stats_dict")
+
     d_stats = {}
     count_releases_args = {
-        field: '',  # changes per iteration below
         'stime': stime,
         'ftime': ftime,
+        'platform': platform,  # note, platform can also be the field in the loop below
     }
 
     for field_value in value_list:
-        count_releases_args[
-            field] = field_value  # e.g. we need to pass user=username to count_releases
+        app.logger.debug("Getting stats for {} {}".format(field, field_value))
+
+        count_releases_args[field] = field_value  # e.g. need to pass user=username
 
         c_total_successful = queries.count_releases(
                 status='SUCCESSFUL', **count_releases_args).all()[0][0]
         c_total_failed = queries.count_releases(
-                status='FAILED').all()[0][0]
+                status='FAILED', **count_releases_args).all()[0][0]
         c_normal_successful = queries.count_releases(
                 rollback=False, status='SUCCESSFUL', **count_releases_args).all()[0][0]
         c_normal_failed = queries.count_releases(
-                rollback=False,
-                status='FAILED').all()[0][0]
+                rollback=False, status='FAILED', **count_releases_args).all()[0][0]
         c_rollback_successful = queries.count_releases(
                 rollback=True, status='SUCCESSFUL', **count_releases_args).all()[0][0]
         c_rollback_failed = queries.count_releases(
@@ -57,16 +54,102 @@ def build_stats_dict(field, value_list, stime=None, ftime=None):
 
         d_stats[field_value] = {
             'releases': {
-                'total_successful': c_total_successful,
-                'total_failed': c_total_failed,
-                'normal_successful': c_normal_successful,
-                'normal_failed': c_normal_failed,
-                'rollback_successful': c_rollback_successful,
-                'rollback_failed': c_rollback_failed,
+                'normal': {
+                    'successful': c_normal_successful,
+                    'failed': c_normal_failed,
+                },
+                'rollback': {
+                    'successful': c_rollback_successful,
+                    'failed': c_rollback_failed,
+                },
+                'total': {
+                    'successful': c_total_successful,
+                    'failed': c_total_failed,
+                },
             }
         }
 
     return d_stats
+
+
+def build_all_stats_dict(stime=None, ftime=None):
+    """
+    Build a dictionary of our stats
+
+    :param datetime ftime: Passed to count_releases
+    :param datetime stime: Passed to count_releases
+
+    :return:
+    """
+
+    app.logger.debug("Entered build_all_stats_dict")
+
+    count_releases_args = {
+        'stime': stime,
+        'ftime': ftime,
+    }
+
+    app.logger.debug("Getting global stats")
+
+    c_total_successful = queries.count_releases(
+            status='SUCCESSFUL', **count_releases_args).all()[0][0]
+    c_total_failed = queries.count_releases(
+            status='FAILED', **count_releases_args).all()[0][0]
+    c_normal_successful = queries.count_releases(
+            rollback=False, status='SUCCESSFUL', **count_releases_args).all()[0][0]
+    c_normal_failed = queries.count_releases(
+            rollback=False, status='FAILED', **count_releases_args).all()[0][0]
+    c_rollback_successful = queries.count_releases(
+            rollback=True, status='SUCCESSFUL', **count_releases_args).all()[0][0]
+    c_rollback_failed = queries.count_releases(
+            rollback=True, status='FAILED', **count_releases_args).all()[0][0]
+
+    d_stats = {
+        'global': {
+            'releases': {
+                'normal': {
+                    'successful': c_normal_successful,
+                    'failed': c_normal_failed,
+                },
+                'rollback': {
+                    'successful': c_rollback_successful,
+                    'failed': c_rollback_failed,
+                },
+                'total': {
+                    'successful': c_total_successful,
+                    'failed': c_total_failed,
+                },
+            }
+        }
+    }
+
+    return d_stats
+
+
+@app.route('/stats')
+def stats():
+    """
+    Return dictionary of global stats
+
+    :query string stime: The lower bound of the time period to filter on
+    :query string ftime: The upper bound of the time period to filter on
+    """
+    s_stime = request.args.get('stime')
+    s_ftime = request.args.get('ftime')
+
+    stime, ftime = None, None
+    try:
+        if s_stime:
+            stime = arrow.get(s_stime)
+        if s_ftime:
+            ftime = arrow.get(s_ftime)
+    except RuntimeError:  # super-class to arrows ParserError, which is not importable
+        raise InvalidUsage("A badly formatted datetime string was given")
+
+    app.logger.debug("Building all_stats dict")
+    all_stats = build_all_stats_dict(stime=stime, ftime=ftime)
+
+    return jsonify(all_stats)
 
 
 @app.route('/stats/user')
@@ -97,10 +180,12 @@ def stats_user(username=None):
     if username:
         user_list = [username]
     else:
+        app.logger.debug("Fetching user list")
         user_result = queries.user_list().all()
         # Flatten query result
         user_list = [u[0] for u in user_result]
 
+    app.logger.debug("Building stats dict")
     user_stats = build_stats_dict('user', user_list, stime=stime, ftime=ftime)
 
     return jsonify(user_stats)
@@ -149,7 +234,7 @@ def stats_platform(platform=None):
     """
     Return a dictionary of statistics for a platform name (optional), or all platforms
 
-    :param string platform: The platform name to provide p_stats for
+    :param string platform: The platform name to provide stats for
     :query string stime: The lower bound of the time period to filter on
     :query string ftime: The upper bound of the time period to filter on
 

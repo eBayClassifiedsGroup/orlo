@@ -1,4 +1,5 @@
 from __future__ import print_function
+from orlo import app
 from orlo.orm import db, Release, Platform, Package, release_platform
 from orlo.exceptions import OrloError
 
@@ -30,7 +31,7 @@ def user_list(platform=None):
 
     :param platform: Platform to filter on
     """
-    query = db.session.query(Release.user)
+    query = db.session.query(Release.user.distinct())
     if platform:
         query = query.filter(Release.platforms.any(Platform.name == platform))
 
@@ -58,7 +59,7 @@ def team_list(platform=None):
 
     :param platform: Platform to filter on
     """
-    query = db.session.query(Release.team)
+    query = db.session.query(Release.team.distinct())
     if platform:
         query = query.filter(Release.platforms.any(Platform.name == platform))
 
@@ -153,6 +154,12 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
 
     Implication of this is that a release can be both "failed" and "in progress".
     """
+
+    args = {
+        'user': user, 'package': package, 'team': team, 'platform': platform, 'status': status,
+        'rollback': rollback, 'stime': stime, 'ftime': ftime,
+    }
+    app.logger.debug("Entered count_releases with args: {}".format(str(args)))
 
     query = db.session.query(db.func.count(Release.id.distinct())).join(Package)
 

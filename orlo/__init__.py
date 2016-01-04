@@ -7,9 +7,13 @@ from orlo._version import __version__
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = config.get('db', 'uri')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 if config.getboolean('main', 'propagate_exceptions'):
     app.config['PROPAGATE_EXCEPTIONS'] = True
+
+if config.getboolean('db', 'echo_queries'):
+    app.config['SQLALCHEMY_ECHO'] = True
 
 if config.getboolean('logging', 'debug'):
     app.debug = True
@@ -22,7 +26,7 @@ logfile = config.get('logging', 'file')
 if logfile != 'disabled':
     handler = RotatingFileHandler(
         logfile,
-        maxBytes=10000,
+        maxBytes=1048576,
         backupCount=1,
     )
     app.logger.addHandler(handler)

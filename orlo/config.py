@@ -12,6 +12,7 @@ config.set('main', 'strict_slashes', 'false')
 
 config.add_section('db')
 config.set('db', 'uri', 'sqlite://')
+config.set('db', 'echo_queries', 'false')
 
 config.add_section('logging')
 config.set('logging', 'debug', 'false')
