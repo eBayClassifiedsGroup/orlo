@@ -37,6 +37,34 @@ def user_list(platform=None):
     return query
 
 
+def team_summary(platform=None):
+    """
+    Find all teams that have performed releases and how many
+
+    :param platform: Platform to filter on
+    :return: Query result [('team', release_count)]
+    """
+
+    query = db.session.query(Release.team, db.func.count(Release.id))
+    if platform:
+        query = query.filter(Release.platforms.any(Platform.name == platform))
+
+    return query.group_by(Release.team)
+
+
+def team_list(platform=None):
+    """
+    Find all teams that have performed releases
+
+    :param platform: Platform to filter on
+    """
+    query = db.session.query(Release.team)
+    if platform:
+        query = query.filter(Release.platforms.any(Platform.name == platform))
+
+    return query
+
+
 def package_summary(platform=None, stime=None, ftime=None):
     """
     Summary of releases by package
@@ -98,7 +126,8 @@ def package_versions(platform=None):
     return q
 
 
-def count_releases(user=None, package=None, team=None, platform=None, status=None, rollback=None):
+def count_releases(user=None, package=None, team=None, platform=None, status=None,
+                   rollback=None, stime=None, ftime=None):
     """
     Return the number of releases with the attributes specified
 
@@ -107,6 +136,8 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
     :param string team:  Filter by team
     :param string status:  Filter by status
     :param string platform: Filter by platform
+    :param string stime: Filter by releases that started after
+    :param string ftime: Filter by releases that started before
     :param boolean rollback: Filter on whether or not the release contains a rollback
     :return: Query
 
@@ -133,6 +164,10 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
         query = query.filter(Release.team == team)
     if package:
         query = query.filter(Package.name == package)
+    if stime:
+        query = query.filter(Release.stime >= stime)
+    if ftime:
+        query = query.filter(Release.stime <= ftime)
 
     if rollback is not None:
         if rollback is True:
@@ -208,5 +243,18 @@ def platform_summary():
             Platform.name, db.func.count(Platform.id)) \
         .join(release_platform) \
         .group_by(Platform.name)
+
+    return query
+
+
+def platform_list():
+    """
+    Return a summary of the known platforms
+
+    :return: Query result [('platform'), release_count]
+    """
+
+    query = db.session.query(Platform.name.distinct()) \
+        .join(release_platform)
 
     return query

@@ -18,6 +18,77 @@ class OrloQueryTest(OrloDbTest):
     pass
 
 
+class ListTest(OrloQueryTest):
+    def test_user_list(self):
+        """
+        Test that user_list returns a list of all users that have released
+        """
+        self._create_release(user='userOne')
+        self._create_release(user='userTwo')
+
+        result = orlo.queries.user_list().all()
+        self.assertEqual(len(result), 2)
+        users = [r[0] for r in result]
+        self.assertIn('userOne', users)
+        self.assertIn('userTwo', users)
+
+    def test_user_list_with_platform(self):
+        """
+        Test user_list with a platform filter
+        """
+        self._create_release(user='userOne', platforms=['platformOne'])
+        self._create_release(user='userTwo', platforms=['platformTwo'])
+
+        result = orlo.queries.user_list(platform='platformOne').all()
+        self.assertEqual(len(result), 1)
+        users = [r[0] for r in result]
+        self.assertIn('userOne', users)
+        self.assertNotIn('userTwo', users)
+
+    def test_package_list(self):
+        """
+        Test that package_list returns a list of all packages released
+        """
+        for _ in range(0, 3):
+            rid = self._create_release()
+            self._create_package(rid, name='packageOne')
+            self._create_package(rid, name='packageTwo')
+
+        result = orlo.queries.package_list().all()
+        self.assertEqual(len(result), 2)
+        packages = [r[0] for r in result]
+        self.assertIn('packageOne', packages)
+        self.assertIn('packageTwo', packages)
+
+    def test_package_list_with_platform(self):
+        """
+        Test package_list with a platform filter
+        """
+        rid1 = self._create_release(platforms=['platformOne'])
+        self._create_package(rid1, name='packageOne')
+
+        rid2 = self._create_release(platforms=['platformTwo'])
+        self._create_package(rid2, name='packageTwo')
+
+        result = orlo.queries.package_list(platform='platformOne').all()
+        self.assertEqual(len(result), 1)
+        packages = [r[0] for r in result]
+        self.assertIn('packageOne', packages)
+        self.assertNotIn('packageTwo', packages)
+
+    def test_platform_list(self):
+        """
+        Test that platform_list returns a list of all platforms that have been released to
+        """
+        self._create_release(platforms=['platformOne', 'platformTwo'])
+        result = orlo.queries.platform_list().all()
+
+        self.assertEqual(len(result), 2)
+        platforms = [r[0] for r in result]
+        self.assertIn('platformOne', platforms)
+        self.assertIn('platformTwo', platforms)
+
+
 class SummaryTest(OrloQueryTest):
     def test_user_summary(self):
         """
@@ -77,37 +148,6 @@ class SummaryTest(OrloQueryTest):
                 self.assertEqual(count, 2)
             else:
                 raise Exception('Unexpected platform: {}'.format(str(platform)))
-
-    def test_package_list(self):
-        """
-        Test that package_list returns a list of all packages released
-        """
-        for _ in range(0, 3):
-            rid = self._create_release()
-            self._create_package(rid, name='packageOne')
-            self._create_package(rid, name='packageTwo')
-
-        result = orlo.queries.package_list().all()
-        self.assertEqual(len(result), 2)
-        packages = [r[0] for r in result]
-        self.assertIn('packageOne', packages)
-        self.assertIn('packageTwo', packages)
-
-    def test_package_list_with_platform(self):
-        """
-        Test package_list with a platform filter
-        """
-        rid1 = self._create_release(platforms=['platformOne'])
-        self._create_package(rid1, name='packageOne')
-
-        rid2 = self._create_release(platforms=['platformTwo'])
-        self._create_package(rid2, name='packageTwo')
-
-        result = orlo.queries.package_list(platform='platformOne').all()
-        self.assertEqual(len(result), 1)
-        packages = [r[0] for r in result]
-        self.assertIn('packageOne', packages)
-        self.assertNotIn('packageTwo', packages)
 
     def test_package_summary(self):
         """
