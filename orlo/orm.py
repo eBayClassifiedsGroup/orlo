@@ -65,6 +65,7 @@ class Release(db.Model):
     duration = db.Column(db.Interval)
     user = db.Column(db.String, nullable=False)
     team = db.Column(db.String)
+    packages = db.relationship("Package", backref=db.backref("release"))
 
     def __init__(self, platforms, user, team=None, references=None):
         # platforms and references are stored as strings in DB but really are lists
@@ -131,8 +132,6 @@ class Package(db.Model):
     diff_url = db.Column(db.String)
     rollback = db.Column(db.Boolean(create_constraint=True))
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
-    release = db.relationship("Release",
-                              backref=db.backref('packages', order_by=stime))
 
     def __init__(self, release_id, name, version, diff_url=None, rollback=False):
         self.id = uuid.uuid4()
