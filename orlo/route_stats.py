@@ -2,17 +2,70 @@ from __future__ import print_function
 import arrow
 from flask import request, jsonify
 from orlo import app
-from orlo.orm import db, Release, Package, Platform, release_platform
-from orlo.util import apply_filters
 import orlo.queries as queries
 
 __author__ = 'alforbes'
+
+"""
+#TODO The stats_ functions in this file are very similar, which means they should probably be
+broken down a different way
+"""
 
 
 @app.route('/stats')
 def stats():
     msg = 'This is the orlo stats endpoint'
     return jsonify(message=msg), 200
+
+
+def build_stats_dict(field, value_list, stime=None, ftime=None):
+    """
+    Build a dictionary of our stats
+
+    :param field: The field we are build stats for, i.e. user, package, team or platform
+    :param value_list: The list of values for the field
+    :param datetime ftime: Passed to count_releases
+    :param datetime stime: Passed to count_releases
+    :return:
+    """
+
+    d_stats = {}
+    count_releases_args = {
+        field: '',  # changes per iteration below
+        'stime': stime,
+        'ftime': ftime,
+    }
+
+    for field_value in value_list:
+        count_releases_args[
+            field] = field_value  # e.g. we need to pass user=username to count_releases
+
+        c_total_successful = queries.count_releases(
+                status='SUCCESSFUL', **count_releases_args).all()[0][0]
+        c_total_failed = queries.count_releases(
+                status='FAILED').all()[0][0]
+        c_normal_successful = queries.count_releases(
+                rollback=False, status='SUCCESSFUL', **count_releases_args).all()[0][0]
+        c_normal_failed = queries.count_releases(
+                rollback=False,
+                status='FAILED').all()[0][0]
+        c_rollback_successful = queries.count_releases(
+                rollback=True, status='SUCCESSFUL', **count_releases_args).all()[0][0]
+        c_rollback_failed = queries.count_releases(
+                rollback=True, status='FAILED', **count_releases_args).all()[0][0]
+
+        d_stats[field_value] = {
+            'releases': {
+                'total_successful': c_total_successful,
+                'total_failed': c_total_failed,
+                'normal_successful': c_normal_successful,
+                'normal_failed': c_normal_failed,
+                'rollback_successful': c_rollback_successful,
+                'rollback_failed': c_rollback_failed,
+            }
+        }
+
+    return d_stats
 
 
 @app.route('/stats/user')
@@ -44,37 +97,9 @@ def stats_user(username=None):
         # Flatten query result
         user_list = [u[0] for u in user_result]
 
-    u_stats = {}
-    for user in user_list:
-        c_total_successful = queries.count_releases(
-                user=user, stime=stime, ftime=ftime, status='SUCCESSFUL').all()[0][0]
-        c_total_failed = queries.count_releases(
-                user=user, stime=stime, ftime=ftime, status='FAILED').all()[0][0]
-        c_normal_successful = queries.count_releases(
-                user=user, stime=stime, ftime=ftime, rollback=False,
-                status='SUCCESSFUL').all()[0][0]
-        c_normal_failed = queries.count_releases(
-                user=user, stime=stime, ftime=ftime, rollback=False,
-                status='FAILED').all()[0][0]
-        c_rollback_successful = queries.count_releases(
-                user=user, stime=stime, ftime=ftime, rollback=True,
-                status='SUCCESSFUL').all()[0][0]
-        c_rollback_failed = queries.count_releases(
-                user=user, stime=stime, ftime=ftime, rollback=True,
-                status='FAILED').all()[0][0]
+    user_stats = build_stats_dict('user', user_list, stime=stime, ftime=ftime)
 
-        u_stats[user] = {
-            'releases': {
-                'total_successful': c_total_successful,
-                'total_failed': c_total_failed,
-                'normal_successful': c_normal_successful,
-                'normal_failed': c_normal_failed,
-                'rollback_successful': c_rollback_successful,
-                'rollback_failed': c_rollback_failed,
-            }
-        }
-
-    return jsonify(u_stats)
+    return jsonify(user_stats)
 
 
 @app.route('/stats/team')
@@ -106,44 +131,16 @@ def stats_team(team=None):
         # Flatten query result
         team_list = [u[0] for u in team_result]
 
-    t_stats = {}
-    for team in team_list:
-        c_total_successful = queries.count_releases(
-                team=team, stime=stime, ftime=ftime, status='SUCCESSFUL').all()[0][0]
-        c_total_failed = queries.count_releases(
-                team=team, stime=stime, ftime=ftime, status='FAILED').all()[0][0]
-        c_normal_successful = queries.count_releases(
-                team=team, stime=stime, ftime=ftime, rollback=False,
-                status='SUCCESSFUL').all()[0][0]
-        c_normal_failed = queries.count_releases(
-                team=team, stime=stime, ftime=ftime, rollback=False,
-                status='FAILED').all()[0][0]
-        c_rollback_successful = queries.count_releases(
-                team=team, stime=stime, ftime=ftime, rollback=True,
-                status='SUCCESSFUL').all()[0][0]
-        c_rollback_failed = queries.count_releases(
-                team=team, stime=stime, ftime=ftime, rollback=True,
-                status='FAILED').all()[0][0]
+    team_stats = build_stats_dict('team', team_list, stime=stime, ftime=ftime)
 
-        t_stats[team] = {
-            'releases': {
-                'total_successful': c_total_successful,
-                'total_failed': c_total_failed,
-                'normal_successful': c_normal_successful,
-                'normal_failed': c_normal_failed,
-                'rollback_successful': c_rollback_successful,
-                'rollback_failed': c_rollback_failed,
-            }
-        }
-
-    return jsonify(t_stats)
+    return jsonify(team_stats)
 
 
 @app.route('/stats/platform')
 @app.route('/stats/platform/<platform>')
 def stats_platform(platform=None):
     """
-    Return a dictionary of statistics for a platformname (optional), or all platforms
+    Return a dictionary of statistics for a platform name (optional), or all platforms
 
     :param string platform: The platform name to provide p_stats for
     :query string stime: The lower bound of the time period to filter on
@@ -168,34 +165,40 @@ def stats_platform(platform=None):
         # Flatten query result
         platform_list = [u[0] for u in platform_result]
 
-    p_stats = {}
-    for platform in platform_list:
-        c_total_successful = queries.count_releases(
-                platform=platform, stime=stime, ftime=ftime, status='SUCCESSFUL').all()[0][0]
-        c_total_failed = queries.count_releases(
-                platform=platform, stime=stime, ftime=ftime, status='FAILED').all()[0][0]
-        c_normal_successful = queries.count_releases(
-                platform=platform, stime=stime, ftime=ftime, rollback=False,
-                status='SUCCESSFUL').all()[0][0]
-        c_normal_failed = queries.count_releases(
-                platform=platform, stime=stime, ftime=ftime, rollback=False,
-                status='FAILED').all()[0][0]
-        c_rollback_successful = queries.count_releases(
-                platform=platform, stime=stime, ftime=ftime, rollback=True,
-                status='SUCCESSFUL').all()[0][0]
-        c_rollback_failed = queries.count_releases(
-                platform=platform, stime=stime, ftime=ftime, rollback=True,
-                status='FAILED').all()[0][0]
+    platform_stats = build_stats_dict('platform', platform_list, stime=stime, ftime=ftime)
 
-        p_stats[platform] = {
-            'releases': {
-                'total_successful': c_total_successful,
-                'total_failed': c_total_failed,
-                'normal_successful': c_normal_successful,
-                'normal_failed': c_normal_failed,
-                'rollback_successful': c_rollback_successful,
-                'rollback_failed': c_rollback_failed,
-            }
-        }
+    return jsonify(platform_stats)
 
-    return jsonify(p_stats)
+
+@app.route('/stats/package')
+@app.route('/stats/package/<package>')
+def stats_package(package=None):
+    """
+    Return a dictionary of statistics for a package name (optional), or all packages
+
+    :param string package: The package name to provide p_stats for
+    :query string stime: The lower bound of the time period to filter on
+    :query string ftime: The upper bound of the time period to filter on
+
+    stime and ftime both filter on the release start time.
+    Note that standard orlo API filters can be used here as well, not just stime/ftime
+    """
+    s_stime = request.args.get('stime')
+    s_ftime = request.args.get('ftime')
+
+    stime, ftime = None, None
+    if s_stime:
+        stime = arrow.get(s_stime)
+    if s_ftime:
+        ftime = arrow.get(s_ftime)
+
+    if package:
+        package_list = [package]
+    else:
+        package_result = queries.package_list().all()
+        # Flatten query result
+        package_list = [u[0] for u in package_result]
+
+    package_stats = build_stats_dict('package', package_list, stime=stime, ftime=ftime)
+
+    return jsonify(package_stats)

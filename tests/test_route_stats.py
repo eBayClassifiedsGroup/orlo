@@ -87,14 +87,14 @@ class TeamStatsTest(StatsTest):
 
     def test_stats_team_200_with_team(self):
         """
-        Test that /stats/team/teamname returns 200
+        Test that /stats/team/team_name returns 200
         """
         response = self.client.get(self.ENDPOINT + '/test%20team')
         self.assert200(response)
 
     def test_stats_team_returns_dict_with_team(self):
         """
-        Test that /stats/team/teamname returns a dictionary
+        Test that /stats/team/team_name returns a dictionary
         """
         response = self.client.get(self.ENDPOINT + '/test%20team')
         self.assertIsInstance(response.json, dict)
@@ -105,7 +105,26 @@ class PlatformStatsTest(StatsTest):
 
     def test_stats_platform_200_with_platform(self):
         """
-        Test that /stats/platform/platformname returns 200
+        Test that /stats/platform/platform_name returns 200
         """
         response = self.client.get(self.ENDPOINT + '/test_platform')
         self.assert200(response)
+
+
+class PackageStatsTest(StatsTest):
+    ENDPOINT = '/stats/package'
+
+    def test_stats_package_200_with_package(self):
+        """
+        Test that /stats/package/package_name returns 200
+        """
+        response = self.client.get(self.ENDPOINT + '/test-package')
+        self.assert200(response)
+
+    def test_stats_package_returns_dict_with_package(self):
+        """
+        Test that /stats/package/package_name returns a dictionary
+        """
+        response = self.client.get(self.ENDPOINT + '/test-package')
+        self.assertIsInstance(response.json, dict)
+
