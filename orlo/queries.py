@@ -108,28 +108,29 @@ def package_versions(platform=None):
     List the current version of all packages
 
     It is not sufficient to just return the highest version of each successful package,
-    as they can be rolled back, so we get the max stime
+    as they can be rolled back, so we determine the version by last release time
 
     :param platform: Platform to filter on
     """
 
+    # Sub query gets a list of successful packages by last successful release time
     sub_q = db.session.query(
-            Package.name, Package.version,
-            db.func.max(Package.stime).label('max_stime'))\
+            Package.name, db.func.max(Package.stime).label('max_stime')) \
         .filter(Package.status == 'SUCCESSFUL')
-    if platform:
+    if platform:  # filter releases not on this platform
         sub_q = sub_q\
             .join(Release)\
             .filter(Release.platforms.any(Platform.name == platform))
-    sub_q =\
-        sub_q.group_by(Package.name, Package.version)\
+    sub_q = sub_q\
+        .group_by(Package.name) \
         .subquery()
 
+    # q inner-joins Package table with sub_q to get the version
     q = db.session.query(
             Package.name,
-            Package.version)\
-        .join(sub_q, sub_q.c.max_stime == Package.stime)\
-        .group_by(Package.name)
+            Package.version) \
+        .join(sub_q, sub_q.c.max_stime == Package.stime) \
+        .group_by(Package.name, Package.version)
 
     return q
 

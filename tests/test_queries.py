@@ -258,7 +258,7 @@ class SummaryTest(OrloQueryTest):
         in the second, therefore the current version for packageOne should be the second release,
         but packageTwo should remain with the first version
         """
-        rid1 = self._create_release(platforms=['foo'])
+        rid1 = self._create_release(platforms=['platformOne'])
         pid1 = self._create_package(rid1, name='packageOne', version='1.0.1')
         pid2 = self._create_package(rid1, name='packageTwo', version='2.0.1')
         self._start_package(pid1)
@@ -266,7 +266,7 @@ class SummaryTest(OrloQueryTest):
         self._start_package(pid2)
         self._stop_package(pid2)
         sleep(0.1)  # To ensure some time separation
-        rid2 = self._create_release(platforms=['foo'])
+        rid2 = self._create_release(platforms=['platformOne'])
         pid1 = self._create_package(rid2, name='packageOne', version='1.0.2')
         pid2 = self._create_package(rid2, name='packageTwo', version='2.0.2')
         self._start_package(pid1)
@@ -286,15 +286,37 @@ class SummaryTest(OrloQueryTest):
         Test package_versions excludes non-specified platforms
         """
         self._create_finished_release()  # this release should not appear in result
-        rid1 = self._create_release(platforms=['foo'])
+        rid1 = self._create_release(platforms=['specific_platform'])
         pid1 = self._create_package(rid1, name='packageOne', version='1.0.1')
         self._start_package(pid1)
         self._stop_package(pid1)
 
-        result = orlo.queries.package_versions(platform='foo').all()
+        result = orlo.queries.package_versions(platform='specific_platform').all()
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 'packageOne')
+
+    def test_package_versions_with_rollback(self):
+        """
+        Test package_versions with a rollback
+
+        We should return the versions that were rolled back to and not exclude them
+        """
+        rid1 = self._create_release(platforms=['platformOne'])
+        pid1 = self._create_package(rid1, name='packageOne', version='1.0.2')
+        self._start_package(pid1)
+        self._stop_package(pid1)
+        sleep(0.1)  # To ensure some time separation
+        rid2 = self._create_release(platforms=['platformOne'])
+        pid1 = self._create_package(rid2, name='packageOne', version='1.0.1', rollback=True)
+        self._start_package(pid1)
+        self._stop_package(pid1)
+
+        result = orlo.queries.package_versions().all()
+        self.assertEqual(len(result), 1)  # One entry, packageOne
+        versions = [(p, v) for p, v in result]  # strip out the time
+        # Correct versions:
+        self.assertIn(('packageOne', '1.0.1'), versions)
 
 
 class CountReleasesTest(OrloQueryTest):

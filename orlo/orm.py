@@ -121,7 +121,7 @@ class Package(db.Model):
 
     id = db.Column(UUIDType, primary_key=True, unique=True, nullable=False)
     name = db.Column(db.String(120), nullable=False)
-    stime = db.Column(ArrowType)
+    stime = db.Column(ArrowType, index=True)
     ftime = db.Column(ArrowType)
     duration = db.Column(db.Interval)
     status = db.Column(
