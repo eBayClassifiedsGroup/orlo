@@ -276,7 +276,7 @@ class SummaryTest(OrloQueryTest):
 
         result = orlo.queries.package_versions().all()
         self.assertEqual(len(result), 2)  # Two entries, packageOne/Two
-        versions = [(p, v) for p, v, t in result]  # strip out the time
+        versions = [(p, v) for p, v in result]  # strip out the time
         # Correct versions:
         self.assertIn(('packageOne', '1.0.2'), versions)
         self.assertIn(('packageTwo', '2.0.1'), versions)

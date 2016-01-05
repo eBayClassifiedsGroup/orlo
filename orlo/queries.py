@@ -113,15 +113,22 @@ def package_versions(platform=None):
     :param platform: Platform to filter on
     """
 
+    sub_q = db.session.query(
+            Package.name, Package.version,
+            db.func.max(Package.stime).label('max_stime'))\
+        .filter(Package.status == 'SUCCESSFUL')
+    if platform:
+        sub_q = sub_q\
+            .join(Release)\
+            .filter(Release.platforms.any(Platform.name == platform))
+    sub_q =\
+        sub_q.group_by(Package.name, Package.version)\
+        .subquery()
+
     q = db.session.query(
             Package.name,
-            Package.version, db.func.max(Package.stime).label('last_release'),
-    )
-    if platform:
-        q = q.join(Release).filter(Release.platforms.any(Platform.name == platform))
-
-    q = q \
-        .filter(Package.status == 'SUCCESSFUL') \
+            Package.version)\
+        .join(sub_q, sub_q.c.max_stime == Package.stime)\
         .group_by(Package.name)
 
     return q
