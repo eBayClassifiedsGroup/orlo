@@ -10,7 +10,7 @@ class OrloTest(TestCase):
     """
     def create_app(self):
         app = orlo.app
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://orlo:password@localhost:5432/orlo'
         app.config['TESTING'] = True
         app.config['DEBUG'] = True
         app.config['TRAP_HTTP_EXCEPTIONS'] = True
