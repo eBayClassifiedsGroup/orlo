@@ -11,7 +11,7 @@ config.set('main', 'time_zone', 'UTC')
 config.set('main', 'strict_slashes', 'false')
 
 config.add_section('db')
-config.set('db', 'uri', 'postgres://orlo:password@localhost:5432/orlo')
+config.set('db', 'uri', 'postgres://orlo@localhost:5432/orlo')
 config.set('db', 'echo_queries', 'false')
 
 config.add_section('logging')
