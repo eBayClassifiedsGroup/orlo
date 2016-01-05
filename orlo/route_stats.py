@@ -202,7 +202,6 @@ def stats_team(team=None):
     :query string ftime: The upper bound of the time period to filter on
 
     stime and ftime both filter on the release start time.
-    Note that standard orlo API filters can be used here as well, not just stime/ftime
     """
     s_stime = request.args.get('stime')
     s_ftime = request.args.get('ftime')

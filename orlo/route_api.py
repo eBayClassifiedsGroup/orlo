@@ -233,8 +233,8 @@ def get_releases(release_id=None):
     """
     Return a list of releases to the client, filters optional
 
-    :param string release_id: Optionally specify a single release UUID to fetch. This does not
-    disable filters.
+    :param string release_id: Optionally specify a single release UUID to fetch. \
+        This does not disable filters.
     :query boolean latest: Return only the last matching release (the latest)
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
@@ -244,7 +244,6 @@ def get_releases(release_id=None):
     :query string ftime_before: Only include releases that finished before timestamp given
     :query string ftime_after: Only include releases that finished after timestamp given
     :query string team: Filter releases by team
-    .. versionadded:: 0.0.4
     :query int duration_lt: Only include releases that took less than (int) seconds
     :query int duration_gt: Only include releases that took more than (int) seconds
     :query boolean package_rollback: Filter on whether or not the releases contain a rollback
@@ -252,8 +251,8 @@ def get_releases(release_id=None):
     :query string package_version: Filter by package version
     :query int package_duration_gt: Filter by packages of duration greater than
     :query int package_duration_lt: Filter by packages of duration less than
-    :query string package_status: Filter by package status. Valid statuses are "NOT_STARTED",
-    "IN_PROGRESS", "SUCCESSFUL", "FAILED"
+    :query string package_status: Filter by package status. Valid statuses are:\
+         "NOT_STARTED", "IN_PROGRESS", "SUCCESSFUL", "FAILED"
 
     **Note for time arguments**:
         The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.

@@ -8,9 +8,7 @@ Orlo
 
 Orlo is an API for tracking deployments, written with Python, Flask and SqlAlchemy.
 
-It originated as part of a siteops hackathon at eBay classifieds, and is currently in development by staff at gumtree.com, kijiji.ca, mobile.de and 2dehands.be (all part of eBay Classifieds).
-
-It is in a very early stage of development, but eventually we hope that it will be used more broadly within ECG and possibly elsewhere.
+It originated as part of a siteops hackathon, and is currently in development by staff at eBay Classifieds Group.
 
 
 Contents
@@ -43,16 +41,19 @@ The API should also be agnostic to release process, server container or packagin
 Why "orlo"?
 -------------
 
-Originally this project was called "Sponge", because sponges are absorbent. But it turns out that name was already in use on readthedocs.org, so it was renamed. In English, orlo means "a plinth supporting the base of a column", which seems like a pretty good analogy for this project.
+Originally this project was called "Sponge", because sponges are absorbent. But it turns out that name was already in use on readthedocs.org, so it was renamed. In English, orlo means "a plinth supporting the base of a column".
 
 Roadmap
 -------
 
-In the beginning:
- - Records release information in a database
- - Returns release information in JSON
- - API documentation
+Currently, Orlo can:
+ - Record release information in a database
+ - Return release information in JSON
+ - Present basic stats on releases
 
-In the future:
- - UI to display and consume the data
- - Control API for performing deployments
+We also have API documentation and a client library in Python (see [orlo-client](https://github.com/eBayClassifiedsGroup/orloclient))
+
+In the future, we hope to add:
+ - UI to display and consume the data (started at [orloui](https://github.com/al4/orloui))
+ - Security and authentication/authorization (at present everything is wide open)
+ - Control API for performing deployments (not yet started)
