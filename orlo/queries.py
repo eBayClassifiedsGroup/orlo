@@ -25,6 +25,21 @@ def user_summary(platform=None):
     return query.group_by(Release.user)
 
 
+def user_info(username):
+    """
+    Get user info for a single user
+
+    :param username:
+    :return:
+    """
+    query = db.session.query(
+            Release.user, db.func.count(Release.id))\
+        .filter(Release.user == username)\
+        .group_by(Release.user)
+
+    return query
+
+
 def user_list(platform=None):
     """
     Find all users that have performed releases

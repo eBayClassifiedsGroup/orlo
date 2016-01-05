@@ -30,14 +30,21 @@ def info_root():
 
 
 @app.route('/info/users', methods=['GET'])
-@app.route('/info/users/<platform>', methods=['GET'])
-def info_users(platform=None):
+@app.route('/info/users/<username>', methods=['GET'])
+def info_users(username=None):
     """
     Return a dictionary of users optionally filtering by platform
 
-    :param platform:
+    :param username: Username to get info for
+    :query platform: Platform to filter on
     """
-    users = queries.user_summary(platform)
+    platform = request.args.get('platform')
+
+    if username:
+        users = queries.user_info(username)
+    else:
+        users = queries.user_summary(platform)
+
     d = {}
     for user, count in users:
         d[user] = {'releases': count}

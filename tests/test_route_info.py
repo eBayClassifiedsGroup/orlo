@@ -22,12 +22,21 @@ class OrloInfoUrlTest(OrloHttpTest):
         self.assert200(response)
         self.assertIn('userOne', response.json)
 
+    def test_info_users_with_user(self):
+        """
+        Test /info/users/username returns 200
+        """
+        self._create_release(user='userOne')
+        response = self.client.get('/info/users/userOne')
+        self.assert200(response)
+        self.assertIn('userOne', response.json)
+
     def test_info_users_with_platform(self):
         """
-        Test /info/<platform> returns 200
+        Test /info?platform=<platform> returns 200
         """
         self._create_release(user='userOne', platforms=['platformOne'])
-        response = self.client.get('/info/users/platformOne')
+        response = self.client.get('/info/users?platform=platformOne')
         self.assert200(response)
         self.assertIn('userOne', response.json)
 
