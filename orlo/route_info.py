@@ -69,6 +69,7 @@ def info_platforms():
 def info_packages(platform=None):
     """
     Summary of packages
+
     :param platform:
     """
     q = queries.package_summary(platform=platform)
@@ -85,6 +86,7 @@ def info_packages(platform=None):
 def info_package_list(platform=None):
     """
     Return list of all known packages
+
     :param platform:
     """
     q = queries.package_list(platform=platform)
@@ -98,6 +100,7 @@ def info_package_list(platform=None):
 def info_package_versions(platform=None):
     """
     Return current version of all packages
+
     :param platform:
     """
     q = queries.package_versions(platform=platform)

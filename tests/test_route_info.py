@@ -11,7 +11,6 @@ class OrloInfoUrlTest(OrloHttpTest):
         """
         response = self.client.get('/info')
         self.assert200(response)
-        print(response.json)
 
     def test_info_users(self):
         """
