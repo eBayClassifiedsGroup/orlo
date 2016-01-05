@@ -73,8 +73,8 @@ def info_packages(platform=None):
     return jsonify(packages), 200
 
 
-@app.route('/info/package_list', methods=['GET'])
-@app.route('/info/package_list/<platform>', methods=['GET'])
+@app.route('/info/packages/list', methods=['GET'])
+@app.route('/info/packages/list/<platform>', methods=['GET'])
 def info_package_list(platform=None):
     """
     Return list of all known packages
@@ -86,8 +86,8 @@ def info_package_list(platform=None):
     return jsonify({'packages': packages}), 200
 
 
-@app.route('/info/package_versions', methods=['GET'])
-@app.route('/info/package_versions/<platform>', methods=['GET'])
+@app.route('/info/packages/versions', methods=['GET'])
+@app.route('/info/packages/versions/<platform>', methods=['GET'])
 def info_package_versions(platform=None):
     """
     Return current version of all packages

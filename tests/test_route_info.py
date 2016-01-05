@@ -56,7 +56,7 @@ class OrloInfoUrlTest(OrloHttpTest):
         """
 
         self._create_finished_release()
-        response = self.client.get('/info/package_list')
+        response = self.client.get('/info/packages/list')
         self.assert200(response)
         self.assertIn('test-package', response.json['packages'])
 
@@ -65,7 +65,7 @@ class OrloInfoUrlTest(OrloHttpTest):
         Test /info/packages returns 200
         """
         self._create_finished_release()
-        response = self.client.get('/info/package_versions')
+        response = self.client.get('/info/packages/versions')
         self.assert200(response)
         self.assertIn('test-package', response.json)
 
@@ -74,7 +74,7 @@ class OrloInfoUrlTest(OrloHttpTest):
         Test /info/packages returns 200
         """
         self._create_finished_release()
-        response = self.client.get('/info/package_versions/test_platform')
+        response = self.client.get('/info/packages/versions/test_platform')
         self.assert200(response)
         self.assertIn('test-package', response.json)
 
@@ -83,6 +83,6 @@ class OrloInfoUrlTest(OrloHttpTest):
         Test /info/packages returns 200
         """
         self._create_finished_release()
-        response = self.client.get('/info/package_versions/non-existant-platform')
+        response = self.client.get('/info/packages/versions/non-existent-platform')
         self.assert200(response)
         self.assertNotIn('test-package', response.json)
