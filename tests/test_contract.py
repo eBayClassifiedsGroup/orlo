@@ -1,35 +1,18 @@
 from __future__ import print_function, unicode_literals
 from datetime import datetime, timedelta
-import orlo
 import json
 import uuid
-from flask.ext.testing import TestCase
 from orlo.orm import db, Package, Release
 from orlo.config import config
+from time import sleep
+from tests import OrloTest
 
 
-class OrloTest(TestCase):
+class OrloHttpTest(OrloTest):
     """
     Base class for tests which contains the methods required to move
-    releases and packages through the workflow
+    releases and packages through the workflow via HTTP
     """
-
-    def create_app(self):
-        app = orlo.app
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
-        app.config['TESTING'] = True
-        app.config['DEBUG'] = True
-        app.config['TRAP_HTTP_EXCEPTIONS'] = True
-        app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
-
-        return orlo.app
-
-    def setUp(self):
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
 
     def _create_release(self,
                         user='testuser',
@@ -174,7 +157,7 @@ class OrloTest(TestCase):
         return response
 
 
-class PostContractTest(OrloTest):
+class PostContractTest(OrloHttpTest):
     """
     Test the HTTP POST contract
     """
@@ -288,13 +271,24 @@ class PostContractTest(OrloTest):
 
         self.assertEqual(pkg.rollback, True)
 
+    def test_references_json_conversion(self):
+        """
+        Test that the references parameter results in valid json in the database
+        """
+        release_id = self._create_release(references=['ticket1', 'ticket2'])
+        q = db.session.query(Release).filter(Release.id == release_id)
+        release = q.first()
 
-class GetContractTest(OrloTest):
+        doc = json.loads(release.references)
+        self.assertIsInstance(doc, list)
+
+
+class GetContractTest(OrloHttpTest):
     """
     Test the HTTP GET contract
     """
 
-    def _get_releases(self, release_id=None, filters=None):
+    def _get_releases(self, release_id=None, filters=None, expected_status=200):
         """
         Perform a GET to /releases with optional filters
         """
@@ -310,7 +304,7 @@ class GetContractTest(OrloTest):
         results_response = self.client.get(
             path, content_type='application/json',
         )
-        self.assertEqual(results_response.status_code, 200)
+        self.assertEqual(results_response.status_code, expected_status)
         r_json = json.loads(results_response.data)
         return r_json
 
@@ -466,7 +460,7 @@ class GetContractTest(OrloTest):
         self.assertEqual(0, len(r_tomorrow['releases']))
         self.assertEqual(3, len(r_yesterday['releases']))
 
-    def test_get_release_filter_duration_less(self):
+    def test_get_release_filter_duration_lt(self):
         """
         Filter on releases that took less than x seconds
 
@@ -476,23 +470,23 @@ class GetContractTest(OrloTest):
         for _ in range(0, 3):
             self._create_finished_release()
 
-        r = self._get_releases(filters=['duration_less=10'])
+        r = self._get_releases(filters=['duration_lt=10'])
         self.assertEqual(3, len(r['releases']))
 
-        r = self._get_releases(filters=['duration_less=0'])
+        r = self._get_releases(filters=['duration_lt=0'])
         self.assertEqual(0, len(r['releases']))
 
-    def test_get_release_filter_duration_greater(self):
+    def test_get_release_filter_duration_gt(self):
         """
         Filter on releases that took greater than x seconds
         """
         for _ in range(0, 3):
             self._create_finished_release()
 
-        r = self._get_releases(filters=['duration_greater=10'])
+        r = self._get_releases(filters=['duration_gt=10'])
         self.assertEqual(0, len(r['releases']))
 
-        r = self._get_releases(filters=['duration_greater=0'])
+        r = self._get_releases(filters=['duration_gt=0'])
         self.assertEqual(3, len(r['releases']))
 
     def test_get_release_filter_team(self):
@@ -515,3 +509,188 @@ class GetContractTest(OrloTest):
             self.assertEqual(r['team'], 'firstTeam')
         for r in second_results['releases']:
             self.assertEqual(r['team'], 'secondTeam')
+
+    def test_get_release_filter_rollback(self):
+        """
+        Filter on releases that contain a rollback
+        """
+        for _ in range(0, 3):
+            rid = self._create_release()
+            self._create_package(rid, rollback=True)
+
+        for _ in range(0, 2):
+            rid = self._create_release()
+            self._create_package(rid, rollback=False)
+
+        first_results = self._get_releases(filters=['package_rollback=True'])
+        second_results = self._get_releases(filters=['package_rollback=False'])
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 2)
+
+        for r in first_results['releases']:
+            for p in r['packages']:
+                self.assertIs(p['rollback'], True)
+        for r in second_results['releases']:
+            for p in r['packages']:
+                self.assertIs(p['rollback'], False)
+
+    def test_get_release_latest(self):
+        """
+        Should return only one release
+        """
+
+        rid = None
+        for _ in range(0, 3):
+            rid = self._create_release()
+            sleep(0.1)
+
+        r = self._get_releases(filters=['latest=True'])
+        self.assertEqual(len(r['releases']), 1)
+        self.assertEqual(r['releases'][0]['id'], rid)
+
+    def test_get_release_package_name(self):
+        """
+        Filter on releases which have a particular package name
+        """
+        rid = self._create_release()
+        self._create_package(rid, name='particular-name')
+        self._create_package(rid, name='another-name')
+
+        rid2 = self._create_release()
+        self._create_package(rid2, name='another-name')
+
+        r = self._get_releases(filters=['package_name=particular-name'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_version(self):
+        """
+        Filter on releases which have a particular version
+        """
+        rid = self._create_release()
+        self._create_package(rid, version='4.9.9')
+        self._create_package(rid, version='3.5.6')
+
+        rid2 = self._create_release()
+        self._create_package(rid2, version='1.2.3')
+
+        r = self._get_releases(filters=['package_version=4.9.9'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_status_not_started(self):
+        """
+        Filter on releases which have package status NOT_STARTED
+        """
+        rid = self._create_release()
+        self._create_package(rid)
+
+        self._create_release()  # extra, should be filtered out
+
+        r = self._get_releases(filters=['package_status=NOT_STARTED'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_status_in_progress(self):
+        """
+        Filter on releases which have package status IN_PROGRESS
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+
+        self._create_release()  # extra, should be filtered out
+
+        r = self._get_releases(filters=['package_status=IN_PROGRESS'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_status_successful(self):
+        """
+        Filter on releases which have package status SUCCESSFUL
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+        self._stop_package(rid, pid, success=True)
+
+        self._create_release()  # extra, should be filtered out
+
+        r = self._get_releases(filters=['package_status=SUCCESSFUL'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_status_failed(self):
+        """
+        Filter on releases which have package status FAILED
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+        self._stop_package(rid, pid, success=False)
+
+        self._create_release()  # extra, should be filtered out
+
+        r = self._get_releases(filters=['package_status=FAILED'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_duration_gt(self):
+        """
+        Filter on releases with a package of duration greater than X
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+        self._stop_package(rid, pid, success=False)
+
+        r = self._get_releases(filters=['package_duration_gt=0'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_package_duration_lt(self):
+        """
+        Filter on releases with a package of duration less than X
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self._start_package(rid, pid)
+        self._stop_package(rid, pid, success=False)
+
+        r = self._get_releases(filters=['package_duration_lt=10'])
+        self.assertEqual(len(r['releases']), 1)
+
+        # TODO need control release
+
+    def test_get_release_filter_rollback_and_status(self):
+        """
+        Filter on rollback and status
+        """
+        for _ in range(0, 3):
+            rid = self._create_release()
+            self._create_package(rid, rollback=True)
+
+        for _ in range(0, 2):
+            rid = self._create_release()
+            self._create_package(rid, rollback=False)
+
+        first_results = self._get_releases(filters=['package_rollback=True',
+                                                    'package_status=NOT_STARTED'])
+        second_results = self._get_releases(filters=['package_rollback=False',
+                                                     'package_status=NOT_STARTED'])
+        # should be zero
+        third_results = self._get_releases(filters=['package_rollback=FALSE',
+                                                    'package_status=SUCCESSFUL'])
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 2)
+        self.assertEqual(len(third_results['releases']), 0)
+
+        for r in first_results['releases']:
+            for p in r['packages']:
+                self.assertIs(p['rollback'], True)
+        for r in second_results['releases']:
+            for p in r['packages']:
+                self.assertIs(p['rollback'], False)
+
+    def test_get_release_bad_attribute(self):
+        """
+        Test that we get the appropriate status code and a message when sending a bad attribute
+        """
+
+        r = self._get_releases(filters=['foo=bar'], expected_status=400)
+        self.assertIn('message', r)

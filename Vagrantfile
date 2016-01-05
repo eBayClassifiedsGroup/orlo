@@ -72,6 +72,8 @@ Vagrant.configure(2) do |config|
     # sudo sed -i 's/archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
     sudo apt-get update
     sudo apt-get -y install python-pip python-dev postgresql postgresql-server-dev-all
+    echo "CREATE USER orlo WITH PASSWORD 'password'; CREATE DATABASE orlo OWNER orlo; " \
+        | sudo -u postgres -i psql
 
     # Build tools
     sudo apt-get -y install build-essential git-buildpackage debhelper python-dev
@@ -85,5 +87,7 @@ Vagrant.configure(2) do |config|
     sudo python /vagrant/setup.py install
 
     python /vagrant/create_db.py
+    sudo pip install -r /vagrant/requirements.txt
+    sudo pip install pytest Flask-Testing
   SHELL
 end

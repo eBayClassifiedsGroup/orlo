@@ -3,9 +3,7 @@ from __future__ import print_function
 __author__ = 'alforbes'
 
 
-class InvalidUsage(Exception):
-    status_code = 400
-
+class OrloError(Exception):
     def __init__(self, message, status_code=None, payload=None):
         Exception.__init__(self)
         self.message = message
@@ -17,3 +15,16 @@ class InvalidUsage(Exception):
         rv = dict(self.payload or ())
         rv['message'] = self.message
         return rv
+
+
+class InvalidUsage(OrloError):
+    status_code = 400
+
+
+class DatabaseError(OrloError):
+    status_code = 500
+
+
+class OrloWorkflowError(OrloError):
+    status_code = 400
+

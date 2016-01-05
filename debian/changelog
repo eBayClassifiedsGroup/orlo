@@ -1,3 +1,15 @@
+python-orlo (0.0.4) stable; urgency=medium
+
+  * Update debian description
+  * Rename /import/release to /releases/import, update docstring
+  * Fix release import error
+  * Add .deb files to gitignore
+  * Bump version
+  * Handle import of documents that omit optional parameters
+  * Add support for importing notes
+
+ -- Alex Forbes <alforbes@gumtree.com>  Fri, 11 Dec 2015 12:52:59 +0000
+
 python-orlo (0.0.3) stable; urgency=medium
 
   * Multiple changes

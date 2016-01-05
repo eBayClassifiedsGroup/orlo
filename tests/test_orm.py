@@ -1,8 +1,11 @@
 from __future__ import print_function
 from tests.test_contract import OrloTest
 from random import randrange
-from tests.test_contract import db
+from orlo.orm import db
 from orlo.orm import Release, Package, PackageResult, Platform
+from orlo import app
+from orlo.util import append_or_create_platforms
+from sqlalchemy.orm import exc
 import arrow
 import datetime
 import uuid
@@ -15,43 +18,130 @@ Tests for the database / orm layer
 
 
 class OrloDbTest(OrloTest):
-    def setUp(self):
-        super(OrloDbTest, self).setUp()
+    """
+    Base test class for tests that need to manipulate data without using the http API
+    """
 
-        # Setup a platform
-        self.platform = Platform('TEST-PLATFORM')
+    def _create_release(self,
+                        user='testuser',
+                        team='test team',
+                        platforms=None,
+                        references=None,
+                        success=True):
+        """
+        Create a release using internal methods
 
-        # Add 10 releases
-        for i in range(10):
-            self._add_release(i)
+        :param user:
+        :param team:
+        :param platforms:
+        :param references:
+        :return:
+        """
 
-    def _add_release(self, i):
+        if not platforms:
+            platforms = ['test_platform']
+        if type(platforms) is not list:
+            raise AssertionError("Platforms parameter must be list")
+        if not references:
+            references = ['TestTicket-123']
+
+        db_platforms = append_or_create_platforms(platforms)
+
         r = Release(
-            platforms=[self.platform],
-            user='TEST USER',
-            references=['REF-{}'.format(randrange(99, 1000)) * 2],
-            team='TEST TEAM',
+            platforms=db_platforms,
+            user=user,
+            references=references,
+            team=team,
         )
         db.session.add(r)
-
-        r.start()
-        for _ in range(0, 2):
-            self._add_package(r.id)
-        r.stop()
         db.session.commit()
 
-    def _add_package(self, release_id):
+        return r.id
+
+    @staticmethod
+    def _create_package(release_id,
+                        name='test-package',
+                        version='1.2.3',
+                        diff_url=None,
+                        rollback=False,
+                        ):
         """
-        Add a package to a release
+        Create a package using internal methods
+
+        :param release_id:
+        :param name:
+        :param version:
+        :param diff_url:
+        :param rollback:
+        :return:
         """
         p = Package(
             release_id=release_id,
-            name='TestPackage-{}'.format(randrange(0, 10)),
-            version=str(randrange(0, 1000)),
+            name=name,
+            version=version,
+            diff_url=diff_url,
+            rollback=rollback,
         )
         db.session.add(p)
-        p.start()
-        p.stop(success=True)
+        db.session.commit()
+
+        return p.id
+
+    @staticmethod
+    def _start_package(package_id):
+        """
+        Start a package
+
+        :param package_id:
+        """
+        package = db.session.query(Package).filter(Package.id == package_id).one()
+        package.start()
+        db.session.commit()
+
+        return package.id
+
+    @staticmethod
+    def _stop_package(package_id, success=True):
+        """
+        Stop a package
+
+        :param package_id:
+        """
+        package = db.session.query(Package).filter(Package.id == package_id).one()
+        package.stop(success=success)
+        db.session.commit()
+
+    @staticmethod
+    def _stop_release(release_id):
+        """
+        Stop a release
+
+        :param release_id:
+        """
+        release = db.session.query(Release).filter(Release.id == release_id).one()
+        release.stop()
+        db.session.commit()
+
+    def _create_finished_release(self, success=True):
+        """
+        Create a completed release using internal methods
+        """
+
+        release_id = self._create_release()
+        package_id = self._create_package(release_id)
+
+        self._start_package(package_id)
+        self._stop_package(package_id, success=success)
+        self._stop_release(release_id)
+        db.session.commit()
+
+
+class TestFields(OrloDbTest):
+    def setUp(self):
+        super(OrloDbTest, self).setUp()
+
+        for r in range(0, 3):
+            self._create_finished_release()
 
     def test_release_types(self):
         """
