@@ -16,8 +16,8 @@ services:
   - postgresql
 
 before_script:
-  - psql -c 'CREATE USER orlo PASSWORD ''password'';'
-  - psql -c 'CREATE DATABASE orlo OWNER orlo;' -U postgres
+  - psql -c "CREATE USER orlo PASSWORD 'password';"
+  - psql -c "CREATE DATABASE orlo OWNER orlo;" -U postgres
 
 before_install:
   - pip install -r requirements.txt
