@@ -53,42 +53,57 @@ def info_users(username=None):
 
 
 @app.route('/info/platforms', methods=['GET'])
-def info_platforms():
+@app.route('/info/platforms/<platform>', methods=['GET'])
+def info_platforms(platform=None):
     """
     Return a summary of the platforms
+
+    :param platform: Platform to get info for
     """
+    if platform:
+        platforms = queries.platform_info(platform)
+    else:
+        platforms = queries.platform_summary()
+
     d = {}
 
-    for platform, count in queries.platform_summary():
+    for platform, count in platforms:
         d[platform] = {'releases': count}
     return jsonify(d), 200
 
 
 @app.route('/info/packages', methods=['GET'])
-@app.route('/info/packages/<platform>', methods=['GET'])
-def info_packages(platform=None):
+@app.route('/info/packages/<package>', methods=['GET'])
+def info_packages(package=None):
     """
     Summary of packages
 
-    :param platform:
+    :param package: Package to get info for
+    :query platform: Platform to filter on
     """
-    q = queries.package_summary(platform=platform)
+    platform = request.args.get('platform')
 
-    packages = {}
+    if package:
+        packages = queries.package_info(package)
+    else:
+        packages = queries.package_summary(platform=platform)
 
-    for package, count in q.all():
-        packages[package] = {'releases': count}
+    d = {}
+
+    for package, count in packages:
+        d[package] = {'releases': count}
     return jsonify(packages), 200
 
 
 @app.route('/info/packages/list', methods=['GET'])
-@app.route('/info/packages/list/<platform>', methods=['GET'])
-def info_package_list(platform=None):
+def info_package_list():
     """
     Return list of all known packages
 
-    :param platform:
+    :query platform: Platform to filter on
     """
+
+    platform = request.args.get('platform')
     q = queries.package_list(platform=platform)
     result = q.all()
     packages = [r[0] for r in result]
@@ -96,13 +111,13 @@ def info_package_list(platform=None):
 
 
 @app.route('/info/packages/versions', methods=['GET'])
-@app.route('/info/packages/versions/<platform>', methods=['GET'])
-def info_package_versions(platform=None):
+def info_package_versions():
     """
     Return current version of all packages
 
-    :param platform:
+    :query platform:
     """
+    platform = request.args.get('platform')
     q = queries.package_versions(platform=platform)
     result = q.all()
 

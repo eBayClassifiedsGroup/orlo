@@ -68,6 +68,21 @@ def team_summary(platform=None):
     return query.group_by(Release.team)
 
 
+def team_info(team_name):
+    """
+    Get info for a single team
+
+    :param team_name:
+    :return:
+    """
+    query = db.session.query(
+            Release.user, db.func.count(Release.id))\
+        .filter(Release.team == team_name)\
+        .group_by(Release.team)
+
+    return query
+
+
 def team_list(platform=None):
     """
     Find all teams that have performed releases
@@ -83,17 +98,18 @@ def team_list(platform=None):
 
 def package_summary(platform=None, stime=None, ftime=None):
     """
-    Summary of releases by package
+    Summary of packages
 
     :param stime: Start time, or time lower bound
     :param ftime: Finish time, or time upper bound
-    :param platform:
+    :param platform: Filter by platform
     """
 
     query = db.session.query(Package.name, db.func.count(Package.release_id))
     if any(x is not None for x in [platform, stime, ftime]):
         query = query.join(Release)
     if platform:
+        print("Platform filter")
         query = query.filter(Release.platforms.any(Platform.name == platform))
     if stime:
         query = query.filter(Release.stime > stime)
@@ -101,6 +117,21 @@ def package_summary(platform=None, stime=None, ftime=None):
         query = query.filter(Release.stime < ftime)
 
     query = query.group_by(Package.name)
+
+    return query
+
+
+def package_info(package_name):
+    """
+    Return a query for a package and how many times it was released
+
+    :param package_name:
+    :return:
+    """
+    query = db.session.query(
+            Package.name, db.func.count(Package.id))\
+        .filter(Package.name == package_name)\
+        .group_by(Package.name)
 
     return query
 
@@ -272,6 +303,22 @@ def platform_summary():
     query = db.session.query(
             Platform.name, db.func.count(Platform.id)) \
         .join(release_platform) \
+        .group_by(Platform.name)
+
+    return query
+
+
+def platform_info(platform_name):
+    """
+    Return a single platform and how many times it was released
+
+    :param platform_name:
+    :return:
+    """
+
+    query = db.session.query(
+            Platform.name, db.func.count(Platform.id)) \
+        .filter(Platform.name == platform_name)\
         .group_by(Platform.name)
 
     return query
