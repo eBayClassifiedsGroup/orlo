@@ -74,6 +74,13 @@ def post_import():
     A json null value is acceptable for non-required fields, or it can be omitted entirely.
     See `orlo.orm.Release` and `orlo.orm.Package`.
 
+    **Example curl**:
+
+    .. sourcecode:: shell
+
+        curl -v -X POST -d @releases.json 'http://127.0.0.1:5000/releases/import' -H \
+        "Content-Type: application/json"
+
     :status 200: The document was accepted
     """
 
