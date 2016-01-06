@@ -1,12 +1,11 @@
-from orlo import app
+from orlo import app, queries
 from orlo.exceptions import InvalidUsage
 from flask import jsonify, request, Response, json
 import arrow
 import datetime
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
 from orlo.util import validate_request_json, create_release, validate_release_input, \
-    validate_package_input, fetch_release, create_package, fetch_package, apply_filters, \
-    stream_json_list
+    validate_package_input, fetch_release, create_package, fetch_package, stream_json_list
 
 
 @app.route('/ping', methods=['GET'])
@@ -260,27 +259,16 @@ def get_releases(release_id=None):
 
     """
 
-    if any(field.startswith('package_') for field in request.args.keys()):
-        query = db.session.query(Release).join(Package)
-    else:
-        # No need to join on package if none of our params need it
-        query = db.session.query(Release)
-
-    if request.args.get('latest', False):
-        # sort descending so we can use .first()
-        query = query.order_by(Release.stime.desc())
-    else:  # ascending
-        query = query.order_by(Release.stime.asc())
-
-    if release_id:
-        query = query.filter(Release.id == release_id)
-    elif request.args:
-        try:
-            query = apply_filters(query, request.args)
-        except AttributeError as e:
-            raise InvalidUsage("An invalid field was specified: {}".format(e.message))
-
-    if request.args.get('latest'):
-        query = query.limit(1)
+    if release_id:  # Simple
+        query = db.session.query(Release).filter(Release.id == release_id)
+    else:  # Bit more complex
+        # Flatten args, as the ImmutableDict puts some values in a list when expanded
+        args = {}
+        for k, v in request.args.items():
+            if type(v) is list:
+                args[k] = v[0]
+            else:
+                args[k] = v
+        query = queries.releases(**args)
 
     return Response(stream_json_list('releases', query), content_type='application/json')
