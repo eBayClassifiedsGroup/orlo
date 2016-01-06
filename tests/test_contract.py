@@ -300,7 +300,6 @@ class GetContractTest(OrloHttpTest):
         else:
             path = '/releases'
 
-        print("GET {}".format(path))
         results_response = self.client.get(
             path, content_type='application/json',
         )

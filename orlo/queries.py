@@ -109,7 +109,6 @@ def package_summary(platform=None, stime=None, ftime=None):
     if any(x is not None for x in [platform, stime, ftime]):
         query = query.join(Release)
     if platform:
-        print("Platform filter")
         query = query.filter(Release.platforms.any(Platform.name == platform))
     if stime:
         query = query.filter(Release.stime > stime)

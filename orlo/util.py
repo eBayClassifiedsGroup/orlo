@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 import arrow
 import datetime
+from flask import json
 from orlo import app
 from orlo.orm import db, Release, Package, Platform
 from orlo.exceptions import InvalidUsage
@@ -224,3 +225,34 @@ def apply_filters(query, args):
             query = query.filter(filter_field.any(sub_field == value))
 
     return query
+
+
+def stream_json_list(heading, iterator):
+    """
+    A lagging generator to stream JSON so we don't have to hold everything in memory
+
+    This is a little tricky, as we need to omit the last comma to make valid JSON,
+    thus we use a lagging generator, similar to http://stackoverflow.com/questions/1630320/
+
+    :param heading: The title of the set, e.g. "releases"
+    :param iterator: Any object with __iter__(), e.g. SQLAlchemy Query
+    """
+    iterator = iterator.__iter__()
+    try:
+        prev_release = next(iterator)  # get first result
+    except StopIteration:
+        # StopIteration here means the length was zero, so yield a valid releases doc and stop
+        yield '{{"{}": []}}'.format(heading)
+        raise StopIteration
+
+    # We have some releases. First, yield the opening json
+    yield '{{"{}": ['.format(heading)
+
+    # Iterate over the releases
+    for item in iterator:
+        yield json.dumps(prev_release.to_dict()) + ', '
+        prev_release = item
+
+    # Now yield the last iteration without comma but with the closing brackets
+    yield json.dumps(prev_release.to_dict()) + ']}'
+

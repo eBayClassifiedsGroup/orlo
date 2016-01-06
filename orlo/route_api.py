@@ -5,7 +5,8 @@ import arrow
 import datetime
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
 from orlo.util import validate_request_json, create_release, validate_release_input, \
-    validate_package_input, fetch_release, create_package, fetch_package, apply_filters
+    validate_package_input, fetch_release, create_package, fetch_package, apply_filters, \
+    stream_json_list
 
 
 @app.route('/ping', methods=['GET'])
@@ -282,30 +283,4 @@ def get_releases(release_id=None):
     if request.args.get('latest'):
         query = query.limit(1)
 
-    def generate():
-        """
-        A lagging generator to stream JSON so we don't have to hold everything in memory
-
-        This is a little tricky, as we need to omit the last comma to make valid JSON,
-        thus we use a lagging generator, similar to http://stackoverflow.com/questions/1630320/
-        """
-        releases = query.__iter__()
-        try:
-            prev_release = next(releases)  # get first result
-        except StopIteration:
-            # StopIteration here means the length was zero, so yield a valid releases doc and stop
-            yield '{"releases": []}'
-            raise StopIteration
-
-        # We have some releases. First, yield the opening json
-        yield '{"releases": ['
-
-        # Iterate over the releases
-        for release in releases:
-            yield json.dumps(prev_release.to_dict()) + ', '
-            prev_release = release
-
-        # Now yield the last iteration without comma but with the closing brackets
-        yield json.dumps(prev_release.to_dict()) + ']}'
-
-    return Response(generate(), content_type='application/json')
+    return Response(stream_json_list('releases', query), content_type='application/json')
