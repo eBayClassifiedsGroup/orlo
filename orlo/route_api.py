@@ -1,6 +1,6 @@
 from orlo import app
 from orlo.exceptions import InvalidUsage
-from flask import jsonify, request
+from flask import jsonify, request, Response, json
 import arrow
 import datetime
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
@@ -282,14 +282,30 @@ def get_releases(release_id=None):
     if request.args.get('latest'):
         query = query.limit(1)
 
-    app.logger.debug("Query: {}".format(str(query)))
-    releases = query.all()
+    def generate():
+        """
+        A lagging generator to stream JSON so we don't have to hold everything in memory
 
-    app.logger.debug("Returning {} releases".format(len(releases)))
-    output = []
-    for r in releases:
-        output.append(r.to_dict())
+        This is a little tricky, as we need to omit the last comma to make valid JSON,
+        thus we use a lagging generator, similar to http://stackoverflow.com/questions/1630320/
+        """
+        releases = query.__iter__()
+        try:
+            prev_release = next(releases)  # get first result
+        except StopIteration:
+            # StopIteration here means the length was zero, so yield a valid releases doc and stop
+            yield '{"releases": []}'
+            raise StopIteration
 
-    return jsonify(releases=output), 200
+        # We have some releases. First, yield the opening json
+        yield '{"releases": ['
 
+        # Iterate over the releases
+        for release in releases:
+            yield json.dumps(prev_release.to_dict()) + ', '
+            prev_release = release
 
+        # Now yield the last iteration without comma but with the closing brackets
+        yield json.dumps(prev_release.to_dict()) + ']}'
+
+    return Response(generate(), content_type='application/json')
