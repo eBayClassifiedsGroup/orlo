@@ -12,6 +12,34 @@ Functions in this file are about generating summaries of data
 """
 
 
+def _filter_release_status(query, status):
+    """
+    Filter the given query by the given release status
+
+    Release status is special, because it's actually determined by the package status
+
+    :param query: Query object
+    :param status: The status to filter on
+    :return:
+    """
+    enums = Package.status.property.columns[0].type.enums
+    if status not in enums:
+        raise InvalidUsage("Invalid package status, {} is not in {}".format(
+                status, str(enums)))
+    if status in ["SUCCESSFUL", "NOT_STARTED"]:
+        # ALL packages must match this status for it to apply to the release
+        # Query logic translates to "Releases which do not have any packages which satisfy
+        # the condition 'Package.status != status'". I.E, all match.
+        query = query.filter(
+                ~Release.packages.any(
+                        Package.status != status
+                ))
+    elif status in ["FAILED", "IN_PROGRESS"]:
+        # ANY package can match for this status to apply to the release
+        query = query.filter(Release.packages.any(Package.status == status))
+    return query
+
+
 def apply_filters(query, args):
     """
     Apply filters to a query
@@ -24,6 +52,11 @@ def apply_filters(query, args):
 
     for field, value in args.iteritems():
         if field == 'latest':  # this is not a comparison
+            continue
+
+        if field == 'status':
+            # special logic for this one
+            query = _filter_release_status(query, value)
             continue
 
         if field.startswith('package_'):
@@ -100,7 +133,10 @@ def releases(**kwargs):
     :return:
     """
 
-    if any(field.startswith('package_') for field in kwargs.keys()):
+    if any(field.startswith('package_') for field in kwargs.keys())\
+            or "status" in kwargs.keys():
+        # Package attributes need the join, as does status as it's really a package
+        # attribute
         query = db.session.query(Release).join(Package)
     else:
         # No need to join on package if none of our params need it
@@ -355,21 +391,7 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
                     rollback, type(rollback)))
 
     if status:
-        enums = Package.status.property.columns[0].type.enums
-        if status not in enums:
-            raise OrloError("Invalid package status, {} is not in {}".format(
-                    status, str(enums)))
-        if status in ["SUCCESSFUL", "NOT_STARTED"]:
-            # ALL packages must match this status for it to apply to the release
-            # Query logic translates to "Releases which do not have any packages which satisfy
-            # the condition 'Package.status != status'". I.E, all match.
-            query = query.filter(
-                    ~Release.packages.any(
-                            Package.status != status
-                    ))
-        elif status in ["FAILED", "IN_PROGRESS"]:
-            # ANY package can match for this status to apply to the release
-            query = query.filter(Release.packages.any(Package.status == status))
+        query = _filter_release_status(query, status)
 
     return query
 

@@ -244,6 +244,8 @@ def get_releases(release_id=None):
     :query string ftime_before: Only include releases that finished before timestamp given
     :query string ftime_after: Only include releases that finished after timestamp given
     :query string team: Filter releases by team
+    :query string status: Filter by release status. This field is calculated from the package. \
+        status, see special note below.
     :query int duration_lt: Only include releases that took less than (int) seconds
     :query int duration_gt: Only include releases that took more than (int) seconds
     :query boolean package_rollback: Filter on whether or not the releases contain a rollback
@@ -256,6 +258,12 @@ def get_releases(release_id=None):
 
     **Note for time arguments**:
         The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.
+
+    **Note on status**:
+        The release status is calculated from the packages it contains. The possible values are
+        the same as a package. For a release to be considered "SUCCESSFUL" or "NOT_STARTED",
+        all packages must have this value. If any one package has the value "IN_PROGRESS" or
+        "FAILED", that status applies to the whole release, with "FAILED" overriding "IN_PROGRESS".
 
     """
 

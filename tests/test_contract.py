@@ -693,3 +693,38 @@ class GetContractTest(OrloHttpTest):
 
         r = self._get_releases(filters=['foo=bar'], expected_status=400)
         self.assertIn('message', r)
+
+    def test_get_release_with_status_successful(self):
+        """
+        Test that the release status filters correctly
+        """
+        # A partially successful release (should be considered "FAILED")
+        rid1 = self._create_release()
+        pid1 = self._create_package(rid1, name='successful_package')
+        self._start_package(rid1, pid1)
+        self._stop_package(rid1, pid1, success=True)
+        pid2 = self._create_package(rid1, name='failed_package')
+        self._start_package(rid1, pid2)
+        self._stop_package(rid1, pid2, success=False)
+        self._stop_release(rid1)
+
+        for _ in range(0, 2):
+            # These should be successful
+            self._create_finished_release()
+
+        success_results = self._get_releases(filters=['status=SUCCESSFUL'])
+        self.assertEqual(len(success_results['releases']), 2)
+
+        failed_results = self._get_releases(filters=['status=FAILED'])
+        self.assertEqual(len(failed_results['releases']), 1)
+        self.assertEqual(rid1, failed_results['releases'][0]['id'])
+
+    def test_get_release_with_bad_status(self):
+        """
+        Tests get /releases?status=garbage give a helpful mesage
+        """
+        self._create_finished_release()
+
+        result = self._get_releases(filters=['status=garbage_boz'], expected_status=400)
+        self.assertIn('message', result)
+
