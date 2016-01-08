@@ -133,6 +133,9 @@ def releases(**kwargs):
     :return:
     """
 
+    limit = kwargs.pop('limit', None)
+    desc = kwargs.pop('desc', False)
+
     if any(field.startswith('package_') for field in kwargs.keys())\
             or "status" in kwargs.keys():
         # Package attributes need the join, as does status as it's really a package
@@ -147,11 +150,15 @@ def releases(**kwargs):
     except AttributeError as e:
         raise InvalidUsage("An invalid field was specified: {}".format(e.message))
 
-    if kwargs.get('latest', False):
-        # sort descending so first is most recent
-        query = query.order_by(Release.stime.desc()).limit(1)
-    else:  # ascending
-        query = query.order_by(Release.stime.asc())
+    if desc:
+        stime_field = Release.stime.desc
+    else:
+        stime_field = Release.stime.asc
+
+    if limit:
+        query = query.order_by(stime_field()).limit(limit)
+    else:
+        query = query.order_by(stime_field())
 
     return query
 

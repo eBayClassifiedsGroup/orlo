@@ -235,7 +235,8 @@ def get_releases(release_id=None):
 
     :param string release_id: Optionally specify a single release UUID to fetch. \
         This does not disable filters.
-    :query boolean latest: Return only the last matching release (the latest)
+    :query int desc: Normally results are returned ordered by stime ascending, setting
+        desc to true will reverse this and sort by stime descending
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform

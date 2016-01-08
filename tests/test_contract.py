@@ -303,7 +303,12 @@ class GetContractTest(OrloHttpTest):
         results_response = self.client.get(
             path, content_type='application/json',
         )
-        self.assertEqual(results_response.status_code, expected_status)
+
+        try:
+            self.assertEqual(results_response.status_code, expected_status)
+        except AssertionError as err:
+            print(results_response.data)
+            raise
         r_json = json.loads(results_response.data)
         return r_json
 
@@ -534,7 +539,7 @@ class GetContractTest(OrloHttpTest):
             for p in r['packages']:
                 self.assertIs(p['rollback'], False)
 
-    def test_get_release_latest(self):
+    def test_get_release_limit_one(self):
         """
         Should return only one release
         """
@@ -544,8 +549,21 @@ class GetContractTest(OrloHttpTest):
             rid = self._create_release()
             sleep(0.1)
 
-        r = self._get_releases(filters=['latest=True'])
+        r = self._get_releases(filters=['limit=1'])
         self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_desc(self):
+        """
+        Should return in reverse order
+        """
+
+        rid = None
+        for _ in range(0, 3):
+            rid = self._create_release()
+            sleep(0.1)
+
+        r = self._get_releases(filters=['desc=true'])
+        # First in list should be last to be created
         self.assertEqual(r['releases'][0]['id'], rid)
 
     def test_get_release_package_name(self):
