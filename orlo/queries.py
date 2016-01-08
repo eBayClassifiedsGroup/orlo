@@ -4,6 +4,7 @@ import arrow
 from orlo import app
 from orlo.orm import db, Release, Platform, Package, release_platform
 from orlo.exceptions import OrloError, InvalidUsage
+from orlo.util import is_int
 
 __author__ = 'alforbes'
 
@@ -159,8 +160,12 @@ def releases(**kwargs):
     query = query.order_by(stime_field())
 
     if limit:
+        if not is_int(limit):
+            raise InvalidUsage("limit must be a valid integer value")
         query = query.limit(limit)
     if offset:
+        if not is_int(offset):
+            raise InvalidUsage("offset must be a valid integer value")
         query = query.offset(offset)
 
     return query

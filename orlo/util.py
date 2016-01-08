@@ -147,7 +147,6 @@ def list_to_string(array):
     return '["' + '", "'.join(array) + '"]'
 
 
-
 def stream_json_list(heading, iterator):
     """
     A lagging generator to stream JSON so we don't have to hold everything in memory
@@ -177,3 +176,10 @@ def stream_json_list(heading, iterator):
     # Now yield the last iteration without comma but with the closing brackets
     yield json.dumps(prev_release.to_dict()) + ']}'
 
+
+def is_int(value):
+    try:
+        int(value)
+        return True
+    except ValueError:
+        return False

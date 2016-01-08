@@ -650,3 +650,29 @@ class CountPackagesRollback(CountPackagesTest):
 
         result = orlo.queries.count_packages(rollback=False).all()
         self.assertEqual(1, result[0][0])
+
+
+class ReleasesTest(OrloQueryTest):
+    """
+    Test the releases method
+    """
+
+    def test_releases_with_bad_limit(self):
+        """
+        Test releases raises InvalidUsage when limit is not an int
+        """
+        args = {
+            'limit': None,
+        }
+        with self.assertRaises(orlo.exceptions.InvalidUsage):
+            orlo.queries.releases(**args)
+
+    def test_releases_with_bad_offset(self):
+        """
+        Test releases raises InvalidUsage when offset is not an int
+        """
+        args = {
+            'offset': None,
+        }
+        with self.assertRaises(orlo.exceptions.InvalidUsage):
+            orlo.queries.releases(**args)
