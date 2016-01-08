@@ -299,3 +299,32 @@ def stats_package(package=None):
     package_stats = build_stats_dict('package', package_list, stime=stime, ftime=ftime)
 
     return jsonify(package_stats)
+
+
+@app.route('/stats/by_date')
+def stats_by_date():
+    """
+    Return release release_stats by date
+
+    :query string unit: Unit to group by, i.e. year, month, week, day, hour
+    :query boolean summarize_by_unit: Don't build hierarchy, just summarize by the unit
+    :return:
+
+    This endpoint also allows filtering on the same fields as GET /releases, e.g stime_gt. See
+    that endpoint for documentation.
+    """
+
+    # Get the filters into an args directory, if they are set
+    filters = dict((k, v) for k, v in request.args.items())
+    unit = filters.pop('unit', 'month')
+
+    summarize_by_unit = False
+    if filters.pop('summarize_by_unit', False):
+        summarize_by_unit = True
+
+    # Returns releases and their time by rollback and status
+    release_stats = queries.stats_release_time(unit, summarize_by_unit, **filters)
+
+    return jsonify(release_stats)
+
+
