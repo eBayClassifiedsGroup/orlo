@@ -134,6 +134,7 @@ def releases(**kwargs):
     """
 
     limit = kwargs.pop('limit', None)
+    offset = kwargs.pop('offset', None)
     desc = kwargs.pop('desc', False)
 
     if any(field.startswith('package_') for field in kwargs.keys())\
@@ -155,10 +156,12 @@ def releases(**kwargs):
     else:
         stime_field = Release.stime.asc
 
+    query = query.order_by(stime_field())
+
     if limit:
-        query = query.order_by(stime_field()).limit(limit)
-    else:
-        query = query.order_by(stime_field())
+        query = query.limit(limit)
+    if offset:
+        query = query.offset(offset)
 
     return query
 

@@ -544,13 +544,25 @@ class GetContractTest(OrloHttpTest):
         Should return only one release
         """
 
-        rid = None
         for _ in range(0, 3):
-            rid = self._create_release()
+            self._create_release()
             sleep(0.1)
 
         r = self._get_releases(filters=['limit=1'])
         self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_offset(self):
+        """
+        Test that offset=1 skips the first release
+        """
+        rid = None
+        for _ in range(0, 2):
+            rid = self._create_release()
+            sleep(0.1)
+
+        r = self._get_releases(filters=['offset=1'])
+        self.assertEqual(len(r['releases']), 1)
+        self.assertEqual(r['releases'][0]['id'], rid)
 
     def test_get_release_desc(self):
         """
