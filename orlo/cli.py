@@ -15,7 +15,7 @@ def parse_args():
 
     p_config = argparse.ArgumentParser(add_help=False)
     p_config.add_argument('--file', '-f', dest='filepath', help="File to write to",
-                          default='/etc/orlo.conf')
+                          default='/etc/orlo/orlo.ini')
 
     p_database = argparse.ArgumentParser(add_help=False)
     p_server = argparse.ArgumentParser(add_help=False)
@@ -54,7 +54,7 @@ def setup_database(args):
     if config.get('db', 'uri') == 'sqlite://':
         print("Warning: setting up in-memory database, this is "
               "probably not what you want!\n"
-              "Please configure db:uri in /etc/orlo.conf")
+              "Please configure db:uri in /etc/orlo/orlo.ini")
     db.create_all()
 
 

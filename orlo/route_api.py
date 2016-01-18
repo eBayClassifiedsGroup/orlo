@@ -261,7 +261,7 @@ def get_releases(release_id=None):
          "NOT_STARTED", "IN_PROGRESS", "SUCCESSFUL", "FAILED"
 
     **Note for time arguments**:
-        The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.
+        The timestamp format you must use is specified in /etc/orlo/orlo.ini. All times are UTC.
 
     **Note on status**:
         The release status is calculated from the packages it contains. The possible values are

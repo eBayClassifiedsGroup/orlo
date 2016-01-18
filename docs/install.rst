@@ -80,7 +80,7 @@ From the psql prompt:
     CREATE DATABASE
     postgres=#
 
-Update uri under [db] in orlo.conf, e.g.
+Update uri under [db] in orlo.ini, e.g.
 
 ::
 
@@ -96,7 +96,7 @@ Create a directory for the db, e.g. :
     mkdir /var/lib/orlo
     chown orlo:root /var/lib/orlo
 
-Update the uri under [db] in orlo.conf to point to a file in this directory:
+Update the uri under [db] in orlo.ini to point to a file in this directory:
 
 ::
 
