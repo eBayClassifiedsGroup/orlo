@@ -282,6 +282,32 @@ class PostContractTest(OrloHttpTest):
         doc = json.loads(release.references)
         self.assertIsInstance(doc, list)
 
+    def test_stop_package_success_true(self):
+        """
+        Test stop_package when success is false
+        """
+        release_id = self._create_release()
+        package_id = self._create_package(release_id)
+        self._start_package(release_id, package_id)
+        self._stop_package(release_id, package_id, success=True)
+
+        release = db.session.query(Release).filter(Release.id == release_id).one()
+        package = release.packages[0]
+        self.assertEqual(package.status, 'SUCCESSFUL')
+
+    def test_stop_package_success_false(self):
+        """
+        Test stop_package when success is false
+        """
+        release_id = self._create_release()
+        package_id = self._create_package(release_id)
+        self._start_package(release_id, package_id)
+        self._stop_package(release_id, package_id, success=False)
+
+        release = db.session.query(Release).filter(Release.id == release_id).one()
+        package = release.packages[0]
+        self.assertEqual(package.status, 'FAILED')
+
 
 class GetContractTest(OrloHttpTest):
     """
