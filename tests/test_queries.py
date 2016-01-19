@@ -650,3 +650,132 @@ class CountPackagesRollback(CountPackagesTest):
 
         result = orlo.queries.count_packages(rollback=False).all()
         self.assertEqual(1, result[0][0])
+
+
+class ReleasesTest(OrloQueryTest):
+    """
+    Test the releases method
+    """
+
+    def test_releases_with_bad_limit(self):
+        """
+        Test releases raises InvalidUsage when limit is not an int
+        """
+        args = {
+            'limit': 'bad_limit',
+        }
+        with self.assertRaises(orlo.exceptions.InvalidUsage):
+            orlo.queries.releases(**args)
+
+    def test_releases_with_bad_offset(self):
+        """
+        Test releases raises InvalidUsage when offset is not an int
+        """
+        args = {
+            'offset': 'bad_offset',
+        }
+        with self.assertRaises(orlo.exceptions.InvalidUsage):
+            orlo.queries.releases(**args)
+
+
+class ReleaseTimeTest(OrloQueryTest):
+    """
+    Test queries.stats_release_time
+    """
+    ARGS = {
+        'stime_gt': arrow.utcnow().replace(hours=-1),
+        'stime_lt': arrow.utcnow().replace(hours=+1)
+    }
+
+    def setUp(self):
+        super(OrloQueryTest, self).setUp()
+
+        for r in range(0, 7):
+            self._create_finished_release()
+
+    def test_append_tree_recursive(self):
+        """
+        Test that append_tree_recursive returns a properly structured dictionary
+        """
+        tree = {}
+        nodes = ['apple', 'orange']
+        orlo.queries.append_tree_recursive(tree, nodes[0], nodes)
+        self.assertEqual(tree, {'apple': {'orange': 1}})
+
+    def test_append_tree_recursive_adds(self):
+        """
+        Test that append_tree_recursive correctly adds one when called on the same path
+        """
+        tree = {}
+        nodes = ['apple', 'orange']
+        orlo.queries.append_tree_recursive(tree, nodes[0], nodes)
+        orlo.queries.append_tree_recursive(tree, nodes[0], nodes)
+        self.assertEqual(tree, {'apple': {'orange': 2}})
+
+    def test_release_time_month(self):
+        """
+        Test queries.add_releases_by_time_to_dict by month
+        """
+        result = orlo.queries.stats_release_time('month', **self.ARGS)
+        year = str(arrow.utcnow().year)
+        month = str(arrow.utcnow().month)
+        self.assertEqual(7, result[year][month]['normal']['successful'])
+
+    def test_release_time_week(self):
+        """
+        Test queries.add_releases_by_time_to_dict by week
+        """
+        result = orlo.queries.stats_release_time('week', **self.ARGS)
+        year, week, day = arrow.utcnow().isocalendar()
+        self.assertEqual(7, result[str(year)][str(week)]['normal']['successful'])
+
+    def test_release_time_year(self):
+        """
+        Test queries.add_releases_by_time_to_dict by year
+        """
+        result = orlo.queries.stats_release_time('year', **self.ARGS)
+        year = str(arrow.utcnow().year)
+        self.assertEqual(7, result[str(year)]['normal']['successful'])
+
+    def test_release_time_day(self):
+        """
+        Test queries.add_releases_by_time_to_dict by day
+        """
+        result = orlo.queries.stats_release_time('day', **self.ARGS)
+        year = str(arrow.utcnow().year)
+        month = str(arrow.utcnow().month)
+        day = str(arrow.utcnow().day)
+        self.assertEqual(
+                7,
+                result[year][month][day]['normal']['successful'],
+        )
+
+    def test_release_time_hour(self):
+        """
+        Test queries.add_releases_by_time_to_dict by hour
+        """
+        result = orlo.queries.stats_release_time('hour', **self.ARGS)
+        year = str(arrow.utcnow().year)
+        month = str(arrow.utcnow().month)
+        day = str(arrow.utcnow().day)
+        hour = str(arrow.utcnow().hour)
+        self.assertEqual(
+            7,
+            result[year][month][day][hour]['normal']['successful'],
+        )
+
+    def test_release_time_with_only_this_unit(self):
+        """
+        Test queries.add_releases_by_time_to_dict with only_this_unit
+
+        Should break down by only the unit given
+        """
+        result = orlo.queries.stats_release_time('hour', summarize_by_unit=True, **self.ARGS)
+        hour = str(arrow.utcnow().hour)
+        self.assertEqual(
+                7,
+                result[hour]['normal']['successful'],
+        )
+
+    def test_release_time_with_unit_day(self):
+        pass

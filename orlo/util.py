@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 import arrow
 import datetime
+from flask import json
 from orlo import app
 from orlo.orm import db, Release, Package, Platform
 from orlo.exceptions import InvalidUsage
@@ -146,81 +147,39 @@ def list_to_string(array):
     return '["' + '", "'.join(array) + '"]'
 
 
-def apply_filters(query, args):
+def stream_json_list(heading, iterator):
     """
-    Apply filters to a query
+    A lagging generator to stream JSON so we don't have to hold everything in memory
 
-    :param query: Query object to apply filters to
-    :param args: Dictionary of arguments, usually request.args
+    This is a little tricky, as we need to omit the last comma to make valid JSON,
+    thus we use a lagging generator, similar to http://stackoverflow.com/questions/1630320/
 
-    :return: filtered query object
+    :param heading: The title of the set, e.g. "releases"
+    :param iterator: Any object with __iter__(), e.g. SQLAlchemy Query
     """
+    iterator = iterator.__iter__()
+    try:
+        prev_release = next(iterator)  # get first result
+    except StopIteration:
+        # StopIteration here means the length was zero, so yield a valid releases doc and stop
+        yield '{{"{}": []}}'.format(heading)
+        raise StopIteration
 
-    for field, value in args.iteritems():
-        if field == 'latest':  # this is not a comparison
-            continue
+    # We have some releases. First, yield the opening json
+    yield '{{"{}": ['.format(heading)
 
-        if field.startswith('package_'):
-            # Package attribute. Ensure source query does a join on Package.
-            db_table = Package
-            field = '_'.join(field.split('_')[1:])
-        else:
-            db_table = Release
+    # Iterate over the releases
+    for item in iterator:
+        yield json.dumps(prev_release.to_dict()) + ', '
+        prev_release = item
 
-        comparison = '=='
-        time_absolute = False
-        time_delta = False
-        strip_last = False
-        sub_field = None
+    # Now yield the last iteration without comma but with the closing brackets
+    yield json.dumps(prev_release.to_dict()) + ']}'
 
-        if field.endswith('_gt'):
-            strip_last = True
-            comparison = '>'
-        if field.endswith('_lt'):
-            strip_last = True
-            comparison = '<'
-        if field.endswith('_before'):
-            strip_last = True
-            comparison = '<'
-            time_absolute = True
-        if field.endswith('_after'):
-            strip_last = True
-            comparison = '>'
-            time_absolute = True
-        if 'duration' in field.split('_'):
-            time_delta = True
-        if field == 'platform':
-            field = 'platforms'
-            comparison = 'any'
-            sub_field = Platform.name
 
-        if strip_last:
-            # Strip anything after the last underscore inclusive
-            field = '_'.join(field.split('_')[:-1])
-
-        filter_field = getattr(db_table, field)
-
-        # Booleans
-        if value in ('True', 'true'):
-            value = True
-        if value in ('False', 'false'):
-            value = False
-
-        # Time related
-        if time_delta:
-            value = datetime.timedelta(seconds=int(value))
-        if time_absolute:
-            value = arrow.get(value)
-
-        # Do comparisons
-        app.logger.debug("Filtering: {} {} {}".format(filter_field, comparison, value))
-        if comparison == '==':
-            query = query.filter(filter_field == value)
-        if comparison == '<':
-            query = query.filter(filter_field < value)
-        if comparison == '>':
-            query = query.filter(filter_field > value)
-        if comparison == 'any':
-            query = query.filter(filter_field.any(sub_field == value))
-
-    return query
+def is_int(value):
+    try:
+        int(value)
+        return True
+    except ValueError:
+        return False

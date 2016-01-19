@@ -1,4 +1,7 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@ --with python-virtualenv
+	dh $@ --with systemd --with python-virtualenv
+
+override_dh_virtualenv:
+	dh_virtualenv --no-test

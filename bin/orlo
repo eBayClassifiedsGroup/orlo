@@ -1,5 +1,5 @@
 #!/bin/bash
 
-/usr/share/python/python-orlo/bin/python /usr/share/python/python-orlo/lib/python2.7/site-packages/orlo/cli.py $@
+/usr/share/python/orlo/bin/python /usr/share/python/orlo/lib/python2.7/site-packages/orlo/cli.py $@
 
 

@@ -1,11 +1,11 @@
-from orlo import app
+from orlo import app, queries
 from orlo.exceptions import InvalidUsage
-from flask import jsonify, request
+from flask import jsonify, request, Response, json
 import arrow
 import datetime
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
 from orlo.util import validate_request_json, create_release, validate_release_input, \
-    validate_package_input, fetch_release, create_package, fetch_package, apply_filters
+    validate_package_input, fetch_release, create_package, fetch_package, stream_json_list
 
 
 @app.route('/ping', methods=['GET'])
@@ -235,7 +235,11 @@ def get_releases(release_id=None):
 
     :param string release_id: Optionally specify a single release UUID to fetch. \
         This does not disable filters.
-    :query boolean latest: Return only the last matching release (the latest)
+    :query int desc: Normally results are returned ordered by stime ascending, setting
+        desc to true will reverse this and sort by stime descending
+    :query int limit: Limit the results by int
+    :query int offset: Offset the results by int
+    :query int skip: Skip this number of releases
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform
@@ -244,6 +248,8 @@ def get_releases(release_id=None):
     :query string ftime_before: Only include releases that finished before timestamp given
     :query string ftime_after: Only include releases that finished after timestamp given
     :query string team: Filter releases by team
+    :query string status: Filter by release status. This field is calculated from the package. \
+        status, see special note below.
     :query int duration_lt: Only include releases that took less than (int) seconds
     :query int duration_gt: Only include releases that took more than (int) seconds
     :query boolean package_rollback: Filter on whether or not the releases contain a rollback
@@ -255,41 +261,26 @@ def get_releases(release_id=None):
          "NOT_STARTED", "IN_PROGRESS", "SUCCESSFUL", "FAILED"
 
     **Note for time arguments**:
-        The timestamp format you must use is specified in /etc/orlo.conf. All times are UTC.
+        The timestamp format you must use is specified in /etc/orlo/orlo.ini. All times are UTC.
+
+    **Note on status**:
+        The release status is calculated from the packages it contains. The possible values are
+        the same as a package. For a release to be considered "SUCCESSFUL" or "NOT_STARTED",
+        all packages must have this value. If any one package has the value "IN_PROGRESS" or
+        "FAILED", that status applies to the whole release, with "FAILED" overriding "IN_PROGRESS".
 
     """
 
-    if any(field.startswith('package_') for field in request.args.keys()):
-        query = db.session.query(Release).join(Package)
-    else:
-        # No need to join on package if none of our params need it
-        query = db.session.query(Release)
+    if release_id:  # Simple
+        query = db.session.query(Release).filter(Release.id == release_id)
+    else:  # Bit more complex
+        # Flatten args, as the ImmutableDict puts some values in a list when expanded
+        args = {}
+        for k, v in request.args.items():
+            if type(v) is list:
+                args[k] = v[0]
+            else:
+                args[k] = v
+        query = queries.releases(**args)
 
-    if request.args.get('latest', False):
-        # sort descending so we can use .first()
-        query = query.order_by(Release.stime.desc())
-    else:  # ascending
-        query = query.order_by(Release.stime.asc())
-
-    if release_id:
-        query = query.filter(Release.id == release_id)
-    elif request.args:
-        try:
-            query = apply_filters(query, request.args)
-        except AttributeError as e:
-            raise InvalidUsage("An invalid field was specified: {}".format(e.message))
-
-    if request.args.get('latest'):
-        query = query.limit(1)
-
-    app.logger.debug("Query: {}".format(str(query)))
-    releases = query.all()
-
-    app.logger.debug("Returning {} releases".format(len(releases)))
-    output = []
-    for r in releases:
-        output.append(r.to_dict())
-
-    return jsonify(releases=output), 200
-
-
+    return Response(stream_json_list('releases', query), content_type='application/json')

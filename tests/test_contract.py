@@ -282,6 +282,32 @@ class PostContractTest(OrloHttpTest):
         doc = json.loads(release.references)
         self.assertIsInstance(doc, list)
 
+    def test_stop_package_success_true(self):
+        """
+        Test stop_package when success is false
+        """
+        release_id = self._create_release()
+        package_id = self._create_package(release_id)
+        self._start_package(release_id, package_id)
+        self._stop_package(release_id, package_id, success=True)
+
+        release = db.session.query(Release).filter(Release.id == release_id).one()
+        package = release.packages[0]
+        self.assertEqual(package.status, 'SUCCESSFUL')
+
+    def test_stop_package_success_false(self):
+        """
+        Test stop_package when success is false
+        """
+        release_id = self._create_release()
+        package_id = self._create_package(release_id)
+        self._start_package(release_id, package_id)
+        self._stop_package(release_id, package_id, success=False)
+
+        release = db.session.query(Release).filter(Release.id == release_id).one()
+        package = release.packages[0]
+        self.assertEqual(package.status, 'FAILED')
+
 
 class GetContractTest(OrloHttpTest):
     """
@@ -300,11 +326,15 @@ class GetContractTest(OrloHttpTest):
         else:
             path = '/releases'
 
-        print("GET {}".format(path))
         results_response = self.client.get(
             path, content_type='application/json',
         )
-        self.assertEqual(results_response.status_code, expected_status)
+
+        try:
+            self.assertEqual(results_response.status_code, expected_status)
+        except AssertionError as err:
+            print(results_response.data)
+            raise
         r_json = json.loads(results_response.data)
         return r_json
 
@@ -535,9 +565,34 @@ class GetContractTest(OrloHttpTest):
             for p in r['packages']:
                 self.assertIs(p['rollback'], False)
 
-    def test_get_release_latest(self):
+    def test_get_release_limit_one(self):
         """
         Should return only one release
+        """
+
+        for _ in range(0, 3):
+            self._create_release()
+            sleep(0.1)
+
+        r = self._get_releases(filters=['limit=1'])
+        self.assertEqual(len(r['releases']), 1)
+
+    def test_get_release_offset(self):
+        """
+        Test that offset=1 skips the first release
+        """
+        rid = None
+        for _ in range(0, 2):
+            rid = self._create_release()
+            sleep(0.1)
+
+        r = self._get_releases(filters=['offset=1'])
+        self.assertEqual(len(r['releases']), 1)
+        self.assertEqual(r['releases'][0]['id'], rid)
+
+    def test_get_release_desc(self):
+        """
+        Should return in reverse order
         """
 
         rid = None
@@ -545,8 +600,8 @@ class GetContractTest(OrloHttpTest):
             rid = self._create_release()
             sleep(0.1)
 
-        r = self._get_releases(filters=['latest=True'])
-        self.assertEqual(len(r['releases']), 1)
+        r = self._get_releases(filters=['desc=true'])
+        # First in list should be last to be created
         self.assertEqual(r['releases'][0]['id'], rid)
 
     def test_get_release_package_name(self):
@@ -694,3 +749,38 @@ class GetContractTest(OrloHttpTest):
 
         r = self._get_releases(filters=['foo=bar'], expected_status=400)
         self.assertIn('message', r)
+
+    def test_get_release_with_status_successful(self):
+        """
+        Test that the release status filters correctly
+        """
+        # A partially successful release (should be considered "FAILED")
+        rid1 = self._create_release()
+        pid1 = self._create_package(rid1, name='successful_package')
+        self._start_package(rid1, pid1)
+        self._stop_package(rid1, pid1, success=True)
+        pid2 = self._create_package(rid1, name='failed_package')
+        self._start_package(rid1, pid2)
+        self._stop_package(rid1, pid2, success=False)
+        self._stop_release(rid1)
+
+        for _ in range(0, 2):
+            # These should be successful
+            self._create_finished_release()
+
+        success_results = self._get_releases(filters=['status=SUCCESSFUL'])
+        self.assertEqual(len(success_results['releases']), 2)
+
+        failed_results = self._get_releases(filters=['status=FAILED'])
+        self.assertEqual(len(failed_results['releases']), 1)
+        self.assertEqual(rid1, failed_results['releases'][0]['id'])
+
+    def test_get_release_with_bad_status(self):
+        """
+        Tests get /releases?status=garbage give a helpful mesage
+        """
+        self._create_finished_release()
+
+        result = self._get_releases(filters=['status=garbage_boz'], expected_status=400)
+        self.assertIn('message', result)
+

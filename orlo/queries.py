@@ -1,13 +1,203 @@
 from __future__ import print_function
+import calendar
+import datetime
+import arrow
 from orlo import app
 from orlo.orm import db, Release, Platform, Package, release_platform
-from orlo.exceptions import OrloError
+from orlo.exceptions import OrloError, InvalidUsage
+from orlo.util import is_int
+from collections import OrderedDict
 
 __author__ = 'alforbes'
 
 """
 Functions in this file are about generating summaries of data
 """
+
+
+def _filter_release_status(query, status):
+    """
+    Filter the given query by the given release status
+
+    Release status is special, because it's actually determined by the package status
+
+    :param query: Query object
+    :param status: The status to filter on
+    :return:
+    """
+    enums = Package.status.property.columns[0].type.enums
+    if status not in enums:
+        raise InvalidUsage("Invalid package status, {} is not in {}".format(
+                status, str(enums)))
+    if status in ["SUCCESSFUL", "NOT_STARTED"]:
+        # ALL packages must match this status for it to apply to the release
+        # Query logic translates to "Releases which do not have any packages which satisfy
+        # the condition 'Package.status != status'". I.E, all match.
+        query = query.filter(
+                ~Release.packages.any(
+                        Package.status != status
+                ))
+    elif status in ["FAILED", "IN_PROGRESS"]:
+        # ANY package can match for this status to apply to the release
+        query = query.filter(Release.packages.any(Package.status == status))
+    return query
+
+
+def _filter_release_rollback(query, rollback):
+    """
+    Filter the given query by whether the releases are rollbacks or not
+
+    :param query: Query object
+    :param boolean rollback:
+    :return:
+    """
+    if rollback is True:
+        # Only count releases which have a rollback package
+        query = query.filter(
+                Release.packages.any(Package.rollback == True)
+        )
+    elif rollback is False:
+        # Only count releases which do not have any rollback packages
+        query = query.filter(
+                ~Release.packages.any(Package.rollback == True)
+        )
+    else:  # What the hell did you pass?
+        raise TypeError("Bad rollback parameter: '{}', type {}. Boolean expected.".format(
+                rollback, type(rollback)))
+    return query
+
+
+def apply_filters(query, args):
+    """
+    Apply filters to a query
+
+    :param query: Query object to apply filters to
+    :param args: Dictionary of arguments, usually request.args
+
+    :return: filtered query object
+    """
+
+    for field, value in args.iteritems():
+        if field == 'latest':  # this is not a comparison
+            continue
+
+        # special logic for these ones, as they are package attributes
+        if field == 'status':
+            query = _filter_release_status(query, value)
+            continue
+        if field == 'rollback':
+            query = _filter_release_rollback(query, value)
+            continue
+
+        if field.startswith('package_'):
+            # Package attribute. Ensure source query does a join on Package.
+            db_table = Package
+            field = '_'.join(field.split('_')[1:])
+        else:
+            db_table = Release
+
+        comparison = '=='
+        time_absolute = False
+        time_delta = False
+        strip_last = False
+        sub_field = None
+
+        if field.endswith('_gt'):
+            strip_last = True
+            comparison = '>'
+        if field.endswith('_lt'):
+            strip_last = True
+            comparison = '<'
+        if field.endswith('_before'):
+            strip_last = True
+            comparison = '<'
+            time_absolute = True
+        if field.endswith('_after'):
+            strip_last = True
+            comparison = '>'
+            time_absolute = True
+        if 'duration' in field.split('_'):
+            time_delta = True
+        if field == 'platform':
+            field = 'platforms'
+            comparison = 'any'
+            sub_field = Platform.name
+
+        if strip_last:
+            # Strip anything after the last underscore inclusive
+            field = '_'.join(field.split('_')[:-1])
+
+        filter_field = getattr(db_table, field)
+
+        # Booleans
+        if value in ('True', 'true'):
+            value = True
+        if value in ('False', 'false'):
+            value = False
+
+        # Time related
+        if time_delta:
+            value = datetime.timedelta(seconds=int(value))
+        if time_absolute:
+            value = arrow.get(value)
+
+        # Do comparisons
+        app.logger.debug("Filtering: {} {} {}".format(filter_field, comparison, value))
+        if comparison == '==':
+            query = query.filter(filter_field == value)
+        if comparison == '<':
+            query = query.filter(filter_field < value)
+        if comparison == '>':
+            query = query.filter(filter_field > value)
+        if comparison == 'any':
+            query = query.filter(filter_field.any(sub_field == value))
+
+    return query
+
+
+def releases(**kwargs):
+    """
+    Return whole releases, based on filters
+
+    :param kwargs: Request arguments
+    :return:
+    """
+
+    limit = kwargs.pop('limit', None)
+    offset = kwargs.pop('offset', None)
+    desc = kwargs.pop('desc', False)
+
+    if any(field.startswith('package_') for field in kwargs.keys()) \
+            or "status" in kwargs.keys():
+        # Package attributes need the join, as does status as it's really a package
+        # attribute
+        query = db.session.query(Release).join(Package)
+    else:
+        # No need to join on package if none of our params need it
+        query = db.session.query(Release)
+
+    try:
+        query = apply_filters(query, kwargs)
+    except AttributeError as e:
+        raise InvalidUsage("An invalid field was specified: {}".format(e.message))
+
+    if desc:
+        stime_field = Release.stime.desc
+    else:
+        stime_field = Release.stime.asc
+
+    query = query.order_by(stime_field())
+
+    if limit:
+        if not is_int(limit):
+            raise InvalidUsage("limit must be a valid integer value")
+        query = query.limit(limit)
+    if offset:
+        if not is_int(offset):
+            raise InvalidUsage("offset must be a valid integer value")
+        query = query.offset(offset)
+
+    return query
 
 
 def user_summary(platform=None):
@@ -23,6 +213,21 @@ def user_summary(platform=None):
         query = query.filter(Release.platforms.any(Platform.name == platform))
 
     return query.group_by(Release.user)
+
+
+def user_info(username):
+    """
+    Get user info for a single user
+
+    :param username:
+    :return:
+    """
+    query = db.session.query(
+            Release.user, db.func.count(Release.id)) \
+        .filter(Release.user == username) \
+        .group_by(Release.user)
+
+    return query
 
 
 def user_list(platform=None):
@@ -53,6 +258,21 @@ def team_summary(platform=None):
     return query.group_by(Release.team)
 
 
+def team_info(team_name):
+    """
+    Get info for a single team
+
+    :param team_name:
+    :return:
+    """
+    query = db.session.query(
+            Release.user, db.func.count(Release.id)) \
+        .filter(Release.team == team_name) \
+        .group_by(Release.team)
+
+    return query
+
+
 def team_list(platform=None):
     """
     Find all teams that have performed releases
@@ -68,11 +288,11 @@ def team_list(platform=None):
 
 def package_summary(platform=None, stime=None, ftime=None):
     """
-    Summary of releases by package
+    Summary of packages
 
     :param stime: Start time, or time lower bound
     :param ftime: Finish time, or time upper bound
-    :param platform:
+    :param platform: Filter by platform
     """
 
     query = db.session.query(Package.name, db.func.count(Package.release_id))
@@ -86,6 +306,21 @@ def package_summary(platform=None, stime=None, ftime=None):
         query = query.filter(Release.stime < ftime)
 
     query = query.group_by(Package.name)
+
+    return query
+
+
+def package_info(package_name):
+    """
+    Return a query for a package and how many times it was released
+
+    :param package_name:
+    :return:
+    """
+    query = db.session.query(
+            Package.name, db.func.count(Package.id)) \
+        .filter(Package.name == package_name) \
+        .group_by(Package.name)
 
     return query
 
@@ -118,10 +353,10 @@ def package_versions(platform=None):
             Package.name, db.func.max(Package.stime).label('max_stime')) \
         .filter(Package.status == 'SUCCESSFUL')
     if platform:  # filter releases not on this platform
-        sub_q = sub_q\
-            .join(Release)\
+        sub_q = sub_q \
+            .join(Release) \
             .filter(Release.platforms.any(Platform.name == platform))
-    sub_q = sub_q\
+    sub_q = sub_q \
         .group_by(Package.name) \
         .subquery()
 
@@ -185,36 +420,10 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
         query = query.filter(Release.stime <= ftime)
 
     if rollback is not None:
-        if rollback is True:
-            # Only count releases which have a rollback package
-            query = query.filter(
-                    Release.packages.any(Package.rollback == True)
-            )
-        elif rollback is False:
-            # Only count releases which do not have any rollback packages
-            query = query.filter(
-                    ~Release.packages.any(Package.rollback == True)
-            )
-        else:  # What the hell did you pass?
-            raise TypeError("Bad rollback parameter: '{}', type {}. Boolean expected.".format(
-                    rollback, type(rollback)))
+        query = _filter_release_rollback(query, rollback)
 
     if status:
-        enums = Package.status.property.columns[0].type.enums
-        if status not in enums:
-            raise OrloError("Invalid package status, {} is not in {}".format(
-                    status, str(enums)))
-        if status in ["SUCCESSFUL", "NOT_STARTED"]:
-            # ALL packages must match this status for it to apply to the release
-            # Query logic translates to "Releases which do not have any packages which satisfy
-            # the condition 'Package.status != status'". I.E, all match.
-            query = query.filter(
-                    ~Release.packages.any(
-                            Package.status != status
-                    ))
-        elif status in ["FAILED", "IN_PROGRESS"]:
-            # ANY package can match for this status to apply to the release
-            query = query.filter(Release.packages.any(Package.status == status))
+        query = _filter_release_status(query, status)
 
     return query
 
@@ -262,6 +471,22 @@ def platform_summary():
     return query
 
 
+def platform_info(platform_name):
+    """
+    Return a single platform and how many times it was released
+
+    :param platform_name:
+    :return:
+    """
+
+    query = db.session.query(
+            Platform.name, db.func.count(Platform.id)) \
+        .filter(Platform.name == platform_name) \
+        .group_by(Platform.name)
+
+    return query
+
+
 def platform_list():
     """
     Return a summary of the known platforms
@@ -273,3 +498,118 @@ def platform_list():
         .join(release_platform)
 
     return query
+
+
+def stats_release_time(unit, summarize_by_unit=False, **kwargs):
+    """
+    Return stats by time from the given arguments
+
+    Functions in this file usually return a query object, but here we are
+    returning the result, as there are several queries in play.
+
+    :param summarize_by_unit: Passed to add_release_by_time_to_dict()
+    :param unit: Passed to add_release_by_time_to_dict()
+    """
+
+    root_query = db.session.query(Release.id, Release.stime).join(Package)
+    root_query = apply_filters(root_query, kwargs)
+
+    # Build queries for the individual stats
+    q_normal_successful = _filter_release_status(
+            _filter_release_rollback(root_query, rollback=False), 'SUCCESSFUL'
+    )
+    q_normal_failed = _filter_release_status(
+            _filter_release_rollback(root_query, rollback=False), 'FAILED'
+    )
+    q_rollback_successful = _filter_release_status(
+            _filter_release_rollback(root_query, rollback=True), 'SUCCESSFUL'
+    )
+    q_rollback_failed = _filter_release_status(
+            _filter_release_rollback(root_query, rollback=True), 'FAILED'
+    )
+
+    output_dict = OrderedDict()
+
+    add_releases_by_time_to_dict(
+            q_normal_successful, output_dict, ('normal', 'successful'), unit, summarize_by_unit)
+    add_releases_by_time_to_dict(
+            q_normal_failed, output_dict, ('normal', 'failed'), unit, summarize_by_unit)
+    add_releases_by_time_to_dict(
+            q_rollback_successful, output_dict, ('rollback', 'successful'), unit,
+            summarize_by_unit)
+    add_releases_by_time_to_dict(
+            q_rollback_failed, output_dict, ('rollback', 'failed'), unit, summarize_by_unit)
+
+    return output_dict
+
+
+def add_releases_by_time_to_dict(query, releases_dict, t_category, unit='month',
+                                 summarize_by_unit=False):
+    """
+    Take a query and add each of its releases to a dictionary, broken down by time
+
+    :param dict releases_dict: Dict to add to
+    :param tuple t_category: tuple of headings, i.e. (<normal|rollback>, <successful|failed>)
+    :param query query: Query object to retrieve releases from
+    :param string unit: Can be 'iso', 'hour', 'day', 'week', 'month', 'year',
+    :param boolean summarize_by_unit: Only break down releases by the given unit, i.e. only one
+        layer deep
+    :return:
+    """
+
+    for release in query:
+        if summarize_by_unit:
+            tree_args = [str(getattr(release.stime, unit))]
+        else:
+            if unit == 'year':
+                tree_args = [str(release.stime.year)]
+            elif unit == 'month':
+                tree_args = [str(release.stime.year), str(release.stime.month)]
+            elif unit == 'week':
+                # First two args of isocalendar(), year and week
+                tree_args = [str(i) for i in release.stime.isocalendar()][0:2]
+            elif unit == 'iso':
+                tree_args = [str(i) for i in release.stime.isocalendar()]
+            elif unit == 'day':
+                tree_args = [str(release.stime.year), str(release.stime.month),
+                             str(release.stime.day)]
+            elif unit == 'hour':
+                tree_args = [str(release.stime.year), str(release.stime.month),
+                             str(release.stime.day), str(release.stime.hour)]
+            else:
+                raise InvalidUsage(
+                    'Invalid unit "{}" specified for release breakdown'.format(
+                        unit))
+        # Append categories
+        print(tree_args)
+        tree_args += t_category
+        append_tree_recursive(releases_dict, tree_args[0], tree_args)
+
+
+def append_tree_recursive(tree, parent, nodes):
+    """
+    Recursively place the nodes under each other
+
+    :param dict tree: The dictionary we are operating on
+    :param parent: The parent for this node
+    :param nodes: The list of nodes
+    :return:
+    """
+    print('Called recursive function with args:\n{}, {}, {}'.format(
+            str(tree), str(parent), str(nodes)))
+    try:
+        # Get the child, one after the parent
+        child = nodes[nodes.index(parent) + 1]
+    except IndexError:
+        # Must be at end
+        if parent in tree:
+            tree[parent] += 1
+        else:
+            tree[parent] = 1
+        return tree
+
+    # Otherwise recurse again
+    if parent not in tree:
+        tree[parent] = {}
+    # Child becomes the parent
+    append_tree_recursive(tree[parent], child, nodes)

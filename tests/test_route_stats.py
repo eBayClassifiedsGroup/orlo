@@ -1,5 +1,6 @@
 from __future__ import print_function
 from tests.test_orm import OrloDbTest
+import arrow
 import unittest
 
 __author__ = 'alforbes'
@@ -127,3 +128,51 @@ class PackageStatsTest(StatsTest):
         response = self.client.get(self.ENDPOINT + '/test-package')
         self.assertIsInstance(response.json, dict)
 
+
+class TimeBasedStatsTest(StatsTest):
+    ENDPOINT = '/stats/by_date'
+
+    def test_result_includes_normals(self):
+        unittest.skip("Not suitable test for this endpoint")
+
+    def test_result_includes_rollbacks(self):
+        unittest.skip("Not suitable test for this endpoint")
+
+    def test_result_includes_totals(self):
+        unittest.skip("Not suitable test for this endpoint")
+
+    def test_with_invalid_stime(self):
+        # TODO the stats endpoints should be made consistent with the others by calling
+        # apply_filters on the query parameters
+        unittest.skip("Not suitable test for this endpoint")
+
+    def test_stats_by_date_with_year(self):
+        """
+        Test /stats/by_date/year
+        """
+        year = arrow.utcnow().year
+        response = self.client.get(self.ENDPOINT + '?stime_gt={}-01-01'.format(year))
+        self.assert200(response)
+
+    def test_stats_by_date_with_year_month(self):
+        """
+        Test /stats/by_date/year
+        """
+        year = arrow.utcnow().year
+        month = arrow.utcnow().month
+        response = self.client.get(self.ENDPOINT + '?stime_gt={}-{}-01'.format(year, month))
+        self.assert200(response)
+
+    def test_stats_by_date_with_unit_day(self):
+        """
+        Test /stats/by_date/year
+        """
+        response = self.client.get(self.ENDPOINT + '?unit=day')
+        self.assert200(response)
+
+    def test_stats_by_date_with_summarize_by_unit_day(self):
+        """
+        Test /stats/by_date/year
+        """
+        response = self.client.get(self.ENDPOINT + '?unit=day&summarize_by_unit=1')
+        self.assert200(response)
