@@ -1,3 +1,67 @@
+orlo (0.1.0) stable; urgency=medium
+
+  * Move orlo to /api/ in nginx
+  * Add ability to filter on rollback
+  * Add DB created to vagrant file
+  * Add more get_releases package filters and "latest" option
+  * Abstract filtering logic +
+  * Show easy to understand json message when filtering on invalid field
+  * Fix last/latest parameter name
+  * Use limit(1) instead of first for latest query
+  * Move helper functions from views.py to util.py
+  * Rename views.py to route_api.py
+  * Move filter function to util
+  * Start adding stats endpoints and functions
+  * Add index to stime field on Release
+  * Add __version__ attribute to package
+  * Add _version.py to gitignore
+  * Move cli interface into python page
+  * Add queries, for use by the stats and info routes
+  * Implement more /info endpoints, separate tests from stats
+  * Refactor non-endpoint tests to use internal methods rather than http
+  * Remove data.py
+  * Make the release counting function (now count_releases) more generic
+  * Add rollback filter to count_packages
+  * Comments, plus bump version
+  * Install requirements in vagrant file
+  * Fix platform name in log message
+  * Implement /stats endpoints
+  * Add /stats/package and consolidate the dictionary creation
+  * Handle poorly formatted time gracefully in stats endpoints
+  * Bump version
+  * Reverse Release-Package relationship
+  * Fix missing arguments passed to count_releases and implement /stats
+  * Fix to package_versions
+  * Rename /info urls
+  * Documentation updates
+  * Update Travis config to use Postgres
+  * Remove password from test postgres DB
+  * Fix postgres command
+  * Fix database setup
+  * Fix quotes in travis DB string
+  * Fix package_versions under postgres
+  * Set Flask packages to >= $version in requirements.txt
+  * Change /info/user endpoint
+  * Remove print statement, fix minor documentation bugs in /info
+  * Move platform in /info routes to query parameter
+  * Stream output of GET /releases to reduce memory usage
+  * Move /releases streaming json generator to util.py
+  * Add example curl to documentation for /import
+  * Abstract release logic away from the get_releases route
+  * Add status to get_releases parameters
+  * Remove "latest" filter option in favour of "desc" and "limit"
+  * Rename test_import
+  * Add offset to get_releases
+  * Ensure limit and offset are ints
+  * Implement time-based stats for charts
+  * Move orlo.conf to orlo/orlo.ini
+  * Rename package from python-orlo to orlo
+  * Deb packaging fixes
+  * Add tests for stop package
+  * Bump version to 0.1.0
+
+ -- Alex Forbes <alforbes@ebay.com>  Tue, 19 Jan 2016 16:07:52 +0000
+
 python-orlo (0.0.4) stable; urgency=medium
 
   * Update debian description
