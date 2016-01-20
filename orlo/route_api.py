@@ -5,7 +5,8 @@ import arrow
 import datetime
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
 from orlo.util import validate_request_json, create_release, validate_release_input, \
-    validate_package_input, fetch_release, create_package, fetch_package, stream_json_list
+    validate_package_input, fetch_release, create_package, fetch_package, stream_json_list, \
+    str_to_bool
 
 
 @app.route('/ping', methods=['GET'])
@@ -271,12 +272,16 @@ def get_releases(release_id=None):
 
     """
 
+    booleans = ('package_rollback', )
+
     if release_id:  # Simple
         query = db.session.query(Release).filter(Release.id == release_id)
     else:  # Bit more complex
         # Flatten args, as the ImmutableDict puts some values in a list when expanded
         args = {}
         for k, v in request.args.items():
+            if k in booleans:
+                args[k] = request.args.get(k, type=bool)
             if type(v) is list:
                 args[k] = v[0]
             else:

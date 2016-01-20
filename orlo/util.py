@@ -183,3 +183,11 @@ def is_int(value):
         return True
     except ValueError:
         return False
+
+
+def str_to_bool(value):
+    if value in ('T', 't', '1', 'true', 'True'):
+        return True
+    if value in ('F', 'f', '0', 'false', 'True'):
+        return False
+    raise ValueError("Value {} can not be cast as boolean".format(value))
