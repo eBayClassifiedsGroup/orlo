@@ -271,7 +271,7 @@ def get_releases(release_id=None):
 
     """
 
-    booleans = ('package_rollback', )
+    booleans = ('rollback', 'package_rollback', )
 
     if release_id:  # Simple
         query = db.session.query(Release).filter(Release.id == release_id)
@@ -282,11 +282,11 @@ def get_releases(release_id=None):
     else:  # Bit more complex
         # Flatten args, as the ImmutableDict puts some values in a list when expanded
         args = {}
-        for k, v in request.args.items():
+        for k in request.args.keys():
             if k in booleans:
                 args[k] = str_to_bool(request.args.get(k))
             else:
-                args[k] = v
+                args[k] = request.args.get(k)
         query = queries.releases(**args)
 
     return Response(stream_json_list('releases', query), content_type='application/json')

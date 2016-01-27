@@ -1,6 +1,8 @@
 from __future__ import print_function
 import arrow
 from flask import request, jsonify
+
+import stats
 from orlo import app
 from orlo.exceptions import InvalidUsage
 import orlo.queries as queries
@@ -127,7 +129,7 @@ def build_all_stats_dict(stime=None, ftime=None):
 
 
 @app.route('/stats')
-def stats():
+def stats_():
     """
     Return dictionary of global stats
 
@@ -323,7 +325,7 @@ def stats_by_date():
         summarize_by_unit = True
 
     # Returns releases and their time by rollback and status
-    release_stats = queries.stats_release_time(unit, summarize_by_unit, **filters)
+    release_stats = stats.releases_by_time(unit, summarize_by_unit, **filters)
 
     return jsonify(release_stats)
 
