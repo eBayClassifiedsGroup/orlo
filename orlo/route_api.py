@@ -284,9 +284,7 @@ def get_releases(release_id=None):
         args = {}
         for k, v in request.args.items():
             if k in booleans:
-                args[k] = request.args.get(k, type=bool)
-            if type(v) is list:
-                args[k] = v[0]
+                args[k] = str_to_bool(request.args.get(k))
             else:
                 args[k] = v
         query = queries.releases(**args)

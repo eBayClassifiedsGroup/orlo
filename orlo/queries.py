@@ -5,7 +5,6 @@ import arrow
 from orlo import app
 from orlo.orm import db, Release, Platform, Package, release_platform
 from orlo.exceptions import OrloError, InvalidUsage
-from orlo.util import is_int
 from collections import OrderedDict
 
 __author__ = 'alforbes'
@@ -81,7 +80,8 @@ def apply_filters(query, args):
         if field == 'latest':  # this is not a comparison
             continue
 
-        # special logic for these ones, as they are package attributes
+        # special logic for these ones, as they are release attributes that
+        # are JIT calculated from package attributes
         if field == 'status':
             query = _filter_release_status(query, value)
             continue
@@ -189,11 +189,15 @@ def releases(**kwargs):
     query = query.order_by(stime_field())
 
     if limit:
-        if not is_int(limit):
+        try:
+            limit = int(limit)
+        except ValueError:
             raise InvalidUsage("limit must be a valid integer value")
         query = query.limit(limit)
     if offset:
-        if not is_int(offset):
+        try:
+            offset = int(offset)
+        except ValueError:
             raise InvalidUsage("offset must be a valid integer value")
         query = query.offset(offset)
 

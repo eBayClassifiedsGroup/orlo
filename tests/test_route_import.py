@@ -63,7 +63,7 @@ class ImportTest(OrloTest):
         Crude. If only this test fails, consider adding a more specific test for the cause of
         the failure.
         """
-        response = self.client.get('/releases')
+        response = self.client.get('/releases?limit=1')
         self.assert200(response)
 
     def test_import_param_platforms(self):

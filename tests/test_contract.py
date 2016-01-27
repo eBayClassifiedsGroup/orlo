@@ -362,7 +362,9 @@ class GetContractTest(OrloHttpTest):
         """
         for _ in range(0, 3):
             self._create_finished_release()
-        results = self._get_releases()
+        results = self._get_releases(
+            filters=['limit=10']
+        )
         self.assertEqual(len(results['releases']), 3)
 
     def test_get_release_filter_package(self):
@@ -555,15 +557,15 @@ class GetContractTest(OrloHttpTest):
         first_results = self._get_releases(filters=['package_rollback=True'])
         second_results = self._get_releases(filters=['package_rollback=False'])
 
-        self.assertEqual(len(first_results['releases']), 3)
-        self.assertEqual(len(second_results['releases']), 2)
-
         for r in first_results['releases']:
             for p in r['packages']:
                 self.assertIs(p['rollback'], True)
         for r in second_results['releases']:
             for p in r['packages']:
                 self.assertIs(p['rollback'], False)
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 2)
 
     def test_get_release_limit_one(self):
         """
@@ -728,7 +730,7 @@ class GetContractTest(OrloHttpTest):
         second_results = self._get_releases(filters=['package_rollback=False',
                                                      'package_status=NOT_STARTED'])
         # should be zero
-        third_results = self._get_releases(filters=['package_rollback=FALSE',
+        third_results = self._get_releases(filters=['package_rollback=False',
                                                     'package_status=SUCCESSFUL'])
 
         self.assertEqual(len(first_results['releases']), 3)

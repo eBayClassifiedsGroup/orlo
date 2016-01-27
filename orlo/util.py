@@ -6,6 +6,7 @@ from orlo import app
 from orlo.orm import db, Release, Package, Platform
 from orlo.exceptions import InvalidUsage
 from sqlalchemy.orm import exc
+from six import string_types
 
 __author__ = 'alforbes'
 
@@ -177,17 +178,15 @@ def stream_json_list(heading, iterator):
     yield json.dumps(prev_release.to_dict()) + ']}'
 
 
-def is_int(value):
-    try:
-        int(value)
-        return True
-    except ValueError:
-        return False
-
-
 def str_to_bool(value):
-    if value in ('T', 't', '1', 'true', 'True'):
-        return True
-    if value in ('F', 'f', '0', 'false', 'True'):
-        return False
+    if isinstance(value, string_types):
+        try:
+            value = int(value)
+        except ValueError:
+            if value.lower() in ('t', 'true'):
+                return True
+            elif value.lower() in ('f', 'false'):
+                return False
+    if isinstance(value, int):
+        return True if value > 0 else False
     raise ValueError("Value {} can not be cast as boolean".format(value))
