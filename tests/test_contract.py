@@ -31,15 +31,15 @@ class OrloHttpTest(OrloTest):
         """
 
         response = self.client.post(
-            '/releases',
-            data=json.dumps({
-                'note': 'test note lorem ipsum',
-                'platforms': platforms,
-                'references': references,
-                'team': team,
-                'user': user,
-            }),
-            content_type='application/json',
+                '/releases',
+                data=json.dumps({
+                    'note': 'test note lorem ipsum',
+                    'platforms': platforms,
+                    'references': references,
+                    'team': team,
+                    'user': user,
+                }),
+                content_type='application/json',
         )
         self.assert200(response)
         return response.json['id']
@@ -71,9 +71,9 @@ class OrloHttpTest(OrloTest):
             doc['rollback'] = rollback
 
         response = self.client.post(
-            '/releases/{}/packages'.format(release_id),
-            data=json.dumps(doc),
-            content_type='application/json',
+                '/releases/{}/packages'.format(release_id),
+                data=json.dumps(doc),
+                content_type='application/json',
         )
         self.assert200(response)
         return response.json['id']
@@ -87,8 +87,8 @@ class OrloHttpTest(OrloTest):
         """
 
         response = self.client.post(
-            '/releases/{}/packages/{}/start'.format(release_id, package_id),
-            content_type='application/json',
+                '/releases/{}/packages/{}/start'.format(release_id, package_id),
+                content_type='application/json',
         )
         self.assertEqual(response.status_code, 204)
         return response
@@ -103,12 +103,12 @@ class OrloHttpTest(OrloTest):
         """
 
         response = self.client.post(
-            '/releases/{}/packages/{}/stop'.format(release_id, package_id),
-            data=json.dumps({
-                'success': str(success),
-                'foo': 'bar',
-            }),
-            content_type='application/json',
+                '/releases/{}/packages/{}/stop'.format(release_id, package_id),
+                data=json.dumps({
+                    'success': str(success),
+                    'foo': 'bar',
+                }),
+                content_type='application/json',
         )
         self.assertEqual(response.status_code, 204)
         return response
@@ -121,8 +121,8 @@ class OrloHttpTest(OrloTest):
         :return:
         """
         response = self.client.post(
-            '/releases/{}/stop'.format(release_id),
-            content_type='application/json',
+                '/releases/{}/stop'.format(release_id),
+                content_type='application/json',
         )
 
         self.assertEqual(response.status_code, 204)
@@ -149,9 +149,9 @@ class OrloHttpTest(OrloTest):
 
         doc = {'text': text}
         response = self.client.post(
-            '/releases/{}/notes'.format(release_id, text),
-            data=json.dumps(doc),
-            content_type='application/json',
+                '/releases/{}/notes'.format(release_id, text),
+                data=json.dumps(doc),
+                content_type='application/json',
         )
         self.assertEqual(response.status_code, 204)
         return response
@@ -185,13 +185,13 @@ class PostContractTest(OrloHttpTest):
         package_id = self._create_package(release_id)
 
         results_response = self.client.post(
-            '/releases/{}/packages/{}/results'.format(
-                release_id, package_id),
-            data=json.dumps({
-                'success': 'true',
-                'foo': 'bar',
-            }),
-            content_type='application/json',
+                '/releases/{}/packages/{}/results'.format(
+                        release_id, package_id),
+                data=json.dumps({
+                    'success': 'true',
+                    'foo': 'bar',
+                }),
+                content_type='application/json',
         )
         self.assertEqual(results_response.status_code, 204)
 
@@ -238,12 +238,12 @@ class PostContractTest(OrloHttpTest):
         Create a release, omitting all optional parameters
         """
         response = self.client.post('/releases',
-            data=json.dumps({
-                'platforms': ['test_platform'],
-                'user': 'testuser',
-            }),
-            content_type='application/json',
-        )
+                                    data=json.dumps({
+                                        'platforms': ['test_platform'],
+                                        'user': 'testuser',
+                                    }),
+                                    content_type='application/json',
+                                    )
         self.assert200(response)
 
     def test_diffurl_present(self):
@@ -327,7 +327,7 @@ class GetContractTest(OrloHttpTest):
             path = '/releases'
 
         results_response = self.client.get(
-            path, content_type='application/json',
+                path, content_type='application/json',
         )
 
         try:
@@ -376,7 +376,7 @@ class GetContractTest(OrloHttpTest):
         package_id = self._create_package(release_id, name='specific-package')
         results = self._get_releases(filters=[
             'package_name=specific-package'
-            ])
+        ])
 
         for r in results['releases']:
             for p in r['packages']:
@@ -475,7 +475,7 @@ class GetContractTest(OrloHttpTest):
         Filter on releases that finished before a particular time
         """
         r_yesterday, r_tomorrow = self._get_releases_time_filter(
-            'ftime_before', finished=True)
+                'ftime_before', finished=True)
 
         self.assertEqual(3, len(r_tomorrow['releases']))
         self.assertEqual(0, len(r_yesterday['releases']))
@@ -485,7 +485,7 @@ class GetContractTest(OrloHttpTest):
         Filter on releases that finished after a particular time
         """
         r_yesterday, r_tomorrow = self._get_releases_time_filter(
-            'ftime_after', finished=True)
+                'ftime_after', finished=True)
 
         self.assertEqual(0, len(r_tomorrow['releases']))
         self.assertEqual(3, len(r_yesterday['releases']))
@@ -777,10 +777,15 @@ class GetContractTest(OrloHttpTest):
 
     def test_get_release_with_bad_status(self):
         """
-        Tests get /releases?status=garbage give a helpful mesage
+        Tests get /releases?status=garbage give a helpful message
         """
         self._create_finished_release()
 
         result = self._get_releases(filters=['status=garbage_boz'], expected_status=400)
         self.assertIn('message', result)
 
+    def test_get_releases_with_no_filters(self):
+        """
+        Test get /releases without filters returns 400
+        """
+        self._get_releases(expected_status=400)

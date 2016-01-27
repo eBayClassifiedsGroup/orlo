@@ -276,6 +276,10 @@ def get_releases(release_id=None):
 
     if release_id:  # Simple
         query = db.session.query(Release).filter(Release.id == release_id)
+    elif len(request.args.keys()) == 0:
+        raise InvalidUsage("Please specify a filter. See "
+                           "http://orlo.readthedocs.org/en/latest/rest.html#get--releases for "
+                           "more info")
     else:  # Bit more complex
         # Flatten args, as the ImmutableDict puts some values in a list when expanded
         args = {}
