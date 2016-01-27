@@ -240,7 +240,6 @@ def get_releases(release_id=None):
         desc to true will reverse this and sort by stime descending
     :query int limit: Limit the results by int
     :query int offset: Offset the results by int
-    :query int skip: Skip this number of releases
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform
