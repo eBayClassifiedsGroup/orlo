@@ -22,7 +22,7 @@ def append_or_create_platforms(request_platforms):
         try:
             query = db.session.query(Platform).filter(Platform.name == p)
             platform = query.one()
-            app.logger.debug("Found platform {}".format(platform.name))
+            # app.logger.debug("Found platform {}".format(platform.name))
         except exc.NoResultFound:
             app.logger.info("Creating platform {}".format(p))
             platform = Platform(p)

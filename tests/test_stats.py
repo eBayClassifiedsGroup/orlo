@@ -8,9 +8,9 @@ from tests.test_orm import OrloDbTest
 __author__ = 'alforbes'
 
 
-class ReleaseTimeTest(OrloDbTest):
+class OrloStatsTest(OrloDbTest):
     """
-    Test stats.release_time
+    Parent class for the stats tests
     """
     ARGS = {
         'stime_gt': arrow.utcnow().replace(hours=-1),
@@ -23,28 +23,40 @@ class ReleaseTimeTest(OrloDbTest):
         for r in range(0, 7):
             self._create_finished_release()
 
+
+class GeneralTest(OrloStatsTest):
+    """
+    Testing the shared stats functions
+    """
+
     def test_append_tree_recursive(self):
         """
         Test that append_tree_recursive returns a properly structured dictionary
         """
         tree = {}
-        nodes = ['apple', 'orange']
+        nodes = ['parent', 'child']
         orlo.stats.append_tree_recursive(tree, nodes[0], nodes)
-        self.assertEqual(tree, {'apple': {'orange': 1}})
+        self.assertEqual(tree, {'parent': {'child': 1}})
 
     def test_append_tree_recursive_adds(self):
         """
         Test that append_tree_recursive correctly adds one when called on the same path
         """
         tree = {}
-        nodes = ['apple', 'orange']
+        nodes = ['parent', 'child']
         orlo.stats.append_tree_recursive(tree, nodes[0], nodes)
         orlo.stats.append_tree_recursive(tree, nodes[0], nodes)
-        self.assertEqual(tree, {'apple': {'orange': 2}})
+        self.assertEqual(tree, {'parent': {'child': 2}})
+
+
+class ReleaseTimeTest(OrloStatsTest):
+    """
+    Test stats.releases_by_time
+    """
 
     def test_release_time_month(self):
         """
-        Test queries.add_releases_by_time_to_dict by month
+        Test stats.add_objects_by_time_to_dict by month
         """
         result = orlo.stats.releases_by_time('month', **self.ARGS)
         year = str(arrow.utcnow().year)
@@ -53,7 +65,7 @@ class ReleaseTimeTest(OrloDbTest):
 
     def test_release_time_week(self):
         """
-        Test queries.add_releases_by_time_to_dict by week
+        Test stats.add_objects_by_time_to_dict by week
         """
         result = orlo.stats.releases_by_time('week', **self.ARGS)
         year, week, day = arrow.utcnow().isocalendar()
@@ -61,7 +73,7 @@ class ReleaseTimeTest(OrloDbTest):
 
     def test_release_time_year(self):
         """
-        Test queries.add_releases_by_time_to_dict by year
+        Test stats.add_objects_by_time_to_dict by year
         """
         result = orlo.stats.releases_by_time('year', **self.ARGS)
         year = str(arrow.utcnow().year)
@@ -69,7 +81,7 @@ class ReleaseTimeTest(OrloDbTest):
 
     def test_release_time_day(self):
         """
-        Test queries.add_releases_by_time_to_dict by day
+        Test stats.add_objects_by_time_to_dict by day
         """
         result = orlo.stats.releases_by_time('day', **self.ARGS)
         year = str(arrow.utcnow().year)
@@ -82,7 +94,7 @@ class ReleaseTimeTest(OrloDbTest):
 
     def test_release_time_hour(self):
         """
-        Test queries.add_releases_by_time_to_dict by hour
+        Test stats.add_objects_by_time_to_dict by hour
         """
         result = orlo.stats.releases_by_time('hour', **self.ARGS)
         year = str(arrow.utcnow().year)
@@ -96,7 +108,7 @@ class ReleaseTimeTest(OrloDbTest):
 
     def test_release_time_with_only_this_unit(self):
         """
-        Test queries.add_releases_by_time_to_dict with only_this_unit
+        Test stats.add_objects_by_time_to_dict with only_this_unit
 
         Should break down by only the unit given
         """
@@ -108,4 +120,78 @@ class ReleaseTimeTest(OrloDbTest):
         )
 
     def test_release_time_with_unit_day(self):
+        pass
+
+
+class PackageTimeTest(OrloStatsTest):
+    """
+    Test stats.packages_by_time
+    """
+    def test_package_time_month(self):
+        """
+        Test stats.add_objects_by_time_to_dict by month
+        """
+        result = orlo.stats.packages_by_time('month', **self.ARGS)
+        year = str(arrow.utcnow().year)
+        month = str(arrow.utcnow().month)
+        self.assertEqual(7, result[year][month]['test-package']['normal']['successful'])
+        print(result)
+
+    def test_package_time_week(self):
+        """
+        Test stats.add_objects_by_time_to_dict by week
+        """
+        result = orlo.stats.packages_by_time('week', **self.ARGS)
+        year, week, day = arrow.utcnow().isocalendar()
+        self.assertEqual(7, result[str(year)][str(week)]['test-package']['normal']['successful'])
+
+    def test_package_time_year(self):
+        """
+        Test stats.add_objects_by_time_to_dict by year
+        """
+        result = orlo.stats.packages_by_time('year', **self.ARGS)
+        year = str(arrow.utcnow().year)
+        self.assertEqual(7, result[str(year)]['test-package']['normal']['successful'])
+
+    def test_package_time_day(self):
+        """
+        Test stats.add_objects_by_time_to_dict by day
+        """
+        result = orlo.stats.packages_by_time('day', **self.ARGS)
+        year = str(arrow.utcnow().year)
+        month = str(arrow.utcnow().month)
+        day = str(arrow.utcnow().day)
+        self.assertEqual(
+                7,
+                result[year][month][day]['test-package']['normal']['successful'],
+        )
+
+    def test_package_time_hour(self):
+        """
+        Test stats.add_objects_by_time_to_dict by hour
+        """
+        result = orlo.stats.packages_by_time('hour', **self.ARGS)
+        year = str(arrow.utcnow().year)
+        month = str(arrow.utcnow().month)
+        day = str(arrow.utcnow().day)
+        hour = str(arrow.utcnow().hour)
+        self.assertEqual(
+                7,
+                result[year][month][day][hour]['test-package']['normal']['successful'],
+        )
+
+    def test_package_time_with_only_this_unit(self):
+        """
+        Test stats.add_objects_by_time_to_dict with only_this_unit
+
+        Should break down by only the unit given
+        """
+        result = orlo.stats.packages_by_time('hour', summarize_by_unit=True, **self.ARGS)
+        hour = str(arrow.utcnow().hour)
+        self.assertEqual(
+                7,
+                result[hour]['test-package']['normal']['successful'],
+        )
+
+    def test_package_time_with_unit_day(self):
         pass

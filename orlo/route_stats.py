@@ -145,7 +145,7 @@ def stats_():
             stime = arrow.get(s_stime)
         if s_ftime:
             ftime = arrow.get(s_ftime)
-    except RuntimeError:  # super-class to arrows ParserError, which is not importable
+    except RuntimeError:  # super-class to arrow's ParserError, which is not importable
         raise InvalidUsage("A badly formatted datetime string was given")
 
     app.logger.debug("Building all_stats dict")
@@ -303,11 +303,12 @@ def stats_package(package=None):
     return jsonify(package_stats)
 
 
-@app.route('/stats/by_date')
-def stats_by_date():
+@app.route('/stats/by_date/<subject>')
+def stats_by_date(subject='release'):
     """
-    Return release release_stats by date
+    Return stats by date
 
+    :param subject: Release or Package (default: release)
     :query string unit: Unit to group by, i.e. year, month, week, day, hour
     :query boolean summarize_by_unit: Don't build hierarchy, just summarize by the unit
     :return:
@@ -320,12 +321,18 @@ def stats_by_date():
     filters = dict((k, v) for k, v in request.args.items())
     unit = filters.pop('unit', 'month')
 
-    summarize_by_unit = False
     if filters.pop('summarize_by_unit', False):
         summarize_by_unit = True
+    else:
+        summarize_by_unit = False
 
     # Returns releases and their time by rollback and status
-    release_stats = stats.releases_by_time(unit, summarize_by_unit, **filters)
+    if subject == 'release':
+        release_stats = stats.releases_by_time(unit, summarize_by_unit, **filters)
+    elif subject == 'package':
+        release_stats = stats.packages_by_time(unit, summarize_by_unit, **filters)
+    else:
+        raise InvalidUsage("subject must release or package, not '{}'".format())
 
     return jsonify(release_stats)
 
