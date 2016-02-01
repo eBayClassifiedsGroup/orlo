@@ -195,7 +195,7 @@ def post_packages_stop(release_id, package_id):
     :param string release_id: Release UUID
     """
     validate_request_json(request)
-    success = request.json.get('success') in ['True', 'true', '1']
+    success = request.json.get('success') in [True, 'True', 'true', '1']
 
     package = fetch_package(release_id, package_id)
     app.logger.info("Package stop, release {}, package {}, success {}".format(
