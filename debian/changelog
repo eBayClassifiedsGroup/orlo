@@ -1,3 +1,30 @@
+orlo (0.1.1) stable; urgency=medium
+
+  * Cast package_rollback as a boolean
+  * Add log files for gunicorn
+  * Separate debug mode and debug logging
+  * Return 400 when getting /releases with no filter
+  * Remove skip from documentation, it was renamed to offset
+  * Fix tests, require filter on GET /releases
+  * Bump vagrant box cpus to 2
+  * Implement stats by date/time
+  * Fix query in release stats to group by release
+  * Add boolean True to acceptable success values
+  * Bump version
+  * Cast package_rollback as a boolean
+  * Add log files for gunicorn
+  * Separate debug mode and debug logging
+  * Return 400 when getting /releases with no filter
+  * Remove skip from documentation, it was renamed to offset
+  * Fix tests, require filter on GET /releases
+  * Bump vagrant box cpus to 2
+  * Implement stats by date/time
+  * Fix query in release stats to group by release
+  * Add boolean True to acceptable success values
+  * Bump version
+
+ -- Alex Forbes <alforbes@gumtree.com>  Mon, 01 Feb 2016 18:19:03 +0000
+
 orlo (0.1.0) stable; urgency=medium
 
   * Move orlo to /api/ in nginx
