@@ -78,6 +78,9 @@ Vagrant.configure(2) do |config|
 
     # Build tools
     sudo apt-get -y install build-essential git-buildpackage debhelper python-dev dh-systemd
+    wget -P /tmp/ \
+        'https://launchpad.net/ubuntu/+archive/primary/+files/dh-virtualenv_0.11-1_all.deb'
+    dpkg -i /tmp/dh-virtualenv_0.11-1_all.deb
 
     sudo pip install --upgrade pip
     sudo pip install sphinx sphinxcontrib-httpdomain
