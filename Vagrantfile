@@ -43,13 +43,14 @@ Vagrant.configure(2) do |config|
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   #
-  # config.vm.provider "virtualbox" do |vb|
+  config.vm.provider "virtualbox" do |vb|
   #   # Display the VirtualBox GUI when booting the machine
   #   vb.gui = true
   #
   #   # Customize the amount of memory on the VM:
   #   vb.memory = "1024"
-  # end
+    vb.cpus = "2"
+  end
   #
   # View the documentation for the provider you are using for more
   # information on available options.
@@ -77,6 +78,9 @@ Vagrant.configure(2) do |config|
 
     # Build tools
     sudo apt-get -y install build-essential git-buildpackage debhelper python-dev dh-systemd
+    wget -P /tmp/ \
+        'https://launchpad.net/ubuntu/+archive/primary/+files/dh-virtualenv_0.11-1_all.deb'
+    dpkg -i /tmp/dh-virtualenv_0.11-1_all.deb
 
     sudo pip install --upgrade pip
     sudo pip install sphinx sphinxcontrib-httpdomain

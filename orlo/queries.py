@@ -5,7 +5,6 @@ import arrow
 from orlo import app
 from orlo.orm import db, Release, Platform, Package, release_platform
 from orlo.exceptions import OrloError, InvalidUsage
-from orlo.util import is_int
 from collections import OrderedDict
 
 __author__ = 'alforbes'
@@ -15,7 +14,7 @@ Functions in this file are about generating summaries of data
 """
 
 
-def _filter_release_status(query, status):
+def filter_release_status(query, status):
     """
     Filter the given query by the given release status
 
@@ -43,7 +42,7 @@ def _filter_release_status(query, status):
     return query
 
 
-def _filter_release_rollback(query, rollback):
+def filter_release_rollback(query, rollback):
     """
     Filter the given query by whether the releases are rollbacks or not
 
@@ -81,12 +80,13 @@ def apply_filters(query, args):
         if field == 'latest':  # this is not a comparison
             continue
 
-        # special logic for these ones, as they are package attributes
+        # special logic for these ones, as they are release attributes that
+        # are JIT calculated from package attributes
         if field == 'status':
-            query = _filter_release_status(query, value)
+            query = filter_release_status(query, value)
             continue
         if field == 'rollback':
-            query = _filter_release_rollback(query, value)
+            query = filter_release_rollback(query, value)
             continue
 
         if field.startswith('package_'):
@@ -189,11 +189,15 @@ def releases(**kwargs):
     query = query.order_by(stime_field())
 
     if limit:
-        if not is_int(limit):
+        try:
+            limit = int(limit)
+        except ValueError:
             raise InvalidUsage("limit must be a valid integer value")
         query = query.limit(limit)
     if offset:
-        if not is_int(offset):
+        try:
+            offset = int(offset)
+        except ValueError:
             raise InvalidUsage("offset must be a valid integer value")
         query = query.offset(offset)
 
@@ -420,10 +424,10 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
         query = query.filter(Release.stime <= ftime)
 
     if rollback is not None:
-        query = _filter_release_rollback(query, rollback)
+        query = filter_release_rollback(query, rollback)
 
     if status:
-        query = _filter_release_status(query, status)
+        query = filter_release_status(query, status)
 
     return query
 
@@ -500,116 +504,3 @@ def platform_list():
     return query
 
 
-def stats_release_time(unit, summarize_by_unit=False, **kwargs):
-    """
-    Return stats by time from the given arguments
-
-    Functions in this file usually return a query object, but here we are
-    returning the result, as there are several queries in play.
-
-    :param summarize_by_unit: Passed to add_release_by_time_to_dict()
-    :param unit: Passed to add_release_by_time_to_dict()
-    """
-
-    root_query = db.session.query(Release.id, Release.stime).join(Package)
-    root_query = apply_filters(root_query, kwargs)
-
-    # Build queries for the individual stats
-    q_normal_successful = _filter_release_status(
-            _filter_release_rollback(root_query, rollback=False), 'SUCCESSFUL'
-    )
-    q_normal_failed = _filter_release_status(
-            _filter_release_rollback(root_query, rollback=False), 'FAILED'
-    )
-    q_rollback_successful = _filter_release_status(
-            _filter_release_rollback(root_query, rollback=True), 'SUCCESSFUL'
-    )
-    q_rollback_failed = _filter_release_status(
-            _filter_release_rollback(root_query, rollback=True), 'FAILED'
-    )
-
-    output_dict = OrderedDict()
-
-    add_releases_by_time_to_dict(
-            q_normal_successful, output_dict, ('normal', 'successful'), unit, summarize_by_unit)
-    add_releases_by_time_to_dict(
-            q_normal_failed, output_dict, ('normal', 'failed'), unit, summarize_by_unit)
-    add_releases_by_time_to_dict(
-            q_rollback_successful, output_dict, ('rollback', 'successful'), unit,
-            summarize_by_unit)
-    add_releases_by_time_to_dict(
-            q_rollback_failed, output_dict, ('rollback', 'failed'), unit, summarize_by_unit)
-
-    return output_dict
-
-
-def add_releases_by_time_to_dict(query, releases_dict, t_category, unit='month',
-                                 summarize_by_unit=False):
-    """
-    Take a query and add each of its releases to a dictionary, broken down by time
-
-    :param dict releases_dict: Dict to add to
-    :param tuple t_category: tuple of headings, i.e. (<normal|rollback>, <successful|failed>)
-    :param query query: Query object to retrieve releases from
-    :param string unit: Can be 'iso', 'hour', 'day', 'week', 'month', 'year',
-    :param boolean summarize_by_unit: Only break down releases by the given unit, i.e. only one
-        layer deep
-    :return:
-    """
-
-    for release in query:
-        if summarize_by_unit:
-            tree_args = [str(getattr(release.stime, unit))]
-        else:
-            if unit == 'year':
-                tree_args = [str(release.stime.year)]
-            elif unit == 'month':
-                tree_args = [str(release.stime.year), str(release.stime.month)]
-            elif unit == 'week':
-                # First two args of isocalendar(), year and week
-                tree_args = [str(i) for i in release.stime.isocalendar()][0:2]
-            elif unit == 'iso':
-                tree_args = [str(i) for i in release.stime.isocalendar()]
-            elif unit == 'day':
-                tree_args = [str(release.stime.year), str(release.stime.month),
-                             str(release.stime.day)]
-            elif unit == 'hour':
-                tree_args = [str(release.stime.year), str(release.stime.month),
-                             str(release.stime.day), str(release.stime.hour)]
-            else:
-                raise InvalidUsage(
-                    'Invalid unit "{}" specified for release breakdown'.format(
-                        unit))
-        # Append categories
-        print(tree_args)
-        tree_args += t_category
-        append_tree_recursive(releases_dict, tree_args[0], tree_args)
-
-
-def append_tree_recursive(tree, parent, nodes):
-    """
-    Recursively place the nodes under each other
-
-    :param dict tree: The dictionary we are operating on
-    :param parent: The parent for this node
-    :param nodes: The list of nodes
-    :return:
-    """
-    print('Called recursive function with args:\n{}, {}, {}'.format(
-            str(tree), str(parent), str(nodes)))
-    try:
-        # Get the child, one after the parent
-        child = nodes[nodes.index(parent) + 1]
-    except IndexError:
-        # Must be at end
-        if parent in tree:
-            tree[parent] += 1
-        else:
-            tree[parent] = 1
-        return tree
-
-    # Otherwise recurse again
-    if parent not in tree:
-        tree[parent] = {}
-    # Child becomes the parent
-    append_tree_recursive(tree[parent], child, nodes)

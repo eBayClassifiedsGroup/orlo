@@ -1,4 +1,5 @@
 from flask import Flask
+import logging
 from logging.handlers import RotatingFileHandler
 
 from orlo.config import config
@@ -15,8 +16,15 @@ if config.getboolean('main', 'propagate_exceptions'):
 if config.getboolean('db', 'echo_queries'):
     app.config['SQLALCHEMY_ECHO'] = True
 
-if config.getboolean('logging', 'debug'):
+# Debug mode ignores all custom logging and should only be used in
+# local testing...
+if config.getboolean('main', 'debug_mode'):
     app.debug = True
+
+# ...as opposed to loglevel debug, which can be used anywhere
+if config.getboolean('logging', 'debug'):
+    app.logger.setLevel(logging.DEBUG)
+
 app.logger.debug('Debug enabled')
 
 if not config.getboolean('main', 'strict_slashes'):

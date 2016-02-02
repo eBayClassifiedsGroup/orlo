@@ -19,8 +19,10 @@ def parse_args():
 
     p_database = argparse.ArgumentParser(add_help=False)
     p_server = argparse.ArgumentParser(add_help=False)
-    p_server.add_argument('--host', '-H', dest='host', default='127.0.0.1', help="Address to listen on")
-    p_server.add_argument('--port', '-P', dest='port', type=int, default=5000, help="Port to listen on")
+    p_server.add_argument('--host', '-H', dest='host', default='127.0.0.1',
+                          help="Address to listen on")
+    p_server.add_argument('--port', '-P', dest='port', type=int, default=5000,
+                          help="Port to listen on")
 
     subparsers = parser.add_subparsers(dest='action')
     sp_config = subparsers.add_parser(

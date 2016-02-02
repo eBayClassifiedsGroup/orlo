@@ -129,8 +129,11 @@ class PackageStatsTest(StatsTest):
         self.assertIsInstance(response.json, dict)
 
 
-class TimeBasedStatsTest(StatsTest):
-    ENDPOINT = '/stats/by_date'
+class StatsByDateReleaseTest(StatsTest):
+    """
+    Testing the "by_date" urls
+    """
+    ENDPOINT = '/stats/by_date/release'
 
     def test_result_includes_normals(self):
         unittest.skip("Not suitable test for this endpoint")
@@ -176,3 +179,55 @@ class TimeBasedStatsTest(StatsTest):
         """
         response = self.client.get(self.ENDPOINT + '?unit=day&summarize_by_unit=1')
         self.assert200(response)
+
+    def test_stats_by_date_with_platform_filter(self):
+        """
+        Test /stats/by_date with a platform filter
+        """
+        year = str(arrow.utcnow().year)
+        response = self.client.get(self.ENDPOINT + '?platform=test_platform')
+        self.assert200(response)
+        self.assertIn(year, response.json)
+
+    def test_stats_by_date_with_platform_filter_negative(self):
+        """
+        Test /stats/by_date with a bad platform filter returns nothing
+        """
+        response = self.client.get(self.ENDPOINT + '?platform=bad_platform_foo')
+        self.assert200(response)
+        self.assertEqual({}, response.json)
+
+
+class StatsByDatePackageTest(OrloDbTest):
+    """
+    Testing the "by_date" urls
+    """
+    ENDPOINT = '/stats/by_date/package'
+
+    def setUp(self):
+        super(OrloDbTest, self).setUp()
+        for r in range(0, 3):
+            self._create_finished_release()
+
+    def test_endpoint_200(self):
+        """
+        Test self.ENDPOINT returns 200
+        """
+        response = self.client.get(self.ENDPOINT)
+        self.assert200(response)
+
+    def test_endpoint_returns_dict(self):
+        """
+        Test self.ENDPOINT returns a dictionary
+        """
+        response = self.client.get(self.ENDPOINT)
+        self.assertIsInstance(response.json, dict)
+
+    def test_package_name_in_dict(self):
+        """
+        Test the package name is in the returned json
+        """
+        response = self.client.get(self.ENDPOINT)
+        year = str(arrow.utcnow().year)
+        month = str(arrow.utcnow().month)
+        self.assertIn('test-package', response.json[year][month])

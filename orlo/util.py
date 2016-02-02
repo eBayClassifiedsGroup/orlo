@@ -6,6 +6,7 @@ from orlo import app
 from orlo.orm import db, Release, Package, Platform
 from orlo.exceptions import InvalidUsage
 from sqlalchemy.orm import exc
+from six import string_types
 
 __author__ = 'alforbes'
 
@@ -21,7 +22,7 @@ def append_or_create_platforms(request_platforms):
         try:
             query = db.session.query(Platform).filter(Platform.name == p)
             platform = query.one()
-            app.logger.debug("Found platform {}".format(platform.name))
+            # app.logger.debug("Found platform {}".format(platform.name))
         except exc.NoResultFound:
             app.logger.info("Creating platform {}".format(p))
             platform = Platform(p)
@@ -177,9 +178,15 @@ def stream_json_list(heading, iterator):
     yield json.dumps(prev_release.to_dict()) + ']}'
 
 
-def is_int(value):
-    try:
-        int(value)
-        return True
-    except ValueError:
-        return False
+def str_to_bool(value):
+    if isinstance(value, string_types):
+        try:
+            value = int(value)
+        except ValueError:
+            if value.lower() in ('t', 'true'):
+                return True
+            elif value.lower() in ('f', 'false'):
+                return False
+    if isinstance(value, int):
+        return True if value > 0 else False
+    raise ValueError("Value {} can not be cast as boolean".format(value))

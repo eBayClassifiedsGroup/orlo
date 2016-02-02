@@ -5,7 +5,8 @@ import arrow
 import datetime
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
 from orlo.util import validate_request_json, create_release, validate_release_input, \
-    validate_package_input, fetch_release, create_package, fetch_package, stream_json_list
+    validate_package_input, fetch_release, create_package, fetch_package, stream_json_list, \
+    str_to_bool
 
 
 @app.route('/ping', methods=['GET'])
@@ -194,7 +195,7 @@ def post_packages_stop(release_id, package_id):
     :param string release_id: Release UUID
     """
     validate_request_json(request)
-    success = request.json.get('success') in ['True', 'true', '1']
+    success = request.json.get('success') in [True, 'True', 'true', '1']
 
     package = fetch_package(release_id, package_id)
     app.logger.info("Package stop, release {}, package {}, success {}".format(
@@ -239,7 +240,6 @@ def get_releases(release_id=None):
         desc to true will reverse this and sort by stime descending
     :query int limit: Limit the results by int
     :query int offset: Offset the results by int
-    :query int skip: Skip this number of releases
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform
@@ -271,16 +271,22 @@ def get_releases(release_id=None):
 
     """
 
+    booleans = ('rollback', 'package_rollback', )
+
     if release_id:  # Simple
         query = db.session.query(Release).filter(Release.id == release_id)
+    elif len(request.args.keys()) == 0:
+        raise InvalidUsage("Please specify a filter. See "
+                           "http://orlo.readthedocs.org/en/latest/rest.html#get--releases for "
+                           "more info")
     else:  # Bit more complex
         # Flatten args, as the ImmutableDict puts some values in a list when expanded
         args = {}
-        for k, v in request.args.items():
-            if type(v) is list:
-                args[k] = v[0]
+        for k in request.args.keys():
+            if k in booleans:
+                args[k] = str_to_bool(request.args.get(k))
             else:
-                args[k] = v
+                args[k] = request.args.get(k)
         query = queries.releases(**args)
 
     return Response(stream_json_list('releases', query), content_type='application/json')
