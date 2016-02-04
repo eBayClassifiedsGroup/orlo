@@ -1,9 +1,7 @@
-import os
 from orlo import app
-from flask import abort, request, jsonify, g, url_for
+from flask import request, jsonify, g
 from flask.ext.httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
-from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
@@ -14,13 +12,13 @@ app.debug = True
 # extensions
 auth = HTTPBasicAuth()
 
+
 class User(object):
 
     def __init__(self, name):
         self.name = name
         self.password_hash = self.getpwent(name)
         self.confirmed = False
-            
 
     def getpwent(self, name):
         with open('etc/passwd') as f:
@@ -41,7 +39,7 @@ class User(object):
         self.password_hash = generate_password_hash(password)
 
     def verify_password(self, password):
-        rc =  check_password_hash(self.password_hash, password)
+        rc = check_password_hash(self.password_hash, password)
         return rc
 
     def generate_auth_token(self, expiration=600):
@@ -62,7 +60,7 @@ class User(object):
 
 
 @auth.verify_password
-def verify_password(username = None, password=None):
+def verify_password(username=None, password=None):
     user = None
     try:
         token = request.headers.get('X-Auth-Token').strip()
@@ -94,6 +92,7 @@ def auth_error():
     response.status_code = 401
     return response
 
+
 @app.before_request
 @auth.login_required
 def before_request():
@@ -101,31 +100,7 @@ def before_request():
         response = jsonify({'error': 'not authorized'})
         response.status_code = 401
         return response
-        # return forbidden('Unconfirmed account')
-    
 
-@app.route('/auth/users', methods=['POST'])
-def new_user():
-    username = request.json.get('username')
-    password = request.json.get('password')
-    if username is None or password is None:
-        abort(400)  # missing arguments
-    if User.query.filter_by(username=username).first() is not None:
-        abort(400)  # existing user
-    user = User(username=username)
-    user.hash_password(password)
-    db.session.add(user)
-    db.session.commit()
-    return (jsonify({'username': user.username}), 201,
-            {'Location': url_for('get_user', id=user.id, _external=True)})
-
-
-@app.route('/auth/users/<int:id>')
-def get_user(id):
-    user = User.query.get(id)
-    if not user:
-        abort(400)
-    return jsonify({'username': user.username})
 
 @app.route('/token')
 @auth.login_required
@@ -133,20 +108,6 @@ def get_token():
     token = g.current_user.generate_auth_token(600)
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
-@app.route('/auth/token')
-@auth.login_required
-def get_auth_token():
-    token = g.user.generate_auth_token(600)
-    return jsonify({'token': token.decode('ascii'), 'duration': 600})
-
-
-@app.route('/auth/resource')
-@auth.login_required
-def get_resource():
-    return jsonify({'data': 'Hello, %s!' % g.user.username})
-
 
 if __name__ == '__main__':
-    if not os.path.exists('db.sqlite'):
-        db.create_all()
-    app.run(debug=True)
+    pass
