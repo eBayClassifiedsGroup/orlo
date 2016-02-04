@@ -175,7 +175,7 @@ class Package(db.Model):
     def to_dict(self):
         time_format = config.get('main', 'time_format')
         return {
-            'id': self.id,
+            'id': unicode(self.id),
             'name': self.name,
             'version': self.version,
             'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
