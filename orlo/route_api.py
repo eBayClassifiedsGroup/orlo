@@ -3,7 +3,7 @@ from orlo.exceptions import InvalidUsage
 from flask import jsonify, request, Response, json
 import arrow
 import datetime
-from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
+from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, ReleaseMetadata, Platform
 from orlo.util import validate_request_json, create_release, validate_release_input, \
     validate_package_input, fetch_release, create_package, fetch_package, stream_json_list, \
     str_to_bool
@@ -54,9 +54,14 @@ def post_releases():
         release_note = ReleaseNote(release.id, request.json.get('note'))
         db.session.add(release_note)
 
+    if request.json.get('metadata'):
+        for key,value in request.json.get('metadata').items():
+            metadata = ReleaseMetadata(release.id, key, value)
+            db.session.add(metadata)
+
     app.logger.info(
             'Create release {}, references: {}, platforms: {}'.format(
-                    release.id, release.notes, release.references, release.platforms)
+                    release.id, release.notes, release.references, release.platforms, release.metadata)
     )
 
     release.start()
@@ -123,6 +128,32 @@ def post_results(release_id, package_id):
     db.session.commit()
     return '', 204
 
+
+@app.route('/releases/<release_id>/deploy', methods=['POST'])
+def post_releases_start(release_id):
+    """
+    Indicate that a release is starting
+
+    This trigger the start of the deploy
+
+    :param string release_id: Release UUID
+
+    **Example curl**:
+
+    .. sourcecode:: shell
+
+        curl -H "Content-Type: application/json" \\
+        -X POST http://127.0.0.1/releases/${RELEASE_ID}/deploy
+    """
+    release = fetch_release(release_id)
+    # TODO call deploy Class start Method
+    app.logger.info("Release start, release {}".format(release_id))
+    release.start()
+    #deploy = Deploy(release)
+    #deploy.start()
+    db.session.add(release)
+    db.session.commit()
+    return '', 204
 
 @app.route('/releases/<release_id>/stop', methods=['POST'])
 def post_releases_stop(release_id):
@@ -227,6 +258,27 @@ def post_releases_notes(release_id):
     db.session.commit()
     return '', 204
 
+@app.route('/releases/<release_id>/metadatas', methods=['POST'])
+def post_releases_metadatas(release_id):
+    """
+    Add a metadata to a release
+
+    :param string release_id: Release UUID
+    :query string text: Text
+    :return:
+    """
+    validate_request_json(request)
+    meta = request
+    if not meta:
+        raise InvalidUsage("Must include metadata in posted document: es {\"key\" : \"value\"}")
+
+    for key,value in request.json.items():
+        app.logger.info("Adding Metadata to release {}".format(release_id))
+        metadata = ReleaseMetadata(release_id, key, value)
+        db.session.add(metadata)
+
+    db.session.commit()
+    return '', 204
 
 @app.route('/releases', methods=['GET'])
 @app.route('/releases/<release_id>', methods=['GET'])
