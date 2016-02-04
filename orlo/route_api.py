@@ -1,6 +1,6 @@
-from orlo import app, queries
+from orlo import app, queries, user_auth
 from orlo.exceptions import InvalidUsage
-from flask import jsonify, request, Response, json
+from flask import jsonify, request, Response, json, g
 import arrow
 import datetime
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, Platform
@@ -290,3 +290,4 @@ def get_releases(release_id=None):
         query = queries.releases(**args)
 
     return Response(stream_json_list('releases', query), content_type='application/json')
+

@@ -41,6 +41,7 @@ if logfile != 'disabled':
 
 # Must be imported last
 import orlo.error_handlers
+import orlo.user_auth
 import orlo.route_api
 import orlo.route_import
 import orlo.route_info
