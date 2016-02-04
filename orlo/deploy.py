@@ -91,19 +91,18 @@ class ShellDeploy(Deploy):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
+        metadata = {}
+        for m in self.release.metadata:
+            metadata.update(m.to_dict())
+        #out, err = p.communicate(json.dumps(metadata))
 
-        self.pid = p.pid
-        # metadata = self.release.metadata
-        metadata = {'foo': 'bar'}
-        out, err = p.communicate(json.dumps(metadata))
+        #print("Out:\n{}".format(out))
+        #print("Err:\n{}".format(err))
 
-        print("Out:\n{}".format(out))
-        print("Err:\n{}".format(err))
-
-        if p.returncode is not 0:
-            raise OrloError("Subprocess exited with code {}".format(
-                p.returncode
-            ))
+        #if p.returncode is not 0:
+        #    raise OrloError("Subprocess exited with code {}".format(
+        #        p.returncode
+        #    ))
 
     def kill(self):
         """
