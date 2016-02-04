@@ -112,6 +112,11 @@ class NormalImportTest(ImportTest):
           "stime": "2015-12-09T12:34:45Z",
           "team": "Gumtree UK Site Operations",
           "references": [ "GTEPICS-TEST3" ],
+          "metadata" :
+            {
+                "env" : "test1",
+                "pool" : "pool1"
+            },
           "packages": [
             {
               "status": "SUCCESSFUL",

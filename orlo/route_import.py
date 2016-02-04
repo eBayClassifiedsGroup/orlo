@@ -37,30 +37,30 @@ def post_import():
 
         [
             {
-            "platforms": [
-              "GumtreeUK"
-            ],
-            "stime": "2015-12-17T17:02:04Z",
-            "ftime": "2015-12-17T17:02:24Z",
-            "team": "Gumtree UK Site Operations",
-            "references": [
-              "TICKET-1"
-            ],
-            "notes": [
-              "Imported from other_system"
-            ],
-            "packages": [
-                {
-                    "name": "",
-                    "diff_url": null,
-                    "stime": "2015-12-17T17:02:22Z"
-                    "ftime": 1450371742,
-                    "rollback": false,
-                    "status": "SUCCESSFUL",
-                    "version": "1.0.1",
-                }
-            ],
-            "user": "user_one"
+                "platforms": [
+                  "GumtreeUK"
+                ],
+                "stime": "2015-12-17T17:02:04Z",
+                "ftime": "2015-12-17T17:02:24Z",
+                "team": "Gumtree UK Site Operations",
+                "references": [
+                  "TICKET-1"
+                ],
+                "notes": [
+                  "Imported from other_system"
+                ],
+                "packages": [
+                    {
+                        "name": "",
+                        "diff_url": null,
+                        "stime": "2015-12-17T17:02:22Z"
+                        "ftime": 1450371742,
+                        "rollback": false,
+                        "status": "SUCCESSFUL",
+                        "version": "1.0.1",
+                    }
+                ],
+                "user": "user_one"
             },
             {...}
         ]
