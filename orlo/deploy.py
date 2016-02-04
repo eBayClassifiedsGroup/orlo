@@ -2,6 +2,7 @@ from __future__ import print_function
 import subprocess
 import json
 from orlo.config import config
+from orlo.exceptions import OrloError
 
 
 __author__ = 'alforbes'
@@ -25,6 +26,7 @@ class Deploy(object):
         Perform a release
         """
         self.release = release
+        self.server_url = config.get('main', 'base_url')
 
     def start(self):
         """
@@ -75,13 +77,13 @@ class ShellDeploy(Deploy):
         print("Args: {}".format(str(args)))
 
         env = {
-            'ORLO_URL': config.get('main', 'base_url')
+            'ORLO_URL': self.server_url
         }
         for key, value in self.release.to_dict().items():
-            my_key = "ORLO_" + key
+            my_key = "ORLO_" + key.upper()
             env[my_key] = str(value)
 
-        print(env)
+        print("Env: {}".format(str(env)))
         p = subprocess.Popen(
             args,
             env=env,
@@ -97,6 +99,11 @@ class ShellDeploy(Deploy):
 
         print("Out:\n{}".format(out))
         print("Err:\n{}".format(err))
+
+        if p.returncode is not 0:
+            raise OrloError("Subprocess exited with code {}".format(
+                p.returncode
+            ))
 
     def kill(self):
         """

@@ -1,24 +1,89 @@
 from __future__ import print_function
-from tests import OrloLiveTest
-from tests.test_orm import OrloDbTest
-import orlo
+from tests import OrloLiveTest, OrloTest
 from orlo.deploy import Deploy, HttpDeploy, ShellDeploy
-from orlo.orm import db, Release
+from orlo.orm import db, Release, Package
+from orlo.util import append_or_create_platforms
 
 __author__ = 'alforbes'
 
 
-class DeployTest(OrloLiveTest, OrloDbTest):
+class DeployTest(OrloLiveTest):
     """
     Test the Deploy class
     """
     CLASS = Deploy
 
     def setUp(self):
-        super(DeployTest, self).setUp()
+        # super(DeployTest, self).setUp()
+        db.create_all()
         rid = self._create_release()
         pid = self._create_package(rid)
         self.release = db.session.query(Release).first()
+
+    @staticmethod
+    def _create_release(user='testuser',
+                        team='test team',
+                        platforms=None,
+                        references=None,
+                        success=True):
+        """
+        Create a release using internal methods
+
+        :param user:
+        :param team:
+        :param platforms:
+        :param references:
+        :return:
+        """
+
+        if not platforms:
+            platforms = ['test_platform']
+        if type(platforms) is not list:
+            raise AssertionError("Platforms parameter must be list")
+        if not references:
+            references = ['TestTicket-123']
+
+        db_platforms = append_or_create_platforms(platforms)
+
+        r = Release(
+                platforms=db_platforms,
+                user=user,
+                references=references,
+                team=team,
+        )
+        db.session.add(r)
+        db.session.commit()
+
+        return r.id
+
+    @staticmethod
+    def _create_package(release_id,
+                        name='test-package',
+                        version='1.2.3',
+                        diff_url=None,
+                        rollback=False,
+                        ):
+        """
+        Create a package using internal methods
+
+        :param release_id:
+        :param name:
+        :param version:
+        :param diff_url:
+        :param rollback:
+        :return:
+        """
+        p = Package(
+                release_id=release_id,
+                name=name,
+                version=version,
+                diff_url=diff_url,
+                rollback=rollback,
+        )
+        db.session.add(p)
+        db.session.commit()
+
+        return p.id
 
     def test_init(self):
         """
@@ -63,6 +128,7 @@ class ShellDeployTest(DeployTest):
         :return:
         """
         deploy = ShellDeploy(self.release)
+        deploy.server_url = self.get_server_url()
         deploy.start()
 
     def test_kill(self):
