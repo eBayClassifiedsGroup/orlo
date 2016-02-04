@@ -1,4 +1,8 @@
 from __future__ import print_function
+import subprocess
+import json
+from orlo.config import config
+
 
 __author__ = 'alforbes'
 
@@ -16,16 +20,11 @@ class Deploy(object):
     integrations.
     """
 
-    def __init__(self, package_doc, metadata=None):
+    def __init__(self, release):
         """
-        :dict package_doc: a dict of packages to be released, e.g.
-            {package1: version, package2: version}
-        :dict metadata: an optional dictionary of metadata which is passed to
-            the deployer
+        Perform a release
         """
-
-        self.package_doc = package_doc
-        self.metadata = metadata
+        self.release = release
 
     def start(self):
         """
@@ -44,9 +43,8 @@ class HttpDeploy(Deploy):
     """
     A http-based Deployment
     """
-    def __init__(self, package_doc, base_url):
-        super(HttpDeploy, self).__init__(package_doc)
-        self.base_url = base_url
+    def __init__(self, release):
+        super(HttpDeploy, self).__init__(release)
 
     def start(self):
         pass
@@ -62,19 +60,46 @@ class ShellDeploy(Deploy):
     meta {} => stdin
     deployer pkg1=1
     capture stdout,
-
-    env USER, TEAM, URL, REFERENCES, (ORLO_
     """
-    def __init__(self, package_doc, command):
-        super(ShellDeploy, self).__init__(package_doc)
-        self.command = command
+    def __init__(self, release):
+        super(ShellDeploy, self).__init__(release)
+        self.pid = None
 
     def start(self):
         """
-
-        :return:
+        Start the deploy
         """
-        pass
+        args = [config.get('deploy_shell', 'command_path')]
+        for p in self.release.packages:
+            args.append("{}={}".format(p.name, p.version))
+        print("Args: {}".format(str(args)))
+
+        env = {
+            'ORLO_URL': config.get('main', 'base_url')
+        }
+        for key, value in self.release.to_dict().items():
+            my_key = "ORLO_" + key
+            env[my_key] = str(value)
+
+        print(env)
+        p = subprocess.Popen(
+            args,
+            env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        self.pid = p.pid
+        # metadata = self.release.metadata
+        metadata = {'foo': 'bar'}
+        out, err = p.communicate(json.dumps(metadata))
+
+        print("Out:\n{}".format(out))
+        print("Err:\n{}".format(err))
 
     def kill(self):
-        pass
+        """
+        Kill a deploy in progress
+        """
+        raise NotImplementedError

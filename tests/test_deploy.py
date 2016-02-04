@@ -1,25 +1,30 @@
 from __future__ import print_function
-from tests.test_contract import OrloHttpTest
+from tests import OrloLiveTest
+from tests.test_orm import OrloDbTest
+import orlo
 from orlo.deploy import Deploy, HttpDeploy, ShellDeploy
+from orlo.orm import db, Release
 
 __author__ = 'alforbes'
 
 
-class DeployTest(OrloHttpTest):
+class DeployTest(OrloLiveTest, OrloDbTest):
     """
     Test the Deploy class
     """
     CLASS = Deploy
-    PACKAGE_DOC = {
-        'package_one': '1.0.0',
-        'package_two': '2.0.0',
-    }
+
+    def setUp(self):
+        super(DeployTest, self).setUp()
+        rid = self._create_release()
+        pid = self._create_package(rid)
+        self.release = db.session.query(Release).first()
 
     def test_init(self):
         """
         Test that we can instantiate the class
         """
-        o = self.CLASS(self.PACKAGE_DOC)
+        o = self.CLASS(self.release)
         self.assertIsInstance(o, Deploy)
 
 
@@ -28,7 +33,7 @@ class BaseDeployTest(DeployTest):
         """
         Base Deploy class should raise NotImplementedError on start
         """
-        o = self.CLASS(self.PACKAGE_DOC)
+        o = self.CLASS(self.release)
         with self.assertRaises(NotImplementedError):
             o.start()
 
@@ -50,14 +55,15 @@ class HttpDeployTest(DeployTest):
 
 
 class ShellDeployTest(DeployTest):
-    CLASS = HttpDeploy
+    CLASS = ShellDeploy
 
     def test_start(self):
         """
         Test that start emits a shell command
         :return:
         """
-        pass
+        deploy = ShellDeploy(self.release)
+        deploy.start()
 
     def test_kill(self):
         """

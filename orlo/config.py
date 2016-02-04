@@ -10,6 +10,7 @@ config.set('main', 'propagate_exceptions', 'true')
 config.set('main', 'time_format', '%Y-%m-%dT%H:%M:%SZ')
 config.set('main', 'time_zone', 'UTC')
 config.set('main', 'strict_slashes', 'false')
+config.set('main', 'base_url', 'http://localhost:5000')
 
 config.add_section('db')
 config.set('db', 'uri', 'postgres://orlo:password@localhost:5432/orlo')
@@ -20,3 +21,7 @@ config.set('logging', 'debug', 'false')
 config.set('logging', 'file', 'disabled')
 
 config.read('/etc/orlo/orlo.ini')
+
+config.add_section('deploy_shell')
+config.set('deploy_shell', 'command_path', '/vagrant/deployer.rb')
+
