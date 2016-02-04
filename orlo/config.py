@@ -23,5 +23,5 @@ config.set('logging', 'file', 'disabled')
 config.read('/etc/orlo/orlo.ini')
 
 config.add_section('deploy_shell')
-config.set('deploy_shell', 'command_path', '/vagrant/deployer.rb')
+config.set('deploy_shell', 'command_path', '../deployer.rb')
 
