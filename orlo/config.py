@@ -5,7 +5,7 @@ __author__ = 'alforbes'
 config = ConfigParser.ConfigParser()
 
 config.add_section('main')
-config.set('main', 'debug_mode', 'true')
+config.set('main', 'debug_mode', 'false')
 config.set('main', 'propagate_exceptions', 'true')
 config.set('main', 'time_format', '%Y-%m-%dT%H:%M:%SZ')
 config.set('main', 'time_zone', 'UTC')
