@@ -7,7 +7,7 @@ from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, ReleaseMe
 from orlo.util import validate_request_json, create_release, validate_release_input, \
     validate_package_input, fetch_release, create_package, fetch_package, stream_json_list, \
     str_to_bool
-
+from orlo.deploy import ShellDeploy
 
 @app.route('/ping', methods=['GET'])
 def ping():
@@ -149,10 +149,11 @@ def post_releases_start(release_id):
     # TODO call deploy Class start Method
     app.logger.info("Release start, release {}".format(release_id))
     release.start()
-    #deploy = Deploy(release)
-    #deploy.start()
     db.session.add(release)
     db.session.commit()
+
+    deploy = ShellDeploy(release)
+    deploy.start()
     return '', 204
 
 @app.route('/releases/<release_id>/stop', methods=['POST'])
