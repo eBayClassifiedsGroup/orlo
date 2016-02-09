@@ -36,8 +36,7 @@ class OrloAuthTest(TestCase):
         db.session.remove()
         db.drop_all()
 
-    def get_with_basic_auth(self, path,
-                            username='testuser', password='blabla', **kwargs):
+    def get_with_basic_auth(self, path, username='testuser', password='blabla'):
         """
         Do a request with basic auth
 
@@ -52,29 +51,24 @@ class OrloAuthTest(TestCase):
         response = Client.open(self.client, path=path, headers=h)
         return response
 
+    def get_with_token_auth(self, path, token):
+        """
+        Do a request with token auth
+
+        :param token:
+        :param path:
+        """
+        h = Headers()
+        h.add('X-Auth-Token', token)
+        response = Client.open(self.client, path=path, headers=h)
+        return response
+
     def get_token(self):
         response = self.get_with_basic_auth('/token')
-        print(response.json)
         return response.json['token']
 
 
-class TestOrloAuth(OrloAuthTest):
-    def test_unauthorised(self):
-        """
-        Test that we get 401 without a token
-        """
-        response = self.client.get('/ping')
-        self.assert401(response)
-        print(response.headers)
-
-    def test_auth_disabled(self):
-        """
-        Same test as above with auth disabled
-        """
-        with ConfigChange('security', 'enabled', 'false'):
-            response = self.client.get('/ping')
-            self.assert200(response)
-
+class TestOrloAuthToken(OrloAuthTest):
     def test_token(self):
         """
         Test that we can fetch a token
@@ -83,7 +77,35 @@ class TestOrloAuth(OrloAuthTest):
         self.assert200(response)
         self.assertIn('token', response.json)
 
+
+class TestOrloAuth(OrloAuthTest):
+    URL_PATH = '/ping'
+
+    def test_unauthorised(self):
+        """
+        Test that we get 401 without a token
+        """
+        response = self.client.get(self.URL_PATH)
+        self.assert401(response)
+        print(response.headers)
+
+    def test_auth_disabled(self):
+        """
+        Same test as above with auth disabled
+        """
+        with ConfigChange('security', 'enabled', 'false'):
+            response = self.client.get(self.URL_PATH)
+            self.assert200(response)
+
     def test_auth_with_token(self):
         token = self.get_token()
-        print(token)
+        response = self.get_with_token_auth(self.URL_PATH, token)
+        self.assert200(response)
 
+
+class TestOrloAuthReleases(TestOrloAuth):
+    """
+    We probably don't want to apply the same blanket auth rules to all
+    endpoints
+    """
+    URL_PATH = '/releases?platform=foo'
