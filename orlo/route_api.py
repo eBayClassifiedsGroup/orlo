@@ -1,4 +1,4 @@
-from orlo import app, queries, user_auth
+from orlo import app, queries
 from orlo.exceptions import InvalidUsage
 from flask import jsonify, request, Response, json, g
 import arrow
@@ -8,6 +8,7 @@ from orlo.util import validate_request_json, create_release, validate_release_in
     validate_package_input, fetch_release, create_package, fetch_package, stream_json_list, \
     str_to_bool
 from orlo.deploy import ShellDeploy
+
 
 @app.route('/ping', methods=['GET'])
 def ping():

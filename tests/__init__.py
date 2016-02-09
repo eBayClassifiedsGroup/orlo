@@ -51,3 +51,24 @@ class OrloLiveTest(LiveServerTestCase):
         db.drop_all()
         db.get_engine(self.app).dispose()
 
+
+class ConfigChange(object):
+    def __init__(self, section, option, value):
+        """
+        Decorator to temporarily change configuration
+
+        @param section: ConfigParser section
+        @param option: ConfigParser option
+        @param value: Value to set
+        @return:
+        """
+        self.section = section
+        self.option = option
+        self.value = value
+
+    def __enter__(self):
+        self.original_state = orlo.config.get(self.section, self.option)
+        orlo.config.set(self.section, self.option, self.value)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        orlo.config.set(self.section, self.option, self.original_state)

@@ -1,4 +1,6 @@
 from orlo import app
+from orlo.config import config
+from orlo.exceptions import OrloAuthError
 from flask import request, jsonify, g
 from flask.ext.httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,34 +8,37 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
 # initialization
-app.config['SECRET_KEY'] = 'Who lives in a pineapple under the sea?'
-app.debug = True
+app.config['SECRET_KEY'] = config.get('security', 'secret_key')
 
 # extensions
 auth = HTTPBasicAuth()
 
 
 class User(object):
-
     def __init__(self, name):
         self.name = name
-        self.password_hash = self.getpwent(name)
+        self.password_hash = self.get_pw_ent(name)
         self.confirmed = False
 
-    def getpwent(self, name):
-        with open('etc/passwd') as f:
-            for line in f:
-                line = line.strip()
-                user = line.split(':')[0]
-                if not user == name:
-                    continue
+    @staticmethod
+    def get_pw_ent(name):
+        if config.get('security', 'method') == 'file':
+            with open(config.get('security', 'passwd_file')) as f:
+                for line in f:
+                    line = line.strip()
+                    user = line.split(':')[0]
+                    if not user == name:
+                        continue
 
-                # found user return password
-                pw = ':'.join(line.split(':')[1:])
-                return pw
+                    # found user return password
+                    app.logger.debug("Found user {} in file".format(name))
+                    pw = ':'.join(line.split(':')[1:])
+                    return pw
+            # user not in passwd file return a hash that cannot occur
+            return '*'
 
-        # user not in passwd file return a hash that cannot occur
-        return '*'
+        # TODO implement LDAP
+        raise OrloAuthError("Unknown auth method, check security config")
 
     def hash_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -61,11 +66,14 @@ class User(object):
 
 @auth.verify_password
 def verify_password(username=None, password=None):
+    if not config.getboolean('security', 'enabled'):
+        return True
+
     user = None
     try:
         token = request.headers.get('X-Auth-Token').strip()
         user = User.verify_auth_token(token)
-    except:
+    except:  # TODO be more specific here
         pass
 
     if user:
@@ -96,10 +104,11 @@ def auth_error():
 @app.before_request
 @auth.login_required
 def before_request():
-    if not g.current_user.confirmed:
-        response = jsonify({'error': 'not authorized'})
-        response.status_code = 401
-        return response
+    if config.getboolean('security', 'enabled'):
+        if not g.current_user.confirmed:
+            response = jsonify({'error': 'not authorized'})
+            response.status_code = 401
+            return response
 
 
 @app.route('/token')
@@ -108,6 +117,3 @@ def get_token():
     token = g.current_user.generate_auth_token(600)
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
-
-if __name__ == '__main__':
-    pass

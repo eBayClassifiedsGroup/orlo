@@ -250,7 +250,6 @@ class ReleaseMetadata(db.Model):
         return {self.key : self.value}
 
 
-
 class Platform(db.Model):
     """
     A platform that is released to

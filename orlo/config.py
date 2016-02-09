@@ -13,6 +13,13 @@ config.set('main', 'time_zone', 'UTC')
 config.set('main', 'strict_slashes', 'false')
 config.set('main', 'base_url', 'http://localhost:8080')
 
+
+config.add_section('security')
+config.set('security', 'enabled', 'false')
+config.set('security', 'method', 'file')
+config.set('security', 'passwd_file', os.path.dirname(__file__) + '/../etc/passwd')
+config.set('security', 'secret_key', 'Who lives in a pineapple under the sea?')
+
 config.add_section('db')
 config.set('db', 'uri', 'postgres://orlo:password@localhost:5432/orlo')
 config.set('db', 'echo_queries', 'false')
