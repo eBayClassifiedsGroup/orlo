@@ -77,7 +77,8 @@ class ShellDeploy(Deploy):
         print("Args: {}".format(str(args)))
 
         env = {
-            'ORLO_URL': self.server_url
+            'ORLO_URL': self.server_url,
+            'ORLO_RELEASE': self.release.id
         }
         for key, value in self.release.to_dict().items():
             my_key = "ORLO_" + key.upper()
