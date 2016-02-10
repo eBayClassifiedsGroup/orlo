@@ -9,8 +9,6 @@ import base64
 
 __author__ = 'alforbes'
 
-orlo.config.set('security', 'enabled', 'true')
-orlo.config.set('security', 'method', 'file')
 USER = 'testuser'
 PASSWORD = 'blah'
 
@@ -31,10 +29,13 @@ class OrloAuthTest(TestCase):
 
     def setUp(self):
         db.create_all()
+        orlo.config.set('security', 'enabled', 'true')
+        orlo.config.set('security', 'method', 'file')
 
     def tearDown(self):
         db.session.remove()
         db.drop_all()
+        orlo.config.set('security', 'enabled', 'false')
 
     def get_with_basic_auth(self, path, username='testuser', password='blabla'):
         """
