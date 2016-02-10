@@ -21,8 +21,10 @@ class OrloTest(TestCase):
 
     def setUp(self):
         db.create_all()
+        db.session.begin_nested()
 
     def tearDown(self):
+        db.session.rollback()
         db.session.remove()
         db.drop_all()
 
@@ -45,10 +47,12 @@ class OrloLiveTest(LiveServerTestCase):
 
     def setUp(self):
         db.create_all()
+        db.session.begin_nested()
 
     def tearDown(self):
-        db.session.remove()
+        db.session.rollback()
         db.drop_all()
+        db.session.remove()
         db.get_engine(self.app).dispose()
 
 

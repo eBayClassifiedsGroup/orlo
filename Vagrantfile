@@ -84,6 +84,7 @@ Vagrant.configure(2) do |config|
 
     sudo pip install --upgrade pip
     sudo pip install sphinx sphinxcontrib-httpdomain
+    sudo pip install git+https://github.com/jarus/flask-testing.git
 
     cd /vagrant/
     # why do we need to do this twice?

@@ -29,13 +29,16 @@ class OrloAuthTest(TestCase):
 
     def setUp(self):
         db.create_all()
+        self.orig_security_enabled = orlo.config.get('security', 'enabled')
+        self.orig_security_method = orlo.config.get('security', 'method')
         orlo.config.set('security', 'enabled', 'true')
         orlo.config.set('security', 'method', 'file')
 
     def tearDown(self):
         db.session.remove()
         db.drop_all()
-        orlo.config.set('security', 'enabled', 'false')
+        orlo.config.set('security', 'enabled', self.orig_security_enabled)
+        orlo.config.set('security', 'method', self.orig_security_method)
 
     def get_with_basic_auth(self, path, username='testuser', password='blabla'):
         """

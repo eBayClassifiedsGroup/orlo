@@ -10,6 +10,16 @@ from orlo.util import validate_request_json, create_release, validate_release_in
 from orlo.deploy import ShellDeploy
 
 
+@app.route('/', methods=['GET'])
+def root():
+    """
+    Root page, display info
+    """
+    return jsonify({
+        'message': "Orlo server, see http://orlo.readthedocs.org/"
+    })
+
+
 @app.route('/ping', methods=['GET'])
 def ping():
     """

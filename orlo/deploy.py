@@ -8,7 +8,7 @@ from orlo.exceptions import OrloError
 __author__ = 'alforbes'
 
 
-class Deploy(object):
+class BaseDeploy(object):
     """
     A Deploy task
 
@@ -41,7 +41,7 @@ class Deploy(object):
         raise NotImplementedError("Please override the kill method")
 
 
-class HttpDeploy(Deploy):
+class HttpDeploy(BaseDeploy):
     """
     A http-based Deployment
     """
@@ -55,7 +55,7 @@ class HttpDeploy(Deploy):
         pass
 
 
-class ShellDeploy(Deploy):
+class ShellDeploy(BaseDeploy):
     """
     Deployment by shell command
 
@@ -78,13 +78,13 @@ class ShellDeploy(Deploy):
 
         env = {
             'ORLO_URL': self.server_url,
-            'ORLO_RELEASE': self.release.id
+            'ORLO_RELEASE': str(self.release.id)
         }
         for key, value in self.release.to_dict().items():
             my_key = "ORLO_" + key.upper()
             env[my_key] = str(value)
 
-        print("Env: {}".format(str(env)))
+        print("Env: {}".format(json.dumps(env)))
         p = subprocess.Popen(
             args,
             env=env,
