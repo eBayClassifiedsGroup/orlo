@@ -3,6 +3,7 @@ from tests import OrloLiveTest, OrloTest
 from orlo.deploy import BaseDeploy, HttpDeploy, ShellDeploy
 from orlo.orm import db, Release, Package
 from orlo.util import append_or_create_platforms
+import unittest
 
 __author__ = 'alforbes'
 
@@ -122,13 +123,12 @@ class TestHttpDeploy(DeployTest):
 class TestShellDeploy(DeployTest):
     CLASS = ShellDeploy
 
+    @unittest.skip("Not working yet, can't install ruby deps in travis")
     def test_start(self):
         """
         Test that start emits a shell command
         :return:
         """
-        import unittest
-        unittest.skip("Blocks indefinitely due to lack of threading")
         deploy = ShellDeploy(self.release)
         deploy.server_url = self.get_server_url()
         deploy.start()

@@ -15,7 +15,7 @@ def orlo_request(method, url, body = nil)
     request  = method.new(url, initheader = {
         "Content-Type" => "application/json"
     })
-    request.basic_auth("alforbes", "moreblabla")
+    request.basic_auth("testuser", "blabla")
 
     if ! body.nil?
         request.body = JSON(body)

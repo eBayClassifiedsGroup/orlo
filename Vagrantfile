@@ -94,5 +94,8 @@ Vagrant.configure(2) do |config|
     python /vagrant/create_db.py
     sudo pip install -r /vagrant/requirements.txt
     sudo pip install pytest Flask-Testing
+
+    # For deployer.rb
+    sudo apt-get install ruby-rest-client ruby-json
   SHELL
 end
