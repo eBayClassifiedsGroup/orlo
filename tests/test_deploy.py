@@ -93,7 +93,7 @@ class DeployTest(OrloLiveTest):
         self.assertIsInstance(o, Deploy)
 
 
-class BaseDeployTest(DeployTest):
+class TestBaseDeploy(DeployTest):
     def test_not_implemented(self):
         """
         Base Deploy class should raise NotImplementedError on start
@@ -103,7 +103,7 @@ class BaseDeployTest(DeployTest):
             o.start()
 
 
-class HttpDeployTest(DeployTest):
+class TestHttpDeploy(DeployTest):
     CLASS = HttpDeploy
 
     def test_start(self):
@@ -119,7 +119,7 @@ class HttpDeployTest(DeployTest):
         pass
 
 
-class ShellDeployTest(DeployTest):
+class TestShellDeploy(DeployTest):
     CLASS = ShellDeploy
 
     def test_start(self):

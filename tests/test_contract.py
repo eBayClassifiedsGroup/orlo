@@ -171,7 +171,7 @@ class OrloHttpTest(OrloTest):
         return response
 
 
-class PostContractTest(OrloHttpTest):
+class TestPostContract(OrloHttpTest):
     """
     Test the HTTP POST contract
     """
@@ -331,7 +331,7 @@ class PostContractTest(OrloHttpTest):
         self.assertEqual(package.status, 'FAILED')
 
 
-class GetContractTest(OrloHttpTest):
+class TestGetContract(OrloHttpTest):
     """
     Test the HTTP GET contract
     """

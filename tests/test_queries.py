@@ -19,7 +19,7 @@ class OrloQueryTest(OrloDbTest):
     pass
 
 
-class ListTest(OrloQueryTest):
+class TestList(OrloQueryTest):
     def test_user_list(self):
         """
         Test that user_list returns a list of all users that have released
@@ -104,7 +104,7 @@ class ListTest(OrloQueryTest):
         self.assertIn('platformTwo', platforms)
 
 
-class SummaryTest(OrloQueryTest):
+class TestSummary(OrloQueryTest):
     def test_user_summary(self):
         """
         Test that user_summary returns the expected output
@@ -320,7 +320,7 @@ class SummaryTest(OrloQueryTest):
         self.assertIn(('packageOne', '1.0.1'), versions)
 
 
-class CountReleasesTest(OrloQueryTest):
+class TestCountReleases(OrloQueryTest):
     """
     Parent class for testing the CountReleases function
 
@@ -374,7 +374,7 @@ class CountReleasesTest(OrloQueryTest):
         self.assertEqual(0, result[0][0])
 
 
-class CountReleasesStatus(CountReleasesTest):
+class CountReleasesStatus(TestCountReleases):
     """
     Test count_releases when filtering on status
 
@@ -437,7 +437,7 @@ class CountReleasesStatus(CountReleasesTest):
         self.assertEqual(1, result[0][0])
 
 
-class CountReleasesUser(CountReleasesTest):
+class CountReleasesUser(TestCountReleases):
     """
     Test count_releases when filtering on user
     """
@@ -445,7 +445,7 @@ class CountReleasesUser(CountReleasesTest):
     EXCLUSIVE_ARGS = {'user': 'bad_foo_user'}
 
 
-class CountReleasesTeam(CountReleasesTest):
+class CountReleasesTeam(TestCountReleases):
     """
     Test count_releases when filtering on team
     """
@@ -453,7 +453,7 @@ class CountReleasesTeam(CountReleasesTest):
     EXCLUSIVE_ARGS = {'team': 'bad team does not exist'}
 
 
-class CountReleasesPackage(CountReleasesTest):
+class CountReleasesPackage(TestCountReleases):
     """
     Test count_releases when filtering on package
     """
@@ -461,7 +461,7 @@ class CountReleasesPackage(CountReleasesTest):
     EXCLUSIVE_ARGS = {'package': 'non-existent-package'}
 
 
-class CountReleasesPlatform(CountReleasesTest):
+class CountReleasesPlatform(TestCountReleases):
     """
     Test count_releases when filtering on platform
     """
@@ -469,7 +469,7 @@ class CountReleasesPlatform(CountReleasesTest):
     EXCLUSIVE_ARGS = {'platform': 'non_existent_platform'}
 
 
-class CountReleasesRollback(CountReleasesTest):
+class CountReleasesRollback(TestCountReleases):
     """
     Test count_releases when filtering on rollback
 

@@ -6,7 +6,7 @@ import unittest
 __author__ = 'alforbes'
 
 
-class StatsTest(OrloDbTest):
+class TestStats(OrloDbTest):
     ENDPOINT = '/stats'
 
     def setUp(self):
@@ -64,7 +64,7 @@ class StatsTest(OrloDbTest):
         self.assertIn('message', response.json)
 
 
-class UserStatsTest(StatsTest):
+class TestUserStats(TestStats):
     ENDPOINT = '/stats/user'
 
     def test_stats_user_200_with_user(self):
@@ -82,7 +82,7 @@ class UserStatsTest(StatsTest):
         self.assertIsInstance(response.json, dict)
 
 
-class TeamStatsTest(StatsTest):
+class TestTeamStats(TestStats):
     ENDPOINT = '/stats/team'
 
     def test_stats_team_200_with_team(self):
@@ -100,7 +100,7 @@ class TeamStatsTest(StatsTest):
         self.assertIsInstance(response.json, dict)
 
 
-class PlatformStatsTest(StatsTest):
+class TestPlatformStats(TestStats):
     ENDPOINT = '/stats/platform'
 
     def test_stats_platform_200_with_platform(self):
@@ -111,7 +111,7 @@ class PlatformStatsTest(StatsTest):
         self.assert200(response)
 
 
-class PackageStatsTest(StatsTest):
+class TestPackageStats(TestStats):
     ENDPOINT = '/stats/package'
 
     def test_stats_package_200_with_package(self):
@@ -129,7 +129,7 @@ class PackageStatsTest(StatsTest):
         self.assertIsInstance(response.json, dict)
 
 
-class StatsByDateReleaseTest(StatsTest):
+class TestStatsByDateRelease(TestStats):
     """
     Testing the "by_date" urls
     """
@@ -198,7 +198,7 @@ class StatsByDateReleaseTest(StatsTest):
         self.assertEqual({}, response.json)
 
 
-class StatsByDatePackageTest(OrloDbTest):
+class TestStatsByDatePackage(OrloDbTest):
     """
     Testing the "by_date" urls
     """

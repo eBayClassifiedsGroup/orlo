@@ -4,7 +4,7 @@ from tests.test_contract import OrloHttpTest
 __author__ = 'alforbes'
 
 
-class OrloInfoUrlTest(OrloHttpTest):
+class TestInfoUrl(OrloHttpTest):
     def test_info_root(self):
         """
         Test /info returns 200

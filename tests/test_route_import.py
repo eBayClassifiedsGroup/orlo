@@ -7,7 +7,7 @@ from tests.test_contract import OrloTest
 __author__ = 'alforbes'
 
 
-class ImportTest(OrloTest):
+class TestImport(OrloTest):
     """
     Base import test class
 
@@ -99,7 +99,7 @@ class ImportTest(OrloTest):
         self.assertEqual(self.package.version, self.doc_dict[0]['packages'][0]['version'])
 
 
-class NormalImportTest(ImportTest):
+class TestNormalImport(TestImport):
     """
     Normal import test with all fields populated
     """
@@ -212,7 +212,7 @@ class NormalImportTest(ImportTest):
             self.assertIn(note.content, self.doc_dict[0]['notes'])
 
 
-class NullTimeTest(ImportTest):
+class TestNullTime(TestImport):
     def test_import_release_ftime_null(self):
         """
         Release ftime should be null (None) for the minimal document
