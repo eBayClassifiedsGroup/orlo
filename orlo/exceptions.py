@@ -33,3 +33,10 @@ class OrloWorkflowError(OrloError):
 
 class OrloAuthError(OrloError):
     pass
+
+
+class OrloStartupError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self)
+        print("Startup Error: " + message)
+

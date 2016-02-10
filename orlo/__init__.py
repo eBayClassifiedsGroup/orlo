@@ -3,6 +3,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 from orlo.config import config
+from orlo.exceptions import OrloStartupError
 from orlo._version import __version__
 
 app = Flask(__name__)
@@ -38,6 +39,11 @@ if logfile != 'disabled':
         backupCount=1,
     )
     app.logger.addHandler(handler)
+
+if config.getboolean('security', 'enabled') and \
+        config.get('security', 'secret_key') == 'change_me':
+    raise OrloStartupError("Security is enabled, please configure the secret key")
+
 
 # Must be imported last
 import orlo.error_handlers

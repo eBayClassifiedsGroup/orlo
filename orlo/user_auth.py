@@ -1,8 +1,8 @@
 from orlo import app
 from orlo.config import config
 from orlo.exceptions import OrloAuthError
+from orlo.login_handler import OrloHTTPBasicAuth
 from flask import request, jsonify, g
-from flask.ext.httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
@@ -10,8 +10,7 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
 # initialization
 app.config['SECRET_KEY'] = config.get('security', 'secret_key')
 
-# extensions
-auth = HTTPBasicAuth()
+auth = OrloHTTPBasicAuth()
 
 
 class User(object):
@@ -96,6 +95,10 @@ def verify_password(username=None, password=None):
 
 @auth.error_handler
 def auth_error():
+    """
+    Authentication error
+    """
+    # raise OrloAuthError("Not authorized")
     response = jsonify({'error': 'not authorized'})
     response.status_code = 401
     return response
@@ -104,6 +107,9 @@ def auth_error():
 @app.before_request
 @auth.login_required
 def before_request():
+    """
+    Check the user is authenticated before allowing the request
+    """
     if config.getboolean('security', 'enabled'):
         if not g.current_user.confirmed:
             response = jsonify({'error': 'not authorized'})
@@ -114,6 +120,9 @@ def before_request():
 @app.route('/token')
 @auth.login_required
 def get_token():
+    """
+    Get a token
+    """
     token = g.current_user.generate_auth_token(600)
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 

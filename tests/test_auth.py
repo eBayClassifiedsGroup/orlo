@@ -87,7 +87,6 @@ class TestOrloAuth(OrloAuthTest):
         """
         response = self.client.get(self.URL_PATH)
         self.assert401(response)
-        print(response.headers)
 
     def test_auth_disabled(self):
         """
