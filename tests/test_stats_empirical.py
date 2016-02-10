@@ -20,7 +20,7 @@ def date_range(start, end):
         yield start + timedelta(n)
 
 
-class StatsEmpiricalTest(OrloDbTest):
+class TestStatsEmpirical(OrloDbTest):
     """
     Test release stats by creating a known data set
 

@@ -77,13 +77,14 @@ Vagrant.configure(2) do |config|
         | sudo -u postgres -i psql
 
     # Build tools
-    sudo apt-get -y install build-essential git-buildpackage debhelper python-dev dh-systemd
+    sudo apt-get -y install build-essential git-buildpackage debhelper python-dev dh-systemd python-virtualenv
     wget -P /tmp/ \
         'https://launchpad.net/ubuntu/+archive/primary/+files/dh-virtualenv_0.11-1_all.deb'
     dpkg -i /tmp/dh-virtualenv_0.11-1_all.deb
 
     sudo pip install --upgrade pip
     sudo pip install sphinx sphinxcontrib-httpdomain
+    sudo pip install git+https://github.com/jarus/flask-testing.git
 
     cd /vagrant/
     # why do we need to do this twice?
@@ -93,5 +94,8 @@ Vagrant.configure(2) do |config|
     python /vagrant/create_db.py
     sudo pip install -r /vagrant/requirements.txt
     sudo pip install pytest Flask-Testing
+
+    # For deployer.rb
+    sudo apt-get install ruby-rest-client ruby-json
   SHELL
 end

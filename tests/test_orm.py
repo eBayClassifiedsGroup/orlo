@@ -163,6 +163,9 @@ class TestFields(OrloDbTest):
         Test the types returned by Package objects are OK
         """
         p = db.session.query(Package).first()
+        x = db.session.query(Package).all()
+        print(x)
+        print(len(x))
         self.assertIs(type(p.id), uuid.UUID)
         self.assertIs(type(p.name), unicode)
         self.assertIs(type(p.stime), arrow.arrow.Arrow)

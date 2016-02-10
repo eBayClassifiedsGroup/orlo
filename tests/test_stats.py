@@ -24,7 +24,7 @@ class OrloStatsTest(OrloDbTest):
             self._create_finished_release()
 
 
-class GeneralTest(OrloStatsTest):
+class TestGeneral(OrloStatsTest):
     """
     Testing the shared stats functions
     """
@@ -49,7 +49,7 @@ class GeneralTest(OrloStatsTest):
         self.assertEqual(tree, {'parent': {'child': 2}})
 
 
-class ReleaseTimeTest(OrloStatsTest):
+class TestReleaseTime(OrloStatsTest):
     """
     Test stats.releases_by_time
     """
@@ -123,7 +123,7 @@ class ReleaseTimeTest(OrloStatsTest):
         pass
 
 
-class PackageTimeTest(OrloStatsTest):
+class TestPackageTime(OrloStatsTest):
     """
     Test stats.packages_by_time
     """

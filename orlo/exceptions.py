@@ -29,3 +29,14 @@ class DatabaseError(OrloError):
 
 class OrloWorkflowError(OrloError):
     status_code = 400
+
+
+class OrloAuthError(OrloError):
+    pass
+
+
+class OrloStartupError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self)
+        print("Startup Error: " + message)
+

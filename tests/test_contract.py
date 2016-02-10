@@ -34,6 +34,7 @@ class OrloHttpTest(OrloTest):
                 '/releases',
                 data=json.dumps({
                     'note': 'test note lorem ipsum',
+                    'metadata' : {'env' : 'test'},
                     'platforms': platforms,
                     'references': references,
                     'team': team,
@@ -156,8 +157,21 @@ class OrloHttpTest(OrloTest):
         self.assertEqual(response.status_code, 204)
         return response
 
+    def _post_releases_metadatas(self, release_id, metadata):
+        """
+        Add a metadata to a release
+        """
 
-class PostContractTest(OrloHttpTest):
+        response = self.client.post(
+                '/releases/{}/metadatas'.format(release_id, metadata),
+                data=json.dumps(metadata),
+                content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 204)
+        return response
+
+
+class TestPostContract(OrloHttpTest):
     """
     Test the HTTP POST contract
     """
@@ -231,6 +245,14 @@ class PostContractTest(OrloHttpTest):
         """
         release_id = self._create_release()
         response = self._post_releases_notes(release_id, "this is a test message")
+        self.assertEqual(204, response.status_code)
+
+    def test_post_metadata(self):
+        """
+        Test adding metadata to a release
+        """
+        release_id = self._create_release()
+        response = self._post_releases_metadatas(release_id, {"meta" : "data"})
         self.assertEqual(204, response.status_code)
 
     def test_create_release_minimal(self):
@@ -309,7 +331,7 @@ class PostContractTest(OrloHttpTest):
         self.assertEqual(package.status, 'FAILED')
 
 
-class GetContractTest(OrloHttpTest):
+class TestGetContract(OrloHttpTest):
     """
     Test the HTTP GET contract
     """

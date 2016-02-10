@@ -86,6 +86,11 @@ class Release(db.Model):
 
     def to_dict(self):
         time_format = config.get('main', 'time_format')
+
+        metadatas = {}
+        for m in self.metadata:
+            metadatas.update(m.to_dict())
+
         return {
             'id': unicode(self.id),
             'packages': [p.to_dict() for p in self.packages],
@@ -94,6 +99,7 @@ class Release(db.Model):
             'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
             'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
+            'metadata' : metadatas,
             'user': self.user,
             'team': self.team,
         }
@@ -169,7 +175,7 @@ class Package(db.Model):
     def to_dict(self):
         time_format = config.get('main', 'time_format')
         return {
-            'id': self.id,
+            'id': unicode(self.id),
             'name': self.name,
             'version': self.version,
             'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
@@ -216,6 +222,32 @@ class ReleaseNote(db.Model):
         self.id = uuid.uuid4()
         self.release_id = release_id
         self.content = content
+
+
+class ReleaseMetadata(db.Model):
+    """
+    Matadata added to a release
+    """
+    __tablename__ = 'release_metadata'
+
+    id = db.Column(UUIDType, primary_key=True, unique=True)
+
+    release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
+    release = db.relationship("Release", backref=db.backref('metadata', order_by=id))
+    key = db.Column(db.Text, nullable=False)
+    value = db.Column(db.Text, nullable=False)
+
+    def __init__(self, release_id, key, value):
+        self.id = uuid.uuid4()
+        self.release_id = release_id
+        self.key = key
+        self.value = value
+
+    def getKey(self):
+        return str(self.key)
+
+    def to_dict(self):
+        return {self.key : self.value}
 
 
 class Platform(db.Model):

@@ -5,7 +5,7 @@ import orlo.util
 __author__ = 'alforbes'
 
 
-class UtilTest(TestCase):
+class TestUtil(TestCase):
     def test_str_to_bool_true(self):
         """
         Test some values for True
