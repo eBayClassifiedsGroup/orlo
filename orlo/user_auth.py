@@ -46,7 +46,7 @@ class User(object):
         rc = check_password_hash(self.password_hash, password)
         return rc
 
-    def generate_auth_token(self, expiration=600):
+    def generate_auth_token(self, expiration=3600):
         s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
         return s.dumps({'id': self.name})
 
@@ -123,6 +123,6 @@ def get_token():
     """
     Get a token
     """
-    token = g.current_user.generate_auth_token(600)
+    token = g.current_user.generate_auth_token(config.get('security', 'token_ttl'))
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
