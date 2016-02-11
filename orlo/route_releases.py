@@ -10,30 +10,6 @@ from orlo.util import validate_request_json, create_release, validate_release_in
 from orlo.deploy import ShellDeploy
 
 
-@app.route('/', methods=['GET'])
-def root():
-    """
-    Root page, display info
-    """
-    return jsonify({
-        'message': "Orlo server, see http://orlo.readthedocs.org/"
-    })
-
-
-@app.route('/ping', methods=['GET'])
-def ping():
-    """
-    Simple ping test, takes no parameters
-
-    **Example curl**:
-
-    .. sourcecode:: shell
-
-        curl -X GET 'http://127.0.0.1/ping'
-    """
-    return 'pong'
-
-
 @app.route('/releases', methods=['POST'])
 def post_releases():
     """
@@ -167,6 +143,7 @@ def post_releases_start(release_id):
     deploy.start()
     return '', 204
 
+
 @app.route('/releases/<release_id>/stop', methods=['POST'])
 def post_releases_stop(release_id):
     """
@@ -270,10 +247,11 @@ def post_releases_notes(release_id):
     db.session.commit()
     return '', 204
 
-@app.route('/releases/<release_id>/metadatas', methods=['POST'])
-def post_releases_metadatas(release_id):
+
+@app.route('/releases/<release_id>/metadata', methods=['POST'])
+def post_releases_metadata(release_id):
     """
-    Add a metadata to a release
+    Add metadata to a release
 
     :param string release_id: Release UUID
     :query string text: Text
@@ -284,13 +262,14 @@ def post_releases_metadatas(release_id):
     if not meta:
         raise InvalidUsage("Must include metadata in posted document: es {\"key\" : \"value\"}")
 
-    for key,value in request.json.items():
+    for key, value in request.json.items():
         app.logger.info("Adding Metadata to release {}".format(release_id))
         metadata = ReleaseMetadata(release_id, key, value)
         db.session.add(metadata)
 
     db.session.commit()
     return '', 204
+
 
 @app.route('/releases', methods=['GET'])
 @app.route('/releases/<release_id>', methods=['GET'])

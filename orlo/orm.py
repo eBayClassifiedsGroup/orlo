@@ -87,9 +87,9 @@ class Release(db.Model):
     def to_dict(self):
         time_format = config.get('main', 'time_format')
 
-        metadatas = {}
+        metadata = {}
         for m in self.metadata:
-            metadatas.update(m.to_dict())
+            metadata.update(m.to_dict())
 
         return {
             'id': unicode(self.id),
@@ -99,7 +99,7 @@ class Release(db.Model):
             'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
             'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
-            'metadata' : metadatas,
+            'metadata': metadata,
             'user': self.user,
             'team': self.team,
         }
