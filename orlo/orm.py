@@ -226,7 +226,7 @@ class ReleaseNote(db.Model):
 
 class ReleaseMetadata(db.Model):
     """
-    Matadata added to a release
+    Metadata added to a release
     """
     __tablename__ = 'release_metadata'
 
@@ -247,7 +247,7 @@ class ReleaseMetadata(db.Model):
         return str(self.key)
 
     def to_dict(self):
-        return {self.key : self.value}
+        return {self.key: self.value}
 
 
 class Platform(db.Model):
