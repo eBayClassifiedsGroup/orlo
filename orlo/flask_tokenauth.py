@@ -27,15 +27,15 @@ class TokenAuthError(Exception):
 class TokenManager(object):
     """ Create and verify Tokens
     """
-    def __init__(self, key):
-        self.key = key
+    def __init__(self, secret_key):
+        self.secret_key = secret_key
 
     def generate(self, name, expiration=3600):
-        s = Serializer(self.key, expires_in=expiration)
+        s = Serializer(self.secret_key, expires_in=expiration)
         return s.dumps({'id': name})
 
     def verify(self, token):
-        s = Serializer(self.key)
+        s = Serializer(self.secret_key)
         try:
             data = s.loads(token)
         except SignatureExpired:
@@ -45,13 +45,29 @@ class TokenManager(object):
         name = data['id']
         return name
 
+    # Not finished
+    def store(self, f):
+        """ Optionally specify a function to store a token
+
+        :param f:
+        """
+        raise NotImplementedError
+        self.store_token_callback = f
+        return f
+
+    def retrieve(self, f):
+        """ Optionally specify a function to retrieve a token
+        :param f: Function to use
+        """
+        raise NotImplementedError
+        self.retrieve_token_callback = f
+
 
 class TokenAuth(object):
     """ Authenticate a token
 
     Takes X-Auth-Token header and extracts a user name value from it using a
     given TokenManager.
-    The name value is then added to request.authorization
 
     Borrows heavily from Flask-HTTPAuth, many thanks to the authors!
     """
@@ -59,8 +75,9 @@ class TokenAuth(object):
         def default_error_handler():
             return "Access Denied"
 
-        self.token_manager = TokenManager(key=secret_key)
+        self.token_manager = TokenManager(secret_key=secret_key)
         self.realm = realm or "Authentication Token Required"
+
         self.verify_token(None)
         self.error_handler(default_error_handler)
 
@@ -91,6 +108,10 @@ class TokenAuth(object):
 
         :param token:
         """
+        if self.verify_token:
+            # Specified verify function overrides below
+            return self.verify_token_callback(token)
+
         if not token:
             return False
 
@@ -98,36 +119,16 @@ class TokenAuth(object):
         if not name:
             return False
 
-        if self.verify_token:
-            if not self.verify_token_callback(token):
-                return False
-
-        request.authorization.username = name
         return True
 
-    # Not finished implementation
     def verify_token(self, f):
-        """ Optionally specify a function to perform additional checks on the token
+        """ Optionally specify a function to perform the token verification
 
-        (e.g., if it is present in a database)
-        :param f:  Function to use
-        """
-        raise NotImplementedError
-        self.verify_token_callback = f
-        return f
-
-    def store_token(self, f):
-        """ Optionally specify a function to store a token
+        For example, if it is present in a database.
+        By default we just check we can decode it with our secret.
 
         :param f:
         """
-        raise NotImplementedError
-        self.store_token_callback = f
+        self.verify_token_callback = f
         return f
 
-    def retrieve_token(self, f):
-        """ Optionally specify a function to retrieve a token
-        :param f: Function to use
-        """
-        raise NotImplementedError
-        self.retrieve_token_callback = f

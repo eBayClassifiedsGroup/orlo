@@ -14,10 +14,11 @@ def log_post_data():
     """
     Before each request, log any POST data, without newlines
     """
-    if request.method == "POST":
-        data = request.get_data(as_text=True)
-        if data:
-            app.logger.info("POST data: {}".format(data.replace('\n', '')))
+    s = "{m} {u}".format(m=request.method, u=request.url)
+    data = request.get_data(as_text=True)
+    if data:
+        s += " POST data: {}".format(data.replace('\n', ''))
+    app.logger.info(s)
 
 
 @app.route('/', methods=['GET'])
@@ -44,5 +45,3 @@ def ping():
     return jsonify({
         'message': 'pong'
     })
-
-

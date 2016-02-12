@@ -1,8 +1,7 @@
+from flask import jsonify, request, Response, json, g
 from orlo import app, queries
 from orlo.exceptions import InvalidUsage
-from flask import jsonify, request, Response, json, g
-import arrow
-import datetime
+from orlo.user_auth import token_auth
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, ReleaseMetadata, Platform
 from orlo.util import validate_request_json, create_release, validate_release_input, \
     validate_package_input, fetch_release, create_package, fetch_package, stream_json_list, \
@@ -11,6 +10,7 @@ from orlo.deploy import ShellDeploy
 
 
 @app.route('/releases', methods=['POST'])
+@token_auth.token_required
 def post_releases():
     """
     Create a release - the first step in a deployment
@@ -42,13 +42,13 @@ def post_releases():
         db.session.add(release_note)
 
     if request.json.get('metadata'):
-        for key,value in request.json.get('metadata').items():
+        for key, value in request.json.get('metadata').items():
             metadata = ReleaseMetadata(release.id, key, value)
             db.session.add(metadata)
 
     app.logger.info(
-            'Create release {}, references: {}, platforms: {}'.format(
-                    release.id, release.notes, release.references, release.platforms, release.metadata)
+        'Create release {}, references: {}, platforms: {}'.format(
+            release.id, release.notes, release.references, release.platforms, release.metadata)
     )
 
     release.start()
@@ -60,6 +60,7 @@ def post_releases():
 
 
 @app.route('/releases/<release_id>/packages', methods=['POST'])
+@token_auth.token_required
 def post_packages(release_id):
     """
     Add a package to a release
@@ -99,6 +100,7 @@ def post_packages(release_id):
 
 @app.route('/releases/<release_id>/packages/<package_id>/results',
            methods=['POST'])
+@token_auth.token_required
 def post_results(release_id, package_id):
     """
     Post the results of a package release
@@ -117,6 +119,7 @@ def post_results(release_id, package_id):
 
 
 @app.route('/releases/<release_id>/deploy', methods=['POST'])
+@token_auth.token_required
 def post_releases_start(release_id):
     """
     Indicate that a release is starting
@@ -145,6 +148,7 @@ def post_releases_start(release_id):
 
 
 @app.route('/releases/<release_id>/stop', methods=['POST'])
+@token_auth.token_required
 def post_releases_stop(release_id):
     """
     Indicate that a release has finished
@@ -173,6 +177,7 @@ def post_releases_stop(release_id):
 
 @app.route('/releases/<release_id>/packages/<package_id>/start',
            methods=['POST'])
+@token_auth.token_required
 def post_packages_start(release_id, package_id):
     """
     Indicate that a package has started deploying
@@ -199,6 +204,7 @@ def post_packages_start(release_id, package_id):
 
 @app.route('/releases/<release_id>/packages/<package_id>/stop',
            methods=['POST'])
+@token_auth.token_required
 def post_packages_stop(release_id, package_id):
     """
     Indicate that a package has finished deploying
@@ -228,6 +234,7 @@ def post_packages_stop(release_id, package_id):
 
 
 @app.route('/releases/<release_id>/notes', methods=['POST'])
+@token_auth.token_required
 def post_releases_notes(release_id):
     """
     Add a note to a release
@@ -249,6 +256,7 @@ def post_releases_notes(release_id):
 
 
 @app.route('/releases/<release_id>/metadata', methods=['POST'])
+@token_auth.token_required
 def post_releases_metadata(release_id):
     """
     Add metadata to a release
@@ -333,4 +341,3 @@ def get_releases(release_id=None):
         query = queries.releases(**args)
 
     return Response(stream_json_list('releases', query), content_type='application/json')
-
