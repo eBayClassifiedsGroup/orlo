@@ -1,16 +1,18 @@
 from orlo import app
 from orlo.config import config
 from orlo.exceptions import OrloAuthError
-from orlo.login_handler import OrloHTTPBasicAuth
-from flask import request, jsonify, g
+from flask.ext.httpauth import HTTPBasicAuth
+from flask_tokenauth import TokenAuth
+from flask import request, jsonify, g, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+from functools import wraps
 
 # initialization
-app.config['SECRET_KEY'] = config.get('security', 'secret_key')
 
-auth = OrloHTTPBasicAuth()
+user_auth = HTTPBasicAuth()
+token_auth = TokenAuth(config.get('security', 'secret_key'))
 
 
 class User(object):
@@ -37,7 +39,7 @@ class User(object):
             return '*'
 
         # TODO implement LDAP
-        raise OrloAuthError("Unknown auth method, check security config")
+        raise OrloAuthError("Unknown user_auth method, check security config")
 
     def hash_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -63,7 +65,7 @@ class User(object):
         return User(name)
 
 
-@auth.verify_password
+@user_auth.verify_password
 def verify_password(username=None, password=None):
     if not config.getboolean('security', 'enabled'):
         return True
@@ -93,36 +95,45 @@ def verify_password(username=None, password=None):
     return True
 
 
-@auth.error_handler
+@user_auth.error_handler
+@token_auth.error_handler
 def auth_error():
     """
     Authentication error
     """
     # raise OrloAuthError("Not authorized")
-    response = jsonify({'error': 'not authorized'})
+    response = jsonify({'error': 'not authorized foo'})
     response.status_code = 401
     return response
 
 
 @app.before_request
-@auth.login_required
 def before_request():
     """
-    Check the user is authenticated before allowing the request
+    Check the user is authenticated
     """
-    if config.getboolean('security', 'enabled'):
-        if not g.current_user.confirmed:
-            response = jsonify({'error': 'not authorized'})
-            response.status_code = 401
-            return response
+    if config.getboolean('security', 'enabled') \
+            and request.endpoint != 'get_token':
+        try:
+            if not g.current_user.confirmed:
+                raise OrloAuthError("Not authenticated for endpoint {}".format(
+                    request.endpoint))
+        except AttributeError:
+            # current_user is not set
+            raise OrloAuthError("Not authenticated")
 
 
 @app.route('/token')
-@auth.login_required
+@user_auth.login_required
 def get_token():
     """
     Get a token
     """
-    token = g.current_user.generate_auth_token(config.get('security', 'token_ttl'))
-    return jsonify({'token': token.decode('ascii'), 'duration': 600})
+    ttl = config.getint('security', 'token_ttl')
+    token = g.current_user.generate_auth_token(ttl)
+
+    return jsonify({
+        'token': token.decode('ascii'),
+        'duration': config.get('security', 'token_ttl')
+    })
 
