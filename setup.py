@@ -28,6 +28,8 @@ setup(
         'Flask',
         'Flask-Migrate',
         'Flask-SQLAlchemy',
+        'Flask-HTTPAuth',
+        'Flask-TokenAuth',
         'arrow',
         'gunicorn',
         'psycopg2',

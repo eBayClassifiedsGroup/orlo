@@ -3,7 +3,7 @@ from flask.ext.testing import TestCase
 from flask import jsonify
 import orlo
 from orlo.orm import db
-from orlo.user_auth import user_auth, token_auth
+from orlo.user_auth import user_auth, token_auth, conditional_auth
 from tests import ConfigChange
 from werkzeug.datastructures import Headers
 from werkzeug.test import Client
@@ -16,17 +16,17 @@ PASSWORD = 'blah'
 
 
 # A couple of test routes which require auth, and return 200 if it succeeds
-@orlo.app.route('/test/token_required', methods=['GET'])
-@token_auth.token_required
+@orlo.app.route('/test/token_required')
+@conditional_auth(token_auth.token_required)
 def token_required():
     response = jsonify({'message': 'OK'})
     response.status_code = 200
     return response
 
 
-@orlo.app.route('/test/auth_required', methods=['GET'])
-@user_auth.login_required
-def user_required():
+@orlo.app.route('/test/auth_required')
+@conditional_auth(user_auth.login_required)
+def auth_required():
     response = jsonify({'message': 'OK'})
     response.status_code = 200
     return response

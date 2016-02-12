@@ -4,6 +4,7 @@ Flask>=0.10.1
 Flask-SQLAlchemy>=2.0
 Flask-Migrate>=1.5.1
 Flask-HTTPAuth>=2.7.1
+Flask-TokenAuth>=0.0.2
 SQLAlchemy==1.0.8
 sqlalchemy-utils==0.31.0
 Jinja2==2.7.1
