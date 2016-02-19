@@ -1,40 +1,19 @@
-from orlo import app, queries
-from orlo.exceptions import InvalidUsage
 from flask import jsonify, request, Response, json, g
-import arrow
-import datetime
+from orlo import app, queries, config
+from orlo.exceptions import InvalidUsage
+from orlo.user_auth import token_auth
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, ReleaseMetadata, Platform
 from orlo.util import validate_request_json, create_release, validate_release_input, \
     validate_package_input, fetch_release, create_package, fetch_package, stream_json_list, \
     str_to_bool
 from orlo.deploy import ShellDeploy
+from orlo.user_auth import conditional_auth
 
-
-@app.route('/', methods=['GET'])
-def root():
-    """
-    Root page, display info
-    """
-    return jsonify({
-        'message': "Orlo server, see http://orlo.readthedocs.org/"
-    })
-
-
-@app.route('/ping', methods=['GET'])
-def ping():
-    """
-    Simple ping test, takes no parameters
-
-    **Example curl**:
-
-    .. sourcecode:: shell
-
-        curl -X GET 'http://127.0.0.1/ping'
-    """
-    return 'pong'
+security_enabled = config.getboolean('security', 'enabled')
 
 
 @app.route('/releases', methods=['POST'])
+@conditional_auth(conditional_auth(token_auth.token_required))
 def post_releases():
     """
     Create a release - the first step in a deployment
@@ -66,13 +45,13 @@ def post_releases():
         db.session.add(release_note)
 
     if request.json.get('metadata'):
-        for key,value in request.json.get('metadata').items():
+        for key, value in request.json.get('metadata').items():
             metadata = ReleaseMetadata(release.id, key, value)
             db.session.add(metadata)
 
     app.logger.info(
-            'Create release {}, references: {}, platforms: {}'.format(
-                    release.id, release.notes, release.references, release.platforms, release.metadata)
+        'Create release {}, references: {}, platforms: {}'.format(
+            release.id, release.notes, release.references, release.platforms, release.metadata)
     )
 
     release.start()
@@ -84,6 +63,7 @@ def post_releases():
 
 
 @app.route('/releases/<release_id>/packages', methods=['POST'])
+@conditional_auth(token_auth.token_required)
 def post_packages(release_id):
     """
     Add a package to a release
@@ -123,6 +103,7 @@ def post_packages(release_id):
 
 @app.route('/releases/<release_id>/packages/<package_id>/results',
            methods=['POST'])
+@conditional_auth(token_auth.token_required)
 def post_results(release_id, package_id):
     """
     Post the results of a package release
@@ -141,6 +122,7 @@ def post_results(release_id, package_id):
 
 
 @app.route('/releases/<release_id>/deploy', methods=['POST'])
+@conditional_auth(token_auth.token_required)
 def post_releases_start(release_id):
     """
     Indicate that a release is starting
@@ -167,7 +149,9 @@ def post_releases_start(release_id):
     deploy.start()
     return '', 204
 
+
 @app.route('/releases/<release_id>/stop', methods=['POST'])
+@conditional_auth(token_auth.token_required)
 def post_releases_stop(release_id):
     """
     Indicate that a release has finished
@@ -196,6 +180,7 @@ def post_releases_stop(release_id):
 
 @app.route('/releases/<release_id>/packages/<package_id>/start',
            methods=['POST'])
+@conditional_auth(token_auth.token_required)
 def post_packages_start(release_id, package_id):
     """
     Indicate that a package has started deploying
@@ -222,6 +207,7 @@ def post_packages_start(release_id, package_id):
 
 @app.route('/releases/<release_id>/packages/<package_id>/stop',
            methods=['POST'])
+@conditional_auth(token_auth.token_required)
 def post_packages_stop(release_id, package_id):
     """
     Indicate that a package has finished deploying
@@ -251,6 +237,7 @@ def post_packages_stop(release_id, package_id):
 
 
 @app.route('/releases/<release_id>/notes', methods=['POST'])
+@conditional_auth(token_auth.token_required)
 def post_releases_notes(release_id):
     """
     Add a note to a release
@@ -270,10 +257,12 @@ def post_releases_notes(release_id):
     db.session.commit()
     return '', 204
 
-@app.route('/releases/<release_id>/metadatas', methods=['POST'])
-def post_releases_metadatas(release_id):
+
+@app.route('/releases/<release_id>/metadata', methods=['POST'])
+@conditional_auth(token_auth.token_required)
+def post_releases_metadata(release_id):
     """
-    Add a metadata to a release
+    Add metadata to a release
 
     :param string release_id: Release UUID
     :query string text: Text
@@ -284,13 +273,14 @@ def post_releases_metadatas(release_id):
     if not meta:
         raise InvalidUsage("Must include metadata in posted document: es {\"key\" : \"value\"}")
 
-    for key,value in request.json.items():
+    for key, value in request.json.items():
         app.logger.info("Adding Metadata to release {}".format(release_id))
         metadata = ReleaseMetadata(release_id, key, value)
         db.session.add(metadata)
 
     db.session.commit()
     return '', 204
+
 
 @app.route('/releases', methods=['GET'])
 @app.route('/releases/<release_id>', methods=['GET'])
@@ -354,4 +344,3 @@ def get_releases(release_id=None):
         query = queries.releases(**args)
 
     return Response(stream_json_list('releases', query), content_type='application/json')
-

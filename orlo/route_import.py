@@ -5,11 +5,13 @@ from flask import jsonify, request
 from orlo import app
 from orlo.orm import db, Package, Release, PackageResult, ReleaseNote, Platform
 from orlo.util import validate_request_json
+from orlo.user_auth import token_auth
 from sqlalchemy.orm import exc
 
 __author__ = 'alforbes'
 
 
+@token_auth.token_required
 @app.route('/releases/import', methods=['GET'])
 def get_import():
     """

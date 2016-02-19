@@ -32,7 +32,7 @@ class OrloWorkflowError(OrloError):
 
 
 class OrloAuthError(OrloError):
-    pass
+    status_code = 401
 
 
 class OrloStartupError(Exception):
@@ -40,3 +40,8 @@ class OrloStartupError(Exception):
         Exception.__init__(self)
         print("Startup Error: " + message)
 
+
+class OrloConfigError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self)
+        print("Configuration Error: " + message)

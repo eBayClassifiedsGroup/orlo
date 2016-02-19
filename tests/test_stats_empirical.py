@@ -201,7 +201,6 @@ class TestStatsEmpirical(OrloDbTest):
         s_month = self.start_date.month
         response = self.client.get('/stats/by_date/release?unit=day')
 
-        print(response.data)
         self.assertEqual(
                 response.json[str(s_year)][str(s_month)]['31']['normal']['successful'],
                 self.normal_successful_per_day,

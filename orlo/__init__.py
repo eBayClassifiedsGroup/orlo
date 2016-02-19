@@ -47,7 +47,8 @@ if config.getboolean('security', 'enabled') and \
 
 # Must be imported last
 import orlo.error_handlers
-import orlo.route_api
+import orlo.route_base
+import orlo.route_releases
 import orlo.route_import
 import orlo.route_info
 import orlo.route_stats

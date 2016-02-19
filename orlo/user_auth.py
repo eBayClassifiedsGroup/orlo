@@ -1,16 +1,45 @@
 from orlo import app
 from orlo.config import config
 from orlo.exceptions import OrloAuthError
-from orlo.login_handler import OrloHTTPBasicAuth
-from flask import request, jsonify, g
+from flask.ext.httpauth import HTTPBasicAuth
+from flask.ext.tokenauth import TokenAuth, TokenManager
+from flask import request, jsonify, g, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+from functools import update_wrapper, wraps
+
 
 # initialization
-app.config['SECRET_KEY'] = config.get('security', 'secret_key')
+user_auth = HTTPBasicAuth()
+token_auth = TokenAuth(config.get('security', 'secret_key'))
+token_manager = TokenManager(secret_key=config.get('security', 'secret_key'))
 
-auth = OrloHTTPBasicAuth()
+
+class conditional_auth(object):
+    """
+    Decorator which wraps a decorator, to only apply it if auth is enabled
+    """
+    def __init__(self, decorator):
+        self.decorator = decorator
+        update_wrapper(self, decorator)
+
+    def __call__(self, func):
+        """
+        Call method
+        """
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            """
+            Wrapped method
+            """
+            if config.getboolean('security', 'enabled'):
+                app.logger.debug("Security enabled")
+                return self.decorator(func)(*args, **kwargs)
+            else:
+                app.logger.debug("Security disabled")
+                return func(*args, **kwargs)
+        return wrapped
 
 
 class User(object):
@@ -37,7 +66,7 @@ class User(object):
             return '*'
 
         # TODO implement LDAP
-        raise OrloAuthError("Unknown auth method, check security config")
+        raise OrloAuthError("Unknown user_auth method, check security config")
 
     def hash_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -46,7 +75,7 @@ class User(object):
         rc = check_password_hash(self.password_hash, password)
         return rc
 
-    def generate_auth_token(self, expiration=600):
+    def generate_auth_token(self, expiration=3600):
         s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
         return s.dumps({'id': self.name})
 
@@ -63,24 +92,10 @@ class User(object):
         return User(name)
 
 
-@auth.verify_password
+@user_auth.verify_password
 def verify_password(username=None, password=None):
-    if not config.getboolean('security', 'enabled'):
-        return True
+    app.logger.debug("Verify_password called")
 
-    user = None
-    try:
-        token = request.headers.get('X-Auth-Token').strip()
-        user = User.verify_auth_token(token)
-    except:  # TODO be more specific here
-        pass
-
-    if user:
-        g.current_user = user
-        g.current_user.confirmed = True
-        return True
-
-    # try to authenticate with username/password
     if not password:
         return False
 
@@ -88,12 +103,31 @@ def verify_password(username=None, password=None):
     if not user.verify_password(password):
         return False
 
-    g.current_user = user
-    g.current_user.confirmed = True
+    set_current_user_as(user)
     return True
 
 
-@auth.error_handler
+@token_auth.verify_token
+def verify_token(token=None):
+    app.logger.debug("Verify_token called")
+
+    if not token:
+        return False
+
+    token_user = token_manager.verify(token)
+    if token_user:
+        set_current_user_as(User(token_user))
+        return True
+
+
+def set_current_user_as(user):
+    if not g.get('current_user'):
+        app.logger.debug('Setting current user to: {}'.format(user.name))
+        g.current_user = user
+
+
+@user_auth.error_handler
+@token_auth.error_handler
 def auth_error():
     """
     Authentication error
@@ -104,25 +138,16 @@ def auth_error():
     return response
 
 
-@app.before_request
-@auth.login_required
-def before_request():
-    """
-    Check the user is authenticated before allowing the request
-    """
-    if config.getboolean('security', 'enabled'):
-        if not g.current_user.confirmed:
-            response = jsonify({'error': 'not authorized'})
-            response.status_code = 401
-            return response
-
-
 @app.route('/token')
-@auth.login_required
+@conditional_auth(user_auth.login_required)
 def get_token():
     """
     Get a token
     """
-    token = g.current_user.generate_auth_token(600)
-    return jsonify({'token': token.decode('ascii'), 'duration': 600})
+    ttl = config.getint('security', 'token_ttl')
+    token = token_manager.generate(g.current_user.name, ttl)
+    return jsonify({
+        'token': token.decode('ascii'),
+        'duration': config.get('security', 'token_ttl')
+    })
 
