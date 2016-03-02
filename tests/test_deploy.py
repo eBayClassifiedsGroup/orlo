@@ -1,5 +1,5 @@
 from __future__ import print_function
-from tests import OrloLiveTest, OrloTest
+from tests import OrloLiveTest, OrloTest, ConfigChange
 from orlo.deploy import BaseDeploy, HttpDeploy, ShellDeploy
 from orlo.orm import db, Release, Package
 from orlo.util import append_or_create_platforms
@@ -123,15 +123,15 @@ class TestHttpDeploy(DeployTest):
 class TestShellDeploy(DeployTest):
     CLASS = ShellDeploy
 
-    @unittest.skip("Not working yet, can't install ruby deps in travis")
     def test_start(self):
         """
         Test that start emits a shell command
         :return:
         """
-        deploy = ShellDeploy(self.release)
-        deploy.server_url = self.get_server_url()
-        deploy.start()
+        with ConfigChange('deploy', 'timeout', '3'):
+            deploy = ShellDeploy(self.release)
+            deploy.server_url = self.get_server_url()
+            deploy.start()
 
     def test_kill(self):
         """
