@@ -23,7 +23,6 @@ class DeployerError(Exception):
     def __init__(self, message):
         self.message = message
         error(message)
-        raise SystemExit(1)
 
 
 def get_params():
@@ -34,8 +33,6 @@ def get_params():
     args, unknown = parser.parse_known_args()
 
     _packages = OrderedDict()
-    if not args.packages:
-        raise DeployerError("No packages to deploy, see help")
 
     for pkg in args.packages:
         package, version = pkg.split('=')
@@ -94,12 +91,20 @@ if __name__ == "__main__":
     # So fetch it here
     release = orlo_client.get_release(orlo_release)
 
-    # TODO - using package info from arguments makes no sense when we could fetch from Orlo
+    # Create packages from arguments if specified on the CLI,
+    # otherwise fetch from the Orlo release
     orlo_packages = []
-    for p, v in packages.items():
-        info("Creating Package {}:{}".format(p, v))
-        pkg = orlo_client.create_package(release, p, v)
-        orlo_packages.append(pkg)
+    if packages:
+        for p, v in packages.items():
+            info("Creating Package {}:{}".format(p, v))
+            pkg = orlo_client.create_package(release, p, v)
+            orlo_packages.append(pkg)
+    elif release.packages:
+        # Fetch from Orlo
+        info("Fetching packages from Orlo")
+        orlo_packages = release.packages
+    else:
+        raise DeployerError("No packages to deploy!")
 
     info("Starting Release")
     for pkg in orlo_packages:

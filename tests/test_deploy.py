@@ -126,18 +126,34 @@ class TestShellDeploy(DeployTest):
     def test_start(self):
         """
         Test that start emits a shell command
-        :return:
         """
         with ConfigChange('deploy', 'timeout', '3'), \
                 ConfigChange('deploy_shell', 'command_path', '/bin/true'):
-
             deploy = ShellDeploy(self.release)
+
+            # Override server_url, normally it is set by config:
             deploy.server_url = self.get_server_url()
+
             deploy.start()
 
     def test_kill(self):
         """
         Test that kill emits a shell command
-        :return:
         """
         pass
+
+    # @unittest.skip("Doesn't work on travis")
+    def test_start_example_deployer(self):
+        """
+        Test the example deployer completes
+
+        DOESN'T WORK ON TRAVIS, as /bin/env python gives the system python
+        """
+        with ConfigChange('deploy', 'timeout', '3'):
+            deploy = ShellDeploy(self.release)
+
+            # Override server_url, normally it is set by config:
+            deploy.server_url = self.get_server_url()
+
+            deploy.start()
+
