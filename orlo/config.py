@@ -33,6 +33,10 @@ config.set('logging', 'file', 'disabled')
 
 config.read('/etc/orlo/orlo.ini')
 
+config.add_section('deploy')
+config.set('deploy', 'timeout', '3600')  # How long to timeout external deployer calls
+
 config.add_section('deploy_shell')
-config.set('deploy_shell', 'command_path', os.path.dirname(os.path.abspath(__file__)) + '/../deployer.rb')
+config.set('deploy_shell', 'command_path', os.path.dirname(os.path.abspath(__file__)) +
+           '/../deployer.py')
 

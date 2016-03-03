@@ -1,5 +1,5 @@
 from __future__ import print_function
-from tests import OrloLiveTest, OrloTest
+from tests import OrloLiveTest, OrloTest, ConfigChange
 from orlo.deploy import BaseDeploy, HttpDeploy, ShellDeploy
 from orlo.orm import db, Release, Package
 from orlo.util import append_or_create_platforms
@@ -47,10 +47,10 @@ class DeployTest(OrloLiveTest):
         db_platforms = append_or_create_platforms(platforms)
 
         r = Release(
-                platforms=db_platforms,
-                user=user,
-                references=references,
-                team=team,
+            platforms=db_platforms,
+            user=user,
+            references=references,
+            team=team,
         )
         db.session.add(r)
         db.session.commit()
@@ -75,11 +75,11 @@ class DeployTest(OrloLiveTest):
         :return:
         """
         p = Package(
-                release_id=release_id,
-                name=name,
-                version=version,
-                diff_url=diff_url,
-                rollback=rollback,
+            release_id=release_id,
+            name=name,
+            version=version,
+            diff_url=diff_url,
+            rollback=rollback,
         )
         db.session.add(p)
         db.session.commit()
@@ -123,15 +123,17 @@ class TestHttpDeploy(DeployTest):
 class TestShellDeploy(DeployTest):
     CLASS = ShellDeploy
 
-    @unittest.skip("Not working yet, can't install ruby deps in travis")
     def test_start(self):
         """
         Test that start emits a shell command
         :return:
         """
-        deploy = ShellDeploy(self.release)
-        deploy.server_url = self.get_server_url()
-        deploy.start()
+        with ConfigChange('deploy', 'timeout', '3'), \
+                ConfigChange('deploy_shell', 'command_path', '/bin/true'):
+
+            deploy = ShellDeploy(self.release)
+            deploy.server_url = self.get_server_url()
+            deploy.start()
 
     def test_kill(self):
         """

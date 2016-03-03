@@ -39,6 +39,7 @@ setup(
     ],
     tests_require=[
         'Flask-Testing',
+        'orloclient>=0.1.1',
     ],
     test_suite='tests',
 )
