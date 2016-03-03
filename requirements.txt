@@ -15,3 +15,4 @@ Werkzeug==0.9.4
 itsdangerous==0.23
 passlib==1.6.1
 psycopg2==2.6.1
+pytz
