@@ -1,4 +1,4 @@
-orloclient
+orloclient>=0.1.1
 gunicorn
 arrow==0.7.0
 Flask>=0.10.1
