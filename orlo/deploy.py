@@ -108,10 +108,12 @@ class ShellDeploy(BaseDeploy):
         """
         raise NotImplementedError
 
-    # Stolen from http://stackoverflow.com/questions/1191374
-    def run_command(self, args, env, in_data, timeout_sec=3600):
+    @staticmethod
+    def run_command(args, env, in_data, timeout_sec=3600):
         """
         Run a command in a separate thread
+
+        Adapted from http://stackoverflow.com/questions/1191374
 
         :param env: Dict of environment variables
         :param in_data: String to pass to stdin
@@ -139,7 +141,6 @@ class ShellDeploy(BaseDeploy):
 
         if proc.returncode is not 0:
             raise OrloError("Subprocess exited with code {}".format(
-                proc.returncode
-            ))
+                proc.returncode), status_code=500)
         print("end run")
 

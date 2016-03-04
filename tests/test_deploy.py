@@ -107,12 +107,14 @@ class TestBaseDeploy(DeployTest):
 class TestHttpDeploy(DeployTest):
     CLASS = HttpDeploy
 
+    @unittest.skip("Not implemented")
     def test_start(self):
         """
         Test that start emits an http call
         """
         pass
 
+    @unittest.skip("Not implemented")
     def test_kill(self):
         """
         Test that kill emits an http call
@@ -136,13 +138,14 @@ class TestShellDeploy(DeployTest):
 
             deploy.start()
 
+    @unittest.skip("Not implemented")
     def test_kill(self):
         """
         Test that kill emits a shell command
         """
         pass
 
-    # @unittest.skip("Doesn't work on travis")
+    @unittest.skip("Doesn't work on travis")
     def test_start_example_deployer(self):
         """
         Test the example deployer completes

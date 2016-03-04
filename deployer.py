@@ -59,13 +59,14 @@ def deploy(package, meta=None):
     :param dict meta: Dictionary of metadata (unused in this dummy function)
     :return:
     """
+    info("Package start - {}:{}".format(package.name, package.version))
     orlo_client.package_start(package)
 
-    # Do the deploy...
-
+    # Do stuff
     # Determining success status is up to you
     success = True
 
+    info("Package stop - {}:{}".format(package.name, package.version))
     orlo_client.package_stop(package, success=success)
 
     return success
@@ -80,37 +81,34 @@ if __name__ == "__main__":
         raise DeployerError("Could not detect ORLO_URL from environment")
 
     if os.getenv('ORLO_RELEASE'):
-        orlo_release = os.environ['ORLO_RELEASE']
+        orlo_release_id = os.environ['ORLO_RELEASE']
     else:
         raise DeployerError("Could not detect ORLO_RELEASE in environment")
 
+    # Fetch packages and metadata. Packages is not used, it is just to demonstrate they are
+    # passed as arguments
     packages, metadata = get_params()
 
+    # Create an instance of the Orlo client
     orlo_client = OrloClient(uri=orlo_url)
-    # The release is created in Orlo before being handed to the deployer
-    # So fetch it here
-    release = orlo_client.get_release(orlo_release)
 
-    # Create packages from arguments if specified on the CLI,
-    # otherwise fetch from the Orlo release
-    orlo_packages = []
-    if packages:
-        for p, v in packages.items():
-            info("Creating Package {}:{}".format(p, v))
-            pkg = orlo_client.create_package(release, p, v)
-            orlo_packages.append(pkg)
-    elif release.packages:
-        # Fetch from Orlo
-        info("Fetching packages from Orlo")
-        orlo_packages = release.packages
-    else:
-        raise DeployerError("No packages to deploy!")
+    # The release is created in Orlo before the deployer is invoked, so fetch it here.
+    # If you prefer, you can to do the release creation within your deployer and use
+    # Orlo only for receiving data
+    release = orlo_client.get_release(orlo_release_id)
+
+    # While we fetch Packages using the Orlo client, they are passed on the CLI as well,
+    # which is useful for non-python deployers
+    info("Fetching packages from Orlo")
+    if not release.packages:
+        raise DeployerError("No packages to deploy")
 
     info("Starting Release")
-    for pkg in orlo_packages:
+    for pkg in release.packages:
         info("Deploying {}".format(pkg.name))
         deploy(pkg, meta=metadata)
-    info("Finishing Release")
 
+    info("Finishing Release")
     orlo_client.release_stop(release)
+
     info("Done.")
