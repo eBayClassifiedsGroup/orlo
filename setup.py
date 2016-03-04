@@ -5,7 +5,7 @@ from setuptools import setup
 import multiprocessing  # nopep8
 
 
-VERSION = '0.1.1-1'
+VERSION = '0.2.0-pre1'
 version_file = open('./orlo/_version.py', 'w')
 version_file.write("__version__ = '{}'".format(VERSION))
 version_file.close()
