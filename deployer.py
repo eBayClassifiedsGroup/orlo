@@ -28,8 +28,8 @@ class DeployerError(Exception):
 def get_params():
     parser = argparse.ArgumentParser(description="Orlo Test Deployer")
     parser.add_argument('packages', choices=None, const=None, nargs='*',
-                        help="Packages to deploy, in format package_name=version, "
-                             "e.g test-package=1.0.0")
+                        help="Packages to deploy, in format "
+                             "package_name=version, e.g test-package=1.0.0")
     args, unknown = parser.parse_known_args()
 
     _packages = OrderedDict()
@@ -77,7 +77,8 @@ if __name__ == "__main__":
         orlo_url = os.environ['ORLO_URL']
     else:
         # This deployer is only every supposed to accept releases from Orlo
-        # Other deployers could use this to detect whether they are being invoked by Orlo
+        # Other deployers could use this to detect whether they are being
+        # invoked by Orlo
         raise DeployerError("Could not detect ORLO_URL from environment")
 
     if os.getenv('ORLO_RELEASE'):
@@ -85,20 +86,26 @@ if __name__ == "__main__":
     else:
         raise DeployerError("Could not detect ORLO_RELEASE in environment")
 
-    # Fetch packages and metadata. Packages is not used, it is just to demonstrate they are
-    # passed as arguments
+    logging.info(
+        "Environment: \n" +
+        json.dumps(os.environ, indent=2, default=lambda o: o.__dict__))
+
+    # Fetch packages and metadata. Packages is not used, it is just to
+    # demonstrate they are passed as arguments
     packages, metadata = get_params()
+
+    logging.info("Stdin: \n" + str(metadata))
 
     # Create an instance of the Orlo client
     orlo_client = OrloClient(uri=orlo_url)
 
-    # The release is created in Orlo before the deployer is invoked, so fetch it here.
-    # If you prefer, you can to do the release creation within your deployer and use
-    # Orlo only for receiving data
+    # The release is created in Orlo before the deployer is invoked, so fetch
+    # it here. If you prefer, you can to do the release creation within your
+    # deployer and use Orlo only for receiving data
     release = orlo_client.get_release(orlo_release_id)
 
-    # While we fetch Packages using the Orlo client, they are passed on the CLI as well,
-    # which is useful for non-python deployers
+    # While we fetch Packages using the Orlo client, they are passed on the
+    # CLI as well, which is useful for non-python deployers
     info("Fetching packages from Orlo")
     if not release.packages:
         raise DeployerError("No packages to deploy")
