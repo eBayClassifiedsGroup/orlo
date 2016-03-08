@@ -42,6 +42,13 @@ class OrloAuthTest(TestCase):
     """
     Base test class to setup the app
     """
+    top = ('o=test', {'o': ['test']})
+    example = ('ou=example,o=test', {'ou': ['example']})
+    people = ('ou=people,ou=example,o=test', {'ou': ['other']})
+    ldapuser = ('uid=ldapuser,ou=people,ou=example,o=test', {'uid': ['ldapuser'], 'userPassword': ['ldapuserpw']})
+    # This is the content of our mock LDAP directory. It takes the form
+    # {dn: {attr: [value, ...], ...}, ...}.
+    directory = dict([top, example, people, ldapuser])
 
     def create_app(self):
         self.app = orlo.app
@@ -53,22 +60,57 @@ class OrloAuthTest(TestCase):
 
         return self.app
 
+    @classmethod
+    def setUpClass(self):
+        # We only need to create the MockLdap instance once. The content we
+        # pass in will be used for all LDAP connections.
+        self.mockldap = MockLdap(self.directory)
+
+    @classmethod
+    def tearDownClass(self):
+        del self.mockldap
+
     def setUp(self):
         db.create_all()
+        self.mockldap.start()
+        self.ldapobj = self.mockldap['ldap://localhost/']
         self.orig_security_enabled = orlo.config.get('security', 'enabled')
         self.orig_security_secret_key = orlo.config.set('security', 'secret_key')
+        self.orig_security_ldap_server = orlo.config.set('security', 'ldap_server')
+        self.orig_security_ldap_port = orlo.config.set('security', 'ldap_port')
+        self.orig_security_user_base_dn = orlo.config.set('security', 'user_base_dn')
         orlo.config.set('security', 'enabled', 'true')
         orlo.config.set('security', 'secret_key', 'It does not matter how slowly you go so long as you do not stop')
+        orlo.config.set('security', 'ldap_server', 'localhost')
+        orlo.config.set('security', 'ldap_port', '389')
+        orlo.config.set('security', 'user_base_dn', 'ou=people,ou=example,o=test')
 
     def tearDown(self):
         db.session.remove()
         db.drop_all()
+        self.mockldap.stop()
+        del self.ldapobj
         orlo.config.set('security', 'enabled', self.orig_security_enabled)
         orlo.config.set('security', 'secret_key', self.orig_security_secret_key)
 
     def get_with_basic_auth(self, path, username='testuser', password='blah'):
         """
         Do a request with basic auth
+
+        :param path:
+        :param username:
+        :param password:
+        """
+        h = Headers()
+        h.add('Authorization', 'Basic ' + base64.b64encode(
+            '{u}:{p}'.format(u=username, p=password)
+        ))
+        response = Client.open(self.client, path=path, headers=h)
+        return response
+
+    def get_with_ldap_auth(self, path, username='ldapuser', password='ldapuserpw'):
+        """
+        Do a request with ldap auth
 
         :param path:
         :param username:
@@ -169,6 +211,12 @@ class TestUserAuth(OrloAuthTest):
 
     def test_with_login(self):
         response = self.get_with_basic_auth('/test/auth_required')
+        self.assert200(response)
+
+    def test_with_ldap_login(self):
+        response = self.get_with_ldap_auth(
+            '/test/auth_required', username='ldapuser', password='ldapuserpw'
+        )
         self.assert200(response)
 
     def test_with_bad_login(self):

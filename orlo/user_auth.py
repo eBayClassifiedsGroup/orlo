@@ -116,9 +116,9 @@ def set_current_user_as(user):
 def verify_ldap_access(username, password):
     app.logger.debug("Verify ldap called")
     try:
-        ldap_server = config.set('security', 'ldap_server')
-        ldap_port = config.set('security', 'ldap_port')
-        user_base_dn = config.set('security', 'user_base_dn')
+        ldap_server = config.get('security', 'ldap_server')
+        ldap_port = config.get('security', 'ldap_port')
+        user_base_dn = config.get('security', 'user_base_dn')
         l = ldap.initialize('ldap://{}:{}'.format(ldap_server, ldap_port))
         ldap_user = "uid=%s,%s" % (username, user_base_dn)
         l.protocol_version = ldap.VERSION3
