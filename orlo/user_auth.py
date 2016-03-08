@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from functools import update_wrapper, wraps
+import ldap
 
 
 # initialization
@@ -43,30 +44,10 @@ class conditional_auth(object):
 
 
 class User(object):
-    def __init__(self, name):
-        self.name = name
-        self.password_hash = self.get_pw_ent(name)
+    def __init__(self, username, password):
+        self.username = username
+        self.password_hash = self.hash_password(password)
         self.confirmed = False
-
-    @staticmethod
-    def get_pw_ent(name):
-        if config.get('security', 'method') == 'file':
-            with open(config.get('security', 'passwd_file')) as f:
-                for line in f:
-                    line = line.strip()
-                    user = line.split(':')[0]
-                    if not user == name:
-                        continue
-
-                    # found user return password
-                    app.logger.debug("Found user {} in file".format(name))
-                    pw = ':'.join(line.split(':')[1:])
-                    return pw
-            # user not in passwd file return a hash that cannot occur
-            return '*'
-
-        # TODO implement LDAP
-        raise OrloAuthError("Unknown user_auth method, check security config")
 
     def hash_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -76,54 +57,95 @@ class User(object):
         return rc
 
     def generate_auth_token(self, expiration=3600):
-        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
-        return s.dumps({'id': self.name})
+        secret_key = config.get('security', 'secret_key')
+        s = Serializer(secret_key, expires_in=expiration)
+        return s.dumps({'id': self.username})
 
     @staticmethod
     def verify_auth_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
+        app.logger.debug("Verify auth token called")
+        s = Serializer(config.get('security', 'secret_key'))
         try:
             data = s.loads(token)
         except SignatureExpired:
             return None  # valid token, but expired
         except BadSignature:
             return None  # invalid token
-        name = data['id']
-        return User(name)
+        user = data['id']
+        return user
 
 
 @user_auth.verify_password
-def verify_password(username=None, password=None):
-    app.logger.debug("Verify_password called")
-
-    if not password:
-        return False
-
-    user = User(username)
-    if not user.verify_password(password):
-        return False
-
-    set_current_user_as(user)
-    return True
+def verify_password(username_or_token=None, password=None):
+    # first try to authenticate by token
+    user = User.verify_auth_token(username_or_token)
+    if user:
+        set_current_user_as(user)
+        return True
+    elif not user:
+        password_file_user = verify_password_file(username_or_token, password)
+        if password_file_user:
+            set_current_user_as(username_or_token)
+            return True
+        else:
+            ldap_user = verify_ldap_access(username_or_token, password)
+            if ldap_user:
+                set_current_user_as(username_or_token)
+                return True
+            else:
+                return False
 
 
 @token_auth.verify_token
 def verify_token(token=None):
-    app.logger.debug("Verify_token called")
-
+    app.logger.debug("Verify token called")
     if not token:
         return False
-
     token_user = token_manager.verify(token)
     if token_user:
-        set_current_user_as(User(token_user))
+        set_current_user_as(token_user)
         return True
 
 
 def set_current_user_as(user):
     if not g.get('current_user'):
-        app.logger.debug('Setting current user to: {}'.format(user.name))
+        app.logger.debug('Setting current user to: {}'.format(user))
         g.current_user = user
+
+
+def verify_ldap_access(username, password):
+    app.logger.debug("Verify ldap called")
+    try:
+        ldap_server = config.set('security', 'ldap_server')
+        ldap_port = config.set('security', 'ldap_port')
+        user_base_dn = config.set('security', 'user_base_dn')
+        l = ldap.initialize('ldap://{}:{}'.format(ldap_server, ldap_port))
+        ldap_user = "uid=%s,%s" % (username, user_base_dn)
+        l.protocol_version = ldap.VERSION3
+        l.simple_bind_s(ldap_user, password)
+        return True
+    except ldap.LDAPError:
+        return False
+
+
+def verify_password_file(username=None, password=None):
+    app.logger.debug("Verify password file called")
+    password_file = config.get('security', 'passwd_file')
+    with open(password_file) as f:
+        for line in f:
+            line = line.strip()
+            user = line.split(':')[0]
+            if not user == username:
+                continue
+            # found user return password
+            elif user == username:
+                app.logger.debug("Found user {} in file".format(username))
+                pw = ':'.join(line.split(':')[1:])
+                checked_password = check_password_hash(pw, password)
+                if checked_password:
+                    return True
+                else:
+                    return False
 
 
 @user_auth.error_handler
@@ -132,7 +154,6 @@ def auth_error():
     """
     Authentication error
     """
-    # raise OrloAuthError("Not authorized")
     response = jsonify({'error': 'not authorized'})
     response.status_code = 401
     return response
@@ -145,9 +166,8 @@ def get_token():
     Get a token
     """
     ttl = config.getint('security', 'token_ttl')
-    token = token_manager.generate(g.current_user.name, ttl)
+    token = token_manager.generate(g.current_user, ttl)
     return jsonify({
         'token': token.decode('ascii'),
         'duration': config.get('security', 'token_ttl')
     })
-

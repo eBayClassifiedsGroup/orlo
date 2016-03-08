@@ -76,6 +76,9 @@ Vagrant.configure(2) do |config|
     echo "CREATE USER orlo WITH PASSWORD 'password'; CREATE DATABASE orlo OWNER orlo; " \
         | sudo -u postgres -i psql
 
+    # python-ldap dependencies
+    sudo apt-get install -y python-dev libldap2-dev libsasl2-dev libssl-dev
+
     # Build tools
     sudo apt-get -y install build-essential git-buildpackage debhelper python-dev dh-systemd python-virtualenv
     wget -P /tmp/ \
