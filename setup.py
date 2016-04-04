@@ -44,4 +44,7 @@ setup(
         'orloclient>=0.1.1',
     ],
     test_suite='tests',
+    entry_points={
+        'console_scripts': ['orlo=orlo.cli:main']
+    }
 )
