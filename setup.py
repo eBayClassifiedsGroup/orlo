@@ -3,10 +3,12 @@
 # from distutils.core import setup
 from setuptools import setup
 import multiprocessing  # nopep8
+import os
 
 
 VERSION = '0.2.0-pre1'
-version_file = open('./orlo/_version.py', 'w')
+my_path = os.path.dirname(os.path.realpath(__file__))
+version_file = open('{}/orlo/_version.py'.format(my_path), 'w')
 version_file.write("__version__ = '{}'".format(VERSION))
 version_file.close()
 
