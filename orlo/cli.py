@@ -72,6 +72,7 @@ def run_server(args):
 
 
 def main():
+    # Referenced by entry_points in setup.py
     args = parse_args()
     args.func(args)
 
