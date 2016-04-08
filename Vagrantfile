@@ -84,11 +84,12 @@ Vagrant.configure(2) do |config|
     wget -P /tmp/ \
         'https://launchpad.net/ubuntu/+archive/primary/+files/dh-virtualenv_0.11-1_all.deb'
     dpkg -i /tmp/dh-virtualenv_0.11-1_all.deb
-    apt-get -f install
+    apt-get -f install -y
 
     pip install --upgrade pip
     pip install virtualenv
 
+    # Virtualenv is to avoid conflict with Debian's python-six
     virtualenv /home/vagrant/virtualenv/orlo
     source /home/vagrant/virtualenv/orlo/bin/activate
     echo "source ~/virtualenv/orlo/bin/activate" >> /home/vagrant/.profile

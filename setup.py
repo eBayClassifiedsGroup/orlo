@@ -44,6 +44,7 @@ setup(
         'orloclient>=0.1.1',
     ],
     test_suite='tests',
+    # Creates a script in /usr/local/bin
     entry_points={
         'console_scripts': ['orlo=orlo.cli:main']
     }

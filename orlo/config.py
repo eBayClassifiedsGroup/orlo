@@ -13,7 +13,6 @@ config.set('main', 'time_zone', 'UTC')
 config.set('main', 'strict_slashes', 'false')
 config.set('main', 'base_url', 'http://localhost:8080')
 
-
 config.add_section('security')
 config.set('security', 'enabled', 'false')
 config.set('security', 'passwd_file', os.path.dirname(__file__) + '/../etc/passwd')
@@ -33,8 +32,6 @@ config.add_section('logging')
 config.set('logging', 'debug', 'false')
 config.set('logging', 'file', 'disabled')
 
-config.read('/etc/orlo/orlo.ini')
-
 config.add_section('deploy')
 config.set('deploy', 'timeout', '3600')  # How long to timeout external deployer calls
 
@@ -42,3 +39,4 @@ config.add_section('deploy_shell')
 config.set('deploy_shell', 'command_path', os.path.dirname(os.path.abspath(__file__)) +
            '/../deployer.py')
 
+config.read('/etc/orlo/orlo.ini')

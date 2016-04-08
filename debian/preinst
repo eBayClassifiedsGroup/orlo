@@ -9,5 +9,8 @@ else
 fi
 
 mkdir -p /var/{lib,log}/orlo
-chown orlo:orlo /var/{lib,log}/orlo
+touch /var/log/orlo/app.log
+
+chown -R orlo:orlo /var/{lib,log}/orlo
 chmod 755 /var/{lib,log}/orlo
+chmod 664 /var/log/orlo/app.log
