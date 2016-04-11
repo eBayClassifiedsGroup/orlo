@@ -23,19 +23,16 @@ class DeployerError(Exception):
     def __init__(self, message):
         self.message = message
         error(message)
-        raise SystemExit(1)
 
 
 def get_params():
     parser = argparse.ArgumentParser(description="Orlo Test Deployer")
     parser.add_argument('packages', choices=None, const=None, nargs='*',
-                        help="Packages to deploy, in format package_name=version, "
-                             "e.g test-package=1.0.0")
+                        help="Packages to deploy, in format "
+                             "package_name=version, e.g test-package=1.0.0")
     args, unknown = parser.parse_known_args()
 
     _packages = OrderedDict()
-    if not args.packages:
-        raise DeployerError("No packages to deploy, see help")
 
     for pkg in args.packages:
         package, version = pkg.split('=')
@@ -62,13 +59,14 @@ def deploy(package, meta=None):
     :param dict meta: Dictionary of metadata (unused in this dummy function)
     :return:
     """
+    info("Package start - {}:{}".format(package.name, package.version))
     orlo_client.package_start(package)
 
-    # Do the deploy...
-
+    # Do stuff
     # Determining success status is up to you
     success = True
 
+    info("Package stop - {}:{}".format(package.name, package.version))
     orlo_client.package_stop(package, success=success)
 
     return success
@@ -79,33 +77,45 @@ if __name__ == "__main__":
         orlo_url = os.environ['ORLO_URL']
     else:
         # This deployer is only every supposed to accept releases from Orlo
-        # Other deployers could use this to detect whether they are being invoked by Orlo
+        # Other deployers could use this to detect whether they are being
+        # invoked by Orlo
         raise DeployerError("Could not detect ORLO_URL from environment")
 
     if os.getenv('ORLO_RELEASE'):
-        orlo_release = os.environ['ORLO_RELEASE']
+        orlo_release_id = os.environ['ORLO_RELEASE']
     else:
         raise DeployerError("Could not detect ORLO_RELEASE in environment")
 
+    logging.info(
+        "Environment: \n" +
+        json.dumps(os.environ, indent=2, default=lambda o: o.__dict__))
+
+    # Fetch packages and metadata. Packages is not used, it is just to
+    # demonstrate they are passed as arguments
     packages, metadata = get_params()
 
-    orlo_client = OrloClient(uri=orlo_url)
-    # The release is created in Orlo before being handed to the deployer
-    # So fetch it here
-    release = orlo_client.get_release(orlo_release)
+    logging.info("Stdin: \n" + str(metadata))
 
-    # TODO - using package info from arguments makes no sense when we could fetch from Orlo
-    orlo_packages = []
-    for p, v in packages.items():
-        info("Creating Package {}:{}".format(p, v))
-        pkg = orlo_client.create_package(release, p, v)
-        orlo_packages.append(pkg)
+    # Create an instance of the Orlo client
+    orlo_client = OrloClient(uri=orlo_url)
+
+    # The release is created in Orlo before the deployer is invoked, so fetch
+    # it here. If you prefer, you can to do the release creation within your
+    # deployer and use Orlo only for receiving data
+    release = orlo_client.get_release(orlo_release_id)
+
+    # While we fetch Packages using the Orlo client, they are passed on the
+    # CLI as well, which is useful for non-python deployers
+    info("Fetching packages from Orlo")
+    if not release.packages:
+        raise DeployerError("No packages to deploy")
 
     info("Starting Release")
-    for pkg in orlo_packages:
+    for pkg in release.packages:
         info("Deploying {}".format(pkg.name))
         deploy(pkg, meta=metadata)
-    info("Finishing Release")
 
+    info("Finishing Release")
     orlo_client.release_stop(release)
+
     info("Done.")

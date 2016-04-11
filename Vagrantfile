@@ -71,34 +71,41 @@ Vagrant.configure(2) do |config|
   # SHELL
   config.vm.provision "shell", inline: <<-SHELL
     # sudo sed -i 's/archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
-    sudo apt-get update
-    sudo apt-get -y install python-pip python-dev postgresql postgresql-server-dev-all
+    apt-get update
+    apt-get -y install python-pip python-dev postgresql postgresql-server-dev-all
     echo "CREATE USER orlo WITH PASSWORD 'password'; CREATE DATABASE orlo OWNER orlo; " \
         | sudo -u postgres -i psql
 
     # python-ldap dependencies
-    sudo apt-get install -y python-dev libldap2-dev libsasl2-dev libssl-dev
+    apt-get install -y python-dev libldap2-dev libsasl2-dev libssl-dev
 
     # Build tools
-    sudo apt-get -y install build-essential git-buildpackage debhelper python-dev dh-systemd python-virtualenv
+    apt-get -y install build-essential git-buildpackage debhelper python-dev dh-systemd python-virtualenv
     wget -P /tmp/ \
         'https://launchpad.net/ubuntu/+archive/primary/+files/dh-virtualenv_0.11-1_all.deb'
     dpkg -i /tmp/dh-virtualenv_0.11-1_all.deb
+    apt-get -f install -y
 
-    sudo pip install --upgrade pip
-    sudo pip install sphinx sphinxcontrib-httpdomain
-    sudo pip install git+https://github.com/jarus/flask-testing.git
+    pip install --upgrade pip
+    pip install virtualenv
 
-    cd /vagrant/
-    # why do we need to do this twice?
-    sudo python /vagrant/setup.py install
-    sudo python /vagrant/setup.py install
+    # Virtualenv is to avoid conflict with Debian's python-six
+    virtualenv /home/vagrant/virtualenv/orlo
+    source /home/vagrant/virtualenv/orlo/bin/activate
+    echo "source ~/virtualenv/orlo/bin/activate" >> /home/vagrant/.profile
 
+    pip install -r /vagrant/requirements.txt
+    pip install -r /vagrant/requirements_testing.txt
+    pip install -r /vagrant/docs/requirements.txt
+
+    # Flask-Testing hasn't been released to pip in ages :(
+    pip install --upgrade git+https://github.com/jarus/flask-testing.git
+
+    sudo chown -R vagrant:vagrant /home/vagrant/virtualenv
+
+    # Create the database
     python /vagrant/create_db.py
-    sudo pip install -r /vagrant/requirements.txt
-    sudo pip install pytest Flask-Testing
-
-    # For deployer.rb
-    sudo apt-get install ruby-rest-client ruby-json
+    mkdir /etc/orlo
+    chown vagrant:root /etc/orlo
   SHELL
 end

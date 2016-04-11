@@ -2,47 +2,12 @@ from __future__ import print_function
 import json
 import subprocess
 from threading import Timer
+from orlo import app
 from orlo.config import config
 from orlo.exceptions import OrloError
 
 
 __author__ = 'alforbes'
-
-
-# Stolen from http://stackoverflow.com/questions/1191374
-def run(args, env, in_data, timeout_sec=3600):
-    """
-    Run a command in a separate thread
-
-    :param env: Dict of environment variables
-    :param in_data: String to pass to stdin
-    :param args: List of arguments
-    :param timeout_sec: Timeout in seconds, 1 hour by default
-    :return:
-    """
-    proc = subprocess.Popen(
-        args,
-        env=env,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-
-    timer = Timer(timeout_sec, proc.kill)
-    out = err = " "
-    try:
-        timer.start()
-        out, err = proc.communicate(in_data)
-    finally:
-        timer.cancel()
-        print("Out:\n{}".format(out))
-        print("Err:\n{}".format(err))
-
-    if proc.returncode is not 0:
-        raise OrloError("Subprocess exited with code {}".format(
-            proc.returncode
-        ))
-    print("end run")
 
 
 class BaseDeploy(object):
@@ -90,16 +55,20 @@ class HttpDeploy(BaseDeploy):
         pass
 
     def kill(self):
-        pass
+        raise NotImplementedError("No kill method for HTTP deploys")
 
 
 class ShellDeploy(BaseDeploy):
     """
     Deployment by shell command
 
-    meta {} => stdin
-    deployer pkg1=1
-    capture stdout,
+    Data is passed to the shell command given in 3 ways:
+
+    * ORLO_URL, ORLO_RELEASE (the ID), and other Release attributes
+      are set as environment variables (all prefixed by ORLO_)
+    * The package and version sets are passed as arguments, e.g.
+      package-name=1.0.0
+    * The metadata dictionary is passed to stdin
     """
 
     def __init__(self, release):
@@ -130,10 +99,48 @@ class ShellDeploy(BaseDeploy):
             metadata.update(m.to_dict())
         in_data = json.dumps(metadata)
 
-        run(args, env, in_data, timeout_sec=config.getint('deploy', 'timeout'))
+        self.run_command(args, env, in_data,
+                         timeout_sec=config.getint('deploy', 'timeout'))
 
     def kill(self):
         """
         Kill a deploy in progress
         """
         raise NotImplementedError
+
+    @staticmethod
+    def run_command(args, env, in_data, timeout_sec=3600):
+        """
+        Run a command in a separate thread
+
+        Adapted from http://stackoverflow.com/questions/1191374
+
+        :param env: Dict of environment variables
+        :param in_data: String to pass to stdin
+        :param args: List of arguments
+        :param timeout_sec: Timeout in seconds, 1 hour by default
+        :return:
+        """
+        proc = subprocess.Popen(
+            args,
+            env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        timer = Timer(timeout_sec, proc.kill)
+        out = err = " "
+        try:
+            timer.start()
+            out, err = proc.communicate(in_data)
+        finally:
+            timer.cancel()
+            print("Out:\n{}".format(out))
+            print("Err:\n{}".format(err))
+
+        if proc.returncode is not 0:
+            raise OrloError("Subprocess exited with code {}".format(
+                proc.returncode), status_code=500)
+        print("end run")
+

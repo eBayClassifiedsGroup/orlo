@@ -71,6 +71,11 @@ def run_server(args):
     app.run(host=args.host, port=args.port, debug=True, use_reloader=True)
 
 
-if __name__ == '__main__':
+def main():
+    # Referenced by entry_points in setup.py
     args = parse_args()
     args.func(args)
+
+
+if __name__ == '__main__':
+    main()

@@ -3,10 +3,12 @@
 # from distutils.core import setup
 from setuptools import setup
 import multiprocessing  # nopep8
+import os
 
 
-VERSION = '0.1.1-1'
-version_file = open('./orlo/_version.py', 'w')
+VERSION = '0.2.0-pre1'
+my_path = os.path.dirname(os.path.realpath(__file__))
+version_file = open('{}/orlo/_version.py'.format(my_path), 'w')
 version_file.write("__version__ = '{}'".format(VERSION))
 version_file.close()
 
@@ -42,4 +44,8 @@ setup(
         'orloclient>=0.1.1',
     ],
     test_suite='tests',
+    # Creates a script in /usr/local/bin
+    entry_points={
+        'console_scripts': ['orlo=orlo.cli:main']
+    }
 )
