@@ -8,6 +8,8 @@ Standards-Version: 3.9.5
 Package: orlo
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends}
-Description: An API for tracking deployments, written with Python, Flask and SqlAlchemy.
+Description: API for tracking deployments
+ Written with Python, Flask and SQLAlchemy
+ See http://orlo.readthedocs.org/en/latest/
 
 
