@@ -1,0 +1,19 @@
+# Obviously, many of these are legitimate packaging problems and should be resolved.
+# Most though, are by virtue of dh-virtualenv
+#
+orlo binary: wrong-path-for-interpreter
+# Python is packaged in:
+orlo binary: python-script-but-no-python-dep
+# Several pip packages cause this:
+orlo binary: executable-not-elf-or-script
+orlo binary: souce-is-missing docs/
+# Werkzeug, sphinx:
+orlo binary: embedded-javascript-library
+orlo binary: package-installs-python-egg usr/share/python/orlo/lib/python2.7/site-packages/flask/testsuite/test_apps/lib/python2.5/site-packages/SiteEgg.egg
+
+# Binary files within the virtualenv:
+orlo binary: arch-dependent-file-in-usr-share usr/share/python/orlo/bin/python
+orlo binary: arch-dependent-file-in-usr-share usr/share/python/orlo/lib/python2.7/site-packages/_ldap.so
+
+# Can't be overridden, would be nice if dh-virtualenv handled this
+orlo binary: package-installs-python-bytecode

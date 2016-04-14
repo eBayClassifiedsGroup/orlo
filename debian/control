@@ -6,8 +6,8 @@ Build-Depends: debhelper (>= 9), python, dh-virtualenv, gcc, python-dev, postgre
 Standards-Version: 3.9.5
 
 Package: orlo
-Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}
+Architecture: amd64
+Depends: ${misc:Depends}
 Description: API for tracking deployments
  Written with Python, Flask and SQLAlchemy
  See http://orlo.readthedocs.org/en/latest/
