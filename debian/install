@@ -1,3 +1,3 @@
-bin/orlo usr/bin
+debian/bin/orlo usr/bin
 etc/orlo.ini /etc/orlo
-systemd/orlo.service /lib/systemd/system
+debian/systemd/orlo.service /lib/systemd/system
