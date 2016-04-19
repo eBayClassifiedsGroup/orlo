@@ -368,6 +368,16 @@ class TestGetContract(OrloHttpTest):
         self.assert200(response)
         self.assertEqual('pong', response.json['message'])
 
+    def test_version(self):
+        """
+        Test the version url
+        """
+        from orlo import __version__
+        print("VERSION: " + str(__version__))
+        response = self.client.get('/version')
+        self.assert200(response)
+        self.assertEqual(__version__, response.json['version'])
+
     def test_get_single_release(self):
         """
         Fetch a single release

@@ -33,10 +33,12 @@ def auth_required():
     response.status_code = 200
     return response
 
+
 @orlo.app.route('/test/user')
 @conditional_auth(user_auth.login_required)
 def get_resource():
     return jsonify({'data': 'Hello, %s!' % g.current_user})
+
 
 class OrloAuthTest(TestCase):
     """
@@ -57,6 +59,7 @@ class OrloAuthTest(TestCase):
         self.app.config['DEBUG'] = True
         self.app.config['TRAP_HTTP_EXCEPTIONS'] = True
         self.app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
+        print(self.app.logger.handlers)
 
         return self.app
 

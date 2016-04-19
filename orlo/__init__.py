@@ -4,7 +4,13 @@ from logging.handlers import RotatingFileHandler
 
 from orlo.config import config
 from orlo.exceptions import OrloStartupError
-from orlo._version import __version__
+
+try:
+    # _version is created by setup.py
+    from orlo._version import __version__
+except ImportError:
+    __version__ = "TEST_BUILD"
+
 
 app = Flask(__name__)
 
