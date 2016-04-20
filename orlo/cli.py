@@ -1,6 +1,13 @@
 from __future__ import print_function
 import argparse
 
+try:
+    from orlo import __version__
+except ImportError:
+    # _version.py doesn't exist
+    __version__ = "TEST_BUILD"
+
+
 __author__ = 'alforbes'
 
 """
@@ -11,10 +18,14 @@ Generally setup/initialisation functions and the like, called by /usr/bin/orlo
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        prog='orlo',
+        version=__version__,
+    )
 
     p_config = argparse.ArgumentParser(add_help=False)
-    p_config.add_argument('--file', '-f', dest='filepath', help="File to write to",
+    p_config.add_argument('--file', '-f', dest='file_path',
+                          help="File to write to",
                           default='/etc/orlo/orlo.ini')
 
     p_database = argparse.ArgumentParser(add_help=False)
@@ -45,7 +56,7 @@ def parse_args():
 
 def write_config(args):
     from orlo import config
-    config_file = open(args.filepath, 'w')
+    config_file = open(args.file_path, 'w')
     config.write(config_file)
 
 
