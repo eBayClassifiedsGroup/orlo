@@ -2,10 +2,9 @@ from __future__ import print_function
 import json
 import subprocess
 from threading import Timer
-from orlo import app
 from orlo.config import config
-from orlo.exceptions import OrloError
-
+from orlo.exceptions import OrloDeployError
+from orlo import app
 
 __author__ = 'alforbes'
 
@@ -82,7 +81,7 @@ class ShellDeploy(BaseDeploy):
         args = [config.get('deploy_shell', 'command_path')]
         for p in self.release.packages:
             args.append("{}={}".format(p.name, p.version))
-        print("Args: {}".format(str(args)))
+        app.logger.debug("Args: {}".format(str(args)))
 
         env = {
             'ORLO_URL': self.server_url,
@@ -92,7 +91,7 @@ class ShellDeploy(BaseDeploy):
             my_key = "ORLO_" + key.upper()
             env[my_key] = str(value)
 
-        print("Env: {}".format(json.dumps(env)))
+        app.logger.debug("Env: {}".format(json.dumps(env)))
 
         metadata = {}
         for m in self.release.metadata:
@@ -121,13 +120,17 @@ class ShellDeploy(BaseDeploy):
         :param timeout_sec: Timeout in seconds, 1 hour by default
         :return:
         """
-        proc = subprocess.Popen(
-            args,
-            env=env,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        try:
+            proc = subprocess.Popen(
+                args,
+                env=env,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except OSError as e:
+            m = "OSError starting deployer process: {}".format(e.strerror)
+            raise OrloDeployError(m)
 
         timer = Timer(timeout_sec, proc.kill)
         out = err = " "
@@ -136,11 +139,16 @@ class ShellDeploy(BaseDeploy):
             out, err = proc.communicate(in_data)
         finally:
             timer.cancel()
-            print("Out:\n{}".format(out))
-            print("Err:\n{}".format(err))
+            app.logger.debug("Out:\n{}".format(out))
+            app.logger.debug("Err:\n{}".format(err))
 
         if proc.returncode is not 0:
-            raise OrloError("Subprocess exited with code {}".format(
-                proc.returncode), status_code=500)
-        print("end run")
-
+            raise OrloDeployError(
+                message="Subprocess exited with code {}".format(
+                    proc.returncode),
+                payload={
+                    'stdout': out,
+                    'stderr': err,
+                },
+                status_code=500)
+        app.logger.debug("end run")

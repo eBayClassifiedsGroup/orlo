@@ -45,3 +45,7 @@ class OrloConfigError(Exception):
     def __init__(self, message):
         Exception.__init__(self)
         print("Configuration Error: " + message)
+
+
+class OrloDeployError(OrloError):
+    status_code = 500

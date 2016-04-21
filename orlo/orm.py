@@ -161,7 +161,8 @@ class Package(db.Model):
         :param success: Whether or not the package deploy succeeded
         """
         if self.stime is None:
-            raise OrloWorkflowError("Can not stop a package which has not been started")
+            raise OrloWorkflowError(
+                "Can not stop a package which has not been started")
         self.ftime = arrow.now(config.get('main', 'time_zone'))
 
         td = self.ftime - self.stime

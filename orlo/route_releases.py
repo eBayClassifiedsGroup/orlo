@@ -124,11 +124,9 @@ def post_results(release_id, package_id):
 
 @app.route('/releases/<release_id>/deploy', methods=['POST'])
 @conditional_auth(token_auth.token_required)
-def post_releases_start(release_id):
+def post_releases_deploy(release_id):
     """
-    Indicate that a release is starting
-
-    This trigger the start of the deploy
+    Deploy a Release
 
     :param string release_id: Release UUID
 
@@ -140,14 +138,33 @@ def post_releases_start(release_id):
         -X POST http://127.0.0.1/releases/${RELEASE_ID}/deploy
     """
     release = fetch_release(release_id)
-    # TODO call deploy Class start Method
     app.logger.info("Release start, release {}".format(release_id))
+
     release.start()
     db.session.add(release)
     db.session.commit()
 
+    # TODO call deploy Class start Method, i.e. pure python rather than shell
     deploy = ShellDeploy(release)
     deploy.start()
+    return '', 204
+
+
+@app.route('/releases/<release_id>/start', methods=['POST'])
+@conditional_auth(token_auth.token_required)
+def post_releases_start(release_id):
+    """
+    Indicate that a release is starting
+
+    :param release_id:
+    :return:
+    """
+    release = fetch_release(release_id)
+    app.logger.info("Release start, release {}".format(release_id))
+    release.start()
+
+    db.session.add(release)
+    db.session.commit()
     return '', 204
 
 
