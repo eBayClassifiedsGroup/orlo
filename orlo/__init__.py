@@ -32,8 +32,6 @@ if config.getboolean('main', 'debug_mode'):
 if config.getboolean('logging', 'debug'):
     app.logger.setLevel(logging.DEBUG)
 
-app.logger.debug('Debug enabled')
-
 if not config.getboolean('main', 'strict_slashes'):
     app.url_map.strict_slashes = False
 

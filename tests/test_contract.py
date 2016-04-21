@@ -373,7 +373,6 @@ class TestGetContract(OrloHttpTest):
         Test the version url
         """
         from orlo import __version__
-        print("VERSION: " + str(__version__))
         response = self.client.get('/version')
         self.assert200(response)
         self.assertEqual(__version__, response.json['version'])

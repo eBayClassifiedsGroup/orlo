@@ -64,7 +64,7 @@ class TestStatsEmpirical(OrloDbTest):
                 self.create_release(False, False)
 
             db.session.commit()
-        print("Total releases created: {}".format(self.releases))
+        # print("Total releases created: {}".format(self.releases))
 
     def create_release(self, normal, successful, user='test_user', team='test_team',
                        platform='test_platform'):

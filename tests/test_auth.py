@@ -56,10 +56,9 @@ class OrloAuthTest(TestCase):
         self.app = orlo.app
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
         self.app.config['TESTING'] = True
-        self.app.config['DEBUG'] = True
+        self.app.config['DEBUG'] = False
         self.app.config['TRAP_HTTP_EXCEPTIONS'] = True
         self.app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
-        print(self.app.logger.handlers)
 
         return self.app
 

@@ -135,7 +135,6 @@ class TestPackageTime(OrloStatsTest):
         year = str(arrow.utcnow().year)
         month = str(arrow.utcnow().month)
         self.assertEqual(7, result[year][month]['test-package']['normal']['successful'])
-        print(result)
 
     def test_package_time_week(self):
         """

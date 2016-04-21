@@ -6,7 +6,7 @@ import multiprocessing  # nopep8
 import os
 
 
-VERSION = '0.2.0-pre2'
+VERSION = '0.2.0-pre3'
 my_path = os.path.dirname(os.path.realpath(__file__))
 version_file = open('{}/orlo/_version.py'.format(my_path), 'w')
 version_file.write("__version__ = '{}'".format(VERSION))
