@@ -1,11 +1,10 @@
 from __future__ import print_function
-import calendar
 import datetime
 import arrow
 from orlo import app
 from orlo.orm import db, Release, Platform, Package, release_platform
 from orlo.exceptions import OrloError, InvalidUsage
-from collections import OrderedDict
+from sqlalchemy import exc
 
 __author__ = 'alforbes'
 
@@ -14,11 +13,22 @@ Functions in this file are about generating summaries of data
 """
 
 
+def get_release(release_id):
+    """
+    Fetch a single release
+
+    :param release_id:
+    :return:
+    """
+    return db.session.query(Release).filter(Release.id == release_id)
+
+
 def filter_release_status(query, status):
     """
     Filter the given query by the given release status
 
-    Release status is special, because it's actually determined by the package status
+    Release status is special, because it's actually determined by the
+    package status
 
     :param query: Query object
     :param status: The status to filter on
@@ -27,15 +37,16 @@ def filter_release_status(query, status):
     enums = Package.status.property.columns[0].type.enums
     if status not in enums:
         raise InvalidUsage("Invalid package status, {} is not in {}".format(
-                status, str(enums)))
+            status, str(enums)))
     if status in ["SUCCESSFUL", "NOT_STARTED"]:
         # ALL packages must match this status for it to apply to the release
-        # Query logic translates to "Releases which do not have any packages which satisfy
+        # Query logic translates to "Releases which do not have any packages
+        # which satisfy
         # the condition 'Package.status != status'". I.E, all match.
         query = query.filter(
-                ~Release.packages.any(
-                        Package.status != status
-                ))
+            ~Release.packages.any(
+                Package.status != status
+            ))
     elif status in ["FAILED", "IN_PROGRESS"]:
         # ANY package can match for this status to apply to the release
         query = query.filter(Release.packages.any(Package.status == status))
@@ -53,15 +64,16 @@ def filter_release_rollback(query, rollback):
     if rollback is True:
         # Only count releases which have a rollback package
         query = query.filter(
-                Release.packages.any(Package.rollback == True)
+            Release.packages.any(Package.rollback == True)
         )
     elif rollback is False:
         # Only count releases which do not have any rollback packages
         query = query.filter(
-                ~Release.packages.any(Package.rollback == True)
+            ~Release.packages.any(Package.rollback == True)
         )
     else:  # What the hell did you pass?
-        raise TypeError("Bad rollback parameter: '{}', type {}. Boolean expected.".format(
+        raise TypeError(
+            "Bad rollback parameter: '{}', type {}. Boolean expected.".format(
                 rollback, type(rollback)))
     return query
 
@@ -142,7 +154,8 @@ def apply_filters(query, args):
             value = arrow.get(value)
 
         # Do comparisons
-        app.logger.debug("Filtering: {} {} {}".format(filter_field, comparison, value))
+        app.logger.debug(
+            "Filtering: {} {} {}".format(filter_field, comparison, value))
         if comparison == '==':
             query = query.filter(filter_field == value)
         if comparison == '<':
@@ -169,7 +182,8 @@ def releases(**kwargs):
 
     if any(field.startswith('package_') for field in kwargs.keys()) \
             or "status" in kwargs.keys():
-        # Package attributes need the join, as does status as it's really a package
+        # Package attributes need the join, as does status as it's really a
+        # package
         # attribute
         query = db.session.query(Release).join(Package)
     else:
@@ -179,7 +193,8 @@ def releases(**kwargs):
     try:
         query = apply_filters(query, kwargs)
     except AttributeError as e:
-        raise InvalidUsage("An invalid field was specified: {}".format(e.message))
+        raise InvalidUsage(
+            "An invalid field was specified: {}".format(e.message))
 
     if desc:
         stime_field = Release.stime.desc
@@ -227,7 +242,7 @@ def user_info(username):
     :return:
     """
     query = db.session.query(
-            Release.user, db.func.count(Release.id)) \
+        Release.user, db.func.count(Release.id)) \
         .filter(Release.user == username) \
         .group_by(Release.user)
 
@@ -270,7 +285,7 @@ def team_info(team_name):
     :return:
     """
     query = db.session.query(
-            Release.user, db.func.count(Release.id)) \
+        Release.user, db.func.count(Release.id)) \
         .filter(Release.team == team_name) \
         .group_by(Release.team)
 
@@ -322,7 +337,7 @@ def package_info(package_name):
     :return:
     """
     query = db.session.query(
-            Package.name, db.func.count(Package.id)) \
+        Package.name, db.func.count(Package.id)) \
         .filter(Package.name == package_name) \
         .group_by(Package.name)
 
@@ -337,7 +352,8 @@ def package_list(platform=None):
     """
     query = db.session.query(Package.name).distinct()
     if platform:
-        query = query.join(Release).filter(Release.platforms.any(Platform.name == platform))
+        query = query.join(Release).filter(
+            Release.platforms.any(Platform.name == platform))
 
     return query
 
@@ -346,15 +362,17 @@ def package_versions(platform=None):
     """
     List the current version of all packages
 
-    It is not sufficient to just return the highest version of each successful package,
+    It is not sufficient to just return the highest version of each
+    successful package,
     as they can be rolled back, so we determine the version by last release time
 
     :param platform: Platform to filter on
     """
 
-    # Sub query gets a list of successful packages by last successful release time
+    # Sub query gets a list of successful packages by last successful release
+    # time
     sub_q = db.session.query(
-            Package.name, db.func.max(Package.stime).label('max_stime')) \
+        Package.name, db.func.max(Package.stime).label('max_stime')) \
         .filter(Package.status == 'SUCCESSFUL')
     if platform:  # filter releases not on this platform
         sub_q = sub_q \
@@ -366,15 +384,16 @@ def package_versions(platform=None):
 
     # q inner-joins Package table with sub_q to get the version
     q = db.session.query(
-            Package.name,
-            Package.version) \
+        Package.name,
+        Package.version) \
         .join(sub_q, sub_q.c.max_stime == Package.stime) \
         .group_by(Package.name, Package.version)
 
     return q
 
 
-def count_releases(user=None, package=None, team=None, platform=None, status=None,
+def count_releases(user=None, package=None, team=None, platform=None,
+                   status=None,
                    rollback=None, stime=None, ftime=None):
     """
     Return the number of releases with the attributes specified
@@ -386,25 +405,28 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
     :param string platform: Filter by platform
     :param string stime: Filter by releases that started after
     :param string ftime: Filter by releases that started before
-    :param boolean rollback: Filter on whether or not the release contains a rollback
+    :param boolean rollback: Filter on whether or not the release contains a \
+    rollback
     :return: Query
 
-    Note that rollback and status are special fields when applied to a release, as they are
-    Package attributes.
+    Note that rollback and status are special fields when applied to a
+    release, as they are Package attributes.
 
-    A "successful" or "in progress" release is defined as a release where all packages match the
-    status. Conversely, a "failed" or "not started" release is defined as a release where any
-    package matches.
+    A "successful" or "in progress" release is defined as a release where all
+    packages match the status. Conversely, a "failed" or "not started" release
+    is defined as a release where any package matches.
 
-    For rollbacks, if any package is a rollback the release is included, otherwise if all
-    packages are not rollbacks the release obviously isn't either.
+    For rollbacks, if any package is a rollback the release is included,
+    otherwise if all packages are not rollbacks the release obviously isn't
+    either.
 
-    Implication of this is that a release can be both "failed" and "in progress".
+    Implication of this is that a release can be both "failed" and "in
+    progress".
     """
 
     args = {
-        'user': user, 'package': package, 'team': team, 'platform': platform, 'status': status,
-        'rollback': rollback, 'stime': stime, 'ftime': ftime,
+        'user': user, 'package': package, 'team': team, 'platform': platform,
+        'status': status, 'rollback': rollback, 'stime': stime, 'ftime': ftime,
     }
     app.logger.debug("Entered count_releases with args: {}".format(str(args)))
 
@@ -432,7 +454,8 @@ def count_releases(user=None, package=None, team=None, platform=None, status=Non
     return query
 
 
-def count_packages(user=None, team=None, platform=None, status=None, rollback=None):
+def count_packages(user=None, team=None, platform=None, status=None,
+                   rollback=None):
     """
     Return the number of packages with the attributes specified
 
@@ -468,7 +491,7 @@ def platform_summary():
     """
 
     query = db.session.query(
-            Platform.name, db.func.count(Platform.id)) \
+        Platform.name, db.func.count(Platform.id)) \
         .join(release_platform) \
         .group_by(Platform.name)
 
@@ -484,7 +507,7 @@ def platform_info(platform_name):
     """
 
     query = db.session.query(
-            Platform.name, db.func.count(Platform.id)) \
+        Platform.name, db.func.count(Platform.id)) \
         .filter(Platform.name == platform_name) \
         .group_by(Platform.name)
 
@@ -502,5 +525,3 @@ def platform_list():
         .join(release_platform)
 
     return query
-
-

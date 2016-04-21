@@ -388,6 +388,13 @@ class TestGetContract(OrloHttpTest):
         self.assertEqual(1, len(r['releases']))
         self.assertEqual(release_id, r['releases'][0]['id'])
 
+    def test_get_single_release_invalid(self):
+        """
+        Test that we return 400 with an invalid release ID
+        """
+        r = self._get_releases(release_id="not_a_valid_uuid",
+                               expected_status=400)
+
     def test_get_releases(self):
         """
         Test the list of releases

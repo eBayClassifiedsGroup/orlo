@@ -13,7 +13,7 @@ class OrloTest(TestCase):
         app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://orlo:password@localhost:5432/orlo'
         # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
         app.config['TESTING'] = True
-        app.config['DEBUG'] = True
+        app.config['DEBUG'] = False
         app.config['TRAP_HTTP_EXCEPTIONS'] = True
         app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
 
