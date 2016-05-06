@@ -89,7 +89,7 @@ class ShellDeploy(BaseDeploy):
         }
         for key, value in self.release.to_dict().items():
             my_key = "ORLO_" + key.upper()
-            env[my_key] = str(value)
+            env[my_key] = json.dumps(value)
 
         app.logger.debug("Env: {}".format(json.dumps(env)))
 
