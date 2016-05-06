@@ -151,4 +151,7 @@ class ShellDeploy(BaseDeploy):
                     'stderr': err,
                 },
                 status_code=500)
+        else:
+            app.logger.info(
+                "Deploy completed successfully. Output:\n{}".format(out))
         app.logger.debug("end run")
