@@ -98,8 +98,8 @@ class ShellDeploy(BaseDeploy):
             metadata.update(m.to_dict())
         in_data = json.dumps(metadata)
 
-        self.run_command(args, env, in_data,
-                         timeout_sec=config.getint('deploy', 'timeout'))
+        return self.run_command(
+            args, env, in_data, timeout_sec=config.getint('deploy', 'timeout'))
 
     def kill(self):
         """
@@ -116,7 +116,8 @@ class ShellDeploy(BaseDeploy):
 
         :param env: Dict of environment variables
         :param in_data: String to pass to stdin
-        :param args: List of arguments
+        :param list args: Arguments (i.e. full list including command,
+        as you would pass to subprocess)
         :param timeout_sec: Timeout in seconds, 1 hour by default
         :return:
         """
@@ -155,3 +156,8 @@ class ShellDeploy(BaseDeploy):
             app.logger.info(
                 "Deploy completed successfully. Output:\n{}".format(out))
         app.logger.debug("end run")
+
+        return {
+            'stdout': out,
+            'stderr': err,
+        }

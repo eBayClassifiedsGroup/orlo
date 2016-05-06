@@ -160,3 +160,21 @@ class TestShellDeploy(DeployTest):
 
             deploy.start()
 
+    def test_output(self):
+        """
+        Test that we return the output of the deploy
+
+        Not a good test, as it relies on the test-package being an argument,
+        and simply echoing it back. This is the "spec", but this test could
+        break if the arguments change.
+        """
+        with ConfigChange('deploy', 'timeout', '3'), \
+                ConfigChange('deploy_shell', 'command_path', '/bin/echo'):
+            deploy = ShellDeploy(self.release)
+
+            # Override server_url, normally it is set by config:
+            deploy.server_url = self.get_server_url()
+
+            output = deploy.start()
+            self.assertEqual(output['stdout'], 'test-package=1.2.3\n')
+

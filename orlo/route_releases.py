@@ -146,8 +146,8 @@ def post_releases_deploy(release_id):
 
     # TODO call deploy Class start Method, i.e. pure python rather than shell
     deploy = ShellDeploy(release)
-    deploy.start()
-    return '', 204
+    output = deploy.start()
+    return jsonify(output), 200
 
 
 @app.route('/releases/<release_id>/start', methods=['POST'])

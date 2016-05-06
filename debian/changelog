@@ -1,4 +1,4 @@
-orlo (0.2.0-pre2) UNRELEASED; urgency=medium
+orlo (0.2.0-pre4) UNRELEASED; urgency=medium
 
   [ Alex Forbes ]
   * Add dependant python virtualenv package to Vagrantfile
@@ -66,6 +66,15 @@ orlo (0.2.0-pre2) UNRELEASED; urgency=medium
   * Move debian packaging files in to debian dir
   * Explicitly set synced_folder to virtualbox provider
   * [lintian] fix description
+  * Add /version url and test
+  * Add --version option to command line
+  * Handle getting an invalid release id gracefully
+  * Reduce test verbosity by disabling debug and removing prints
+  * [debian] Add prerm script to stop service
+  * Separate post_releases_start and post_releases_deploy
+  * Log output of deploy
+  * Use json.dumps instead of str() for reliable conversion
+  * Return output of deploy to client
 
  -- Alex Forbes <alforbes@gumtree.com>  Thu, 14 Apr 2016 16:17:34 +0000
 
