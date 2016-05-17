@@ -130,8 +130,11 @@ class ShellDeploy(BaseDeploy):
                 stderr=subprocess.PIPE,
             )
         except OSError as e:
-            m = "OSError starting deployer process: {}".format(e.strerror)
-            raise OrloDeployError(m)
+            raise OrloDeployError(
+                message="OSError starting process: {}".format(
+                    e.strerror),
+                payload={'arguments': args}
+            )
 
         timer = Timer(timeout_sec, proc.kill)
         out = err = " "
