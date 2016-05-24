@@ -25,7 +25,7 @@ def parse_args():
 
     p_config = argparse.ArgumentParser(add_help=False)
     p_config.add_argument('--file', '-f', dest='file_path',
-                          help="File to write to",
+                          help="Config file to read/write",
                           default='/etc/orlo/orlo.ini')
 
     p_database = argparse.ArgumentParser(add_help=False)
@@ -43,12 +43,12 @@ def parse_args():
 
     sp_database = subparsers.add_parser(
             'setup_database', help="Initialise the configured DB",
-            parents=[p_database])
+            parents=[p_database, p_config])
     sp_database.set_defaults(func=setup_database)
 
     sp_run_server = subparsers.add_parser(
             'run_server', help="Run a test server",
-            parents=[p_server])
+            parents=[p_server, p_config])
     sp_run_server.set_defaults(func=run_server)
 
     return parser.parse_args()

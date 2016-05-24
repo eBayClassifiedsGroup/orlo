@@ -4,10 +4,15 @@ import os
 
 __author__ = 'alforbes'
 
-config = ConfigParser.ConfigParser()
+try:
+    CONFIG_FILE = os.environ['ORLO_CONFIG']
+except KeyError:
+    CONFIG_FILE = '/etc/orlo/orlo.ini'
+
+config = ConfigParser.RawConfigParser()
 
 config.add_section('main')
-config.set('main', 'debug_mode', 'true')
+config.set('main', 'debug_mode', 'false')
 config.set('main', 'propagate_exceptions', 'true')
 config.set('main', 'time_format', '%Y-%m-%dT%H:%M:%SZ')
 config.set('main', 'time_zone', 'UTC')
@@ -32,8 +37,11 @@ config.set('db', 'uri', 'postgres://orlo:password@localhost:5432/orlo')
 config.set('db', 'echo_queries', 'false')
 
 config.add_section('logging')
-config.set('logging', 'debug', 'false')
+config.set('logging', 'level', 'info')
 config.set('logging', 'file', 'disabled')
+config.set('logging', 'format', '%(asctime)s [main] %(levelname)s %('
+                                'module)s:%(funcName)s:%(lineno)d - %('
+                                'message)s')
 
 config.add_section('deploy')
 config.set('deploy', 'timeout',
@@ -44,4 +52,4 @@ config.set('deploy_shell', 'command_path',
            os.path.dirname(os.path.abspath(__file__)) +
            '/../deployer.py')
 
-config.read('/etc/orlo/orlo.ini')
+config.read(CONFIG_FILE)

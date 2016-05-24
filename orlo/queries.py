@@ -362,9 +362,9 @@ def package_versions(platform=None):
     """
     List the current version of all packages
 
-    It is not sufficient to just return the highest version of each
-    successful package,
-    as they can be rolled back, so we determine the version by last release time
+    It is not sufficient to just return the highest version of each successful
+    package, as they can be rolled back, so we determine the version by last
+    release time
 
     :param platform: Platform to filter on
     """
