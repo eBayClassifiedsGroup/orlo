@@ -17,6 +17,16 @@ USERNAME = 'testuser'
 PASSWORD = 'blah'
 
 
+"""
+IF YOU GET FAILURES IN THIS FILE
+
+E.g:
+IOError: [Errno 2] No such file or directory: '/home/vagrant/virtualenv/orlo/local/lib/python2.7/site-packages/orlo-0.2.0_pre5-py2.7.egg/orlo/../etc/passwd'
+
+This is because you're using an installed module and not actually testing
+your changes! Uninstall the installed module before testing.
+"""
+
 # A couple of test routes which require auth, and return 200 if it succeeds
 @orlo.app.route('/test/token_required')
 @conditional_auth(token_auth.token_required)
