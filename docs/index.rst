@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Orlo
-======
+====
 
 Orlo is an API for tracking deployments, written with Python, Flask and SqlAlchemy.
 
@@ -18,11 +18,12 @@ Contents
     :maxdepth: 2
 
     install
+    config
     rest
 
 
 About Orlo
-------------
+----------
 
 Orlo aims to cover the needs of all eCG platforms with respect to gathering information about deployments, while being simple to integrate with existing deployment software and scripts. This currently includes:
 
@@ -39,7 +40,7 @@ With this information, it will be possible to build dashboards and more intellig
 The API should also be agnostic to release process, server container or packaging format - all platforms do things differently. It should be forgiving and "do the right thing" in the case of missing data, as not all platforms will use every field.
 
 Why "orlo"?
--------------
+-----------
 
 Originally this project was called "Sponge", because sponges are absorbent. But it turns out that name was already in use on readthedocs.org, so it was renamed. In English, orlo means "a plinth supporting the base of a column".
 
