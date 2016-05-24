@@ -39,7 +39,7 @@ config.set('db', 'echo_queries', 'false')
 config.add_section('logging')
 config.set('logging', 'level', 'info')
 config.set('logging', 'file', 'disabled')
-config.set('logging', 'format', '%(asctime)s [main] %(levelname)s %('
+config.set('logging', 'format', '%(asctime)s [%(name)s] %(levelname)s %('
                                 'module)s:%(funcName)s:%(lineno)d - %('
                                 'message)s')
 

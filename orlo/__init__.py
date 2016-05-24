@@ -61,9 +61,7 @@ if config.getboolean('security', 'enabled') and \
     raise OrloStartupError(
         "Security is enabled, please configure the secret key")
 
-app.logger.info("Startup completed with configuration from {}".format(
-    CONFIG_FILE))
-
+app.logger.debug("Log level: {}".format(config.get('logging', 'level')))
 
 # Must be imported last
 import orlo.error_handlers
@@ -73,4 +71,7 @@ import orlo.route_import
 import orlo.route_info
 import orlo.route_stats
 import orlo.user_auth
+
+app.logger.info("Startup completed with configuration from {}".format(
+    CONFIG_FILE))
 
