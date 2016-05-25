@@ -9,6 +9,6 @@ requests>=2.4.2
 SQLAlchemy>=1.0.8
 sqlalchemy-utils>=0.31.0
 psycopg2>=2.6.1
-python-ldap>=2.4.25
+pyldap>=2.4.25
 pytz
-six
+six>=1.10.0
