@@ -16,3 +16,4 @@ passlib==1.6.1
 psycopg2==2.6.1
 python-ldap>=2.4.25
 pytz
+six
