@@ -1,6 +1,6 @@
 from __future__ import print_function
-import ConfigParser
 import os
+from six.moves.configparser import RawConfigParser
 
 __author__ = 'alforbes'
 
@@ -9,7 +9,7 @@ try:
 except KeyError:
     CONFIG_FILE = '/etc/orlo/orlo.ini'
 
-config = ConfigParser.RawConfigParser()
+config = RawConfigParser()
 
 config.add_section('main')
 config.set('main', 'debug_mode', 'false')

@@ -18,10 +18,10 @@ Generally setup/initialisation functions and the like, called by /usr/bin/orlo
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        prog='orlo',
-        version=__version__,
-    )
+    parser = argparse.ArgumentParser(prog='orlo')
+
+    parser.add_argument('--version', '-v', action='version',
+                        version='%(prog)s {}'.format(__version__))
 
     p_config = argparse.ArgumentParser(add_help=False)
     p_config.add_argument('--file', '-f', dest='file_path',
