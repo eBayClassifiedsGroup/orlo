@@ -75,6 +75,24 @@ orlo (0.2.0-pre4) UNRELEASED; urgency=medium
   * Log output of deploy
   * Use json.dumps instead of str() for reliable conversion
   * Return output of deploy to client
+  * Add .DS_Store to gitignore
+  * Add payload of arguments to error
+  * Add configuration to documentation
+  * Break out ExecStart command into multiple lines for clarity
+  * Add note to test_auth file
+  * Make config file configurable by environment variable
+  * Include logger name in logs
+  * Update requirements for py3, use >= where possible
+  * Remove indirect dependencies
+  * Update Vagrantfile to Ubuntu Xenial
+  * Remove indirect imports
+  * [py3] fix import errors
+  * Fix tests to run under python3
+  * Fix for python2 again
+  * Add own fork of flask-testing
+  * Fix /versions sometimes returning wrong version
+
+  [ Ubuntu ]
 
  -- Alex Forbes <alforbes@gumtree.com>  Thu, 14 Apr 2016 16:17:34 +0000
 
