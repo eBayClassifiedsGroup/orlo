@@ -140,7 +140,7 @@ class ShellDeploy(BaseDeploy):
         out = err = " "
         try:
             timer.start()
-            out, err = proc.communicate(in_data)
+            out, err = proc.communicate(in_data.encode('utf-8'))
         finally:
             timer.cancel()
             app.logger.debug("Out:\n{}".format(out))

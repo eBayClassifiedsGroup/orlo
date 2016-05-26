@@ -181,7 +181,7 @@ class TestPostContract(OrloHttpTest):
         Create a release
         """
         release_id = self._create_release()
-        self.assertEqual(uuid.UUID(release_id).get_version(), 4)
+        self.assertEqual(uuid.UUID(release_id).version, 4)
 
     def test_create_package(self):
         """
@@ -189,7 +189,7 @@ class TestPostContract(OrloHttpTest):
         """
         release_id = self._create_release()
         package_id = self._create_package(release_id)
-        self.assertEqual(uuid.UUID(package_id).get_version(), 4)
+        self.assertEqual(uuid.UUID(package_id).version, 4)
 
     def test_add_results(self):
         """
@@ -357,7 +357,7 @@ class TestGetContract(OrloHttpTest):
         except AssertionError as err:
             print(results_response.data)
             raise
-        r_json = json.loads(results_response.data)
+        r_json = json.loads(results_response.data.decode('utf-8'))
         return r_json
 
     def test_ping(self):

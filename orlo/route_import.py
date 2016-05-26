@@ -1,4 +1,3 @@
-from __future__ import print_function
 import arrow
 import json
 from flask import jsonify, request
@@ -146,4 +145,4 @@ def post_import():
 
         releases.append(release.id)
 
-    return jsonify({'releases': [unicode(x) for x in releases]}), 200
+    return jsonify({'releases': [str(x) for x in releases]}), 200

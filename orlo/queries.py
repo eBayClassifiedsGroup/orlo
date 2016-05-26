@@ -88,7 +88,7 @@ def apply_filters(query, args):
     :return: filtered query object
     """
 
-    for field, value in args.iteritems():
+    for field, value in args.items():
         if field == 'latest':  # this is not a comparison
             continue
 
@@ -194,7 +194,7 @@ def releases(**kwargs):
         query = apply_filters(query, kwargs)
     except AttributeError as e:
         raise InvalidUsage(
-            "An invalid field was specified: {}".format(e.message))
+            "An invalid field was specified: {}".format(e.args[0]))
 
     if desc:
         stime_field = Release.stime.desc

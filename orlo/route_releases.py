@@ -365,7 +365,7 @@ def get_releases(release_id=None):
         if not is_uuid(release_id):
             raise InvalidUsage("Release ID given is not a valid UUID")
         query = queries.get_release(release_id)
-    elif len(request.args.keys()) == 0:
+    elif len([x for x in request.args.keys()]) == 0:
         raise InvalidUsage("Please specify a filter. See "
                            "http://orlo.readthedocs.org/en/latest/rest.html"
                            "#get--releases for more info")

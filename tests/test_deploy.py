@@ -176,5 +176,5 @@ class TestShellDeploy(DeployTest):
             deploy.server_url = self.get_server_url()
 
             output = deploy.start()
-            self.assertEqual(output['stdout'], 'test-package=1.2.3\n')
+            self.assertEqual(output['stdout'], b'test-package=1.2.3\n')
 
