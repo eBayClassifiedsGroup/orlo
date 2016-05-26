@@ -1,4 +1,4 @@
-orlo (0.2.0-pre4) UNRELEASED; urgency=medium
+orlo (0.2.0.pre5) UNRELEASED; urgency=medium
 
   [ Alex Forbes ]
   * Add dependant python virtualenv package to Vagrantfile

@@ -4,4 +4,4 @@
 	dh $@ --with systemd --with python-virtualenv
 
 override_dh_virtualenv:
-	dh_virtualenv --no-test
+	dh_virtualenv --no-test --python /usr/bin/python3
