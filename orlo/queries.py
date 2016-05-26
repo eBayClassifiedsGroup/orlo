@@ -4,7 +4,7 @@ import arrow
 from orlo import app
 from orlo.orm import db, Release, Platform, Package, release_platform
 from orlo.exceptions import OrloError, InvalidUsage
-from sqlalchemy import exc
+from sqlalchemy import and_, exc
 
 __author__ = 'alforbes'
 
@@ -372,9 +372,10 @@ def package_versions(platform=None):
     # Sub query gets a list of successful packages by last successful release
     # time
     sub_q = db.session.query(
-        Package.name, db.func.max(Package.stime).label('max_stime')) \
+            Package.name.label('name'),
+            db.func.max(Package.stime).label('max_stime')) \
         .filter(Package.status == 'SUCCESSFUL')
-    if platform:  # filter releases not on this platform
+    if platform:  # filter by platform
         sub_q = sub_q \
             .join(Release) \
             .filter(Release.platforms.any(Platform.name == platform))
@@ -384,17 +385,17 @@ def package_versions(platform=None):
 
     # q inner-joins Package table with sub_q to get the version
     q = db.session.query(
-        Package.name,
-        Package.version) \
-        .join(sub_q, sub_q.c.max_stime == Package.stime) \
+            Package.name,
+            Package.version) \
+        .join(sub_q, and_(sub_q.c.max_stime == Package.stime,
+                          sub_q.c.name == Package.name)) \
         .group_by(Package.name, Package.version)
 
     return q
 
 
 def count_releases(user=None, package=None, team=None, platform=None,
-                   status=None,
-                   rollback=None, stime=None, ftime=None):
+                   status=None, rollback=None, stime=None, ftime=None):
     """
     Return the number of releases with the attributes specified
 

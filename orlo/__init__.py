@@ -4,9 +4,11 @@ from flask import Flask
 import logging
 from logging.handlers import RotatingFileHandler
 from logging import Formatter
+import sys
 
 from orlo.config import config, CONFIG_FILE
-from orlo.exceptions import OrloStartupError
+from orlo.exceptions import OrloStartupError, OrloError, OrloAuthError, \
+    OrloConfigError
 
 try:
     # _version is created by setup.py
@@ -76,4 +78,3 @@ import orlo.user_auth
 
 app.logger.info("Startup completed with configuration from {}".format(
     CONFIG_FILE))
-
