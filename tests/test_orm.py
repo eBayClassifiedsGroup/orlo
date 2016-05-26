@@ -149,15 +149,15 @@ class TestFields(OrloDbTest):
         Test the types returned by Release objects are OK
         """
         r = db.session.query(Release).first()
-        self.assertIs(type(r.id), uuid.UUID)
+        self.assertIsInstance(r.id, uuid.UUID)
         self.assertIs(hasattr(r.notes, '__iter__'), True)
         self.assertIs(hasattr(r.platforms, '__iter__'), True)
-        self.assertIn(type(r.references), string_types)
+        self.assertIsInstance(r.references, string_types)
         self.assertIs(type(list(r.references)), list)
-        self.assertIs(type(r.stime), arrow.arrow.Arrow)
-        self.assertIs(type(r.ftime), arrow.arrow.Arrow)
-        self.assertIs(type(r.duration), datetime.timedelta)
-        self.assertIn(type(r.team), string_types)
+        self.assertIsInstance(r.stime, arrow.arrow.Arrow)
+        self.assertIsInstance(r.ftime, arrow.arrow.Arrow)
+        self.assertIsInstance(r.duration, datetime.timedelta)
+        self.assertIsInstance(r.team, string_types)
 
     def test_package_types(self):
         """
@@ -165,10 +165,10 @@ class TestFields(OrloDbTest):
         """
         p = db.session.query(Package).first()
         x = db.session.query(Package).all()
-        self.assertIs(type(p.id), uuid.UUID)
-        self.assertIn(type(p.name), string_types)
-        self.assertIs(type(p.stime), arrow.arrow.Arrow)
-        self.assertIs(type(p.ftime), arrow.arrow.Arrow)
-        self.assertIs(type(p.duration), datetime.timedelta)
-        self.assertIn(type(p.status), string_types)
-        self.assertIn(type(p.version), string_types)
+        self.assertIsInstance(p.id, uuid.UUID)
+        self.assertIsInstance(p.name, string_types)
+        self.assertIsInstance(p.stime, arrow.arrow.Arrow)
+        self.assertIsInstance(p.ftime, arrow.arrow.Arrow)
+        self.assertIsInstance(p.duration, datetime.timedelta)
+        self.assertIsInstance(p.status, string_types)
+        self.assertIsInstance(p.version, string_types)
