@@ -1,7 +1,7 @@
 import orlo
 import unittest
 from orlo.orm import db
-from flask.ext.testing import TestCase, LiveServerTestCase
+from flask_testing import TestCase, LiveServerTestCase
 
 
 class OrloTest(TestCase):

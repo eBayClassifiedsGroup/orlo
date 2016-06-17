@@ -1,4 +1,4 @@
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.types.uuid import UUIDType
 from sqlalchemy_utils.types.arrow import ArrowType
 
