@@ -132,7 +132,7 @@ class Package(db.Model):
         db.Enum('NOT_STARTED', 'IN_PROGRESS', 'SUCCESSFUL', 'FAILED',
                 name='status_types'),
         default='NOT_STARTED')
-    version = db.Column(db.String(16), nullable=False)
+    version = db.Column(db.String(32), nullable=False)
     diff_url = db.Column(db.String)
     rollback = db.Column(db.Boolean(create_constraint=True))
     release_id = db.Column(UUIDType, db.ForeignKey("release.id"))
