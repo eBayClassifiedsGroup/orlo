@@ -6,6 +6,7 @@ import orlo.queries
 import orlo.exceptions
 import orlo.stats
 from time import sleep
+import sqlalchemy.orm
 
 __author__ = 'alforbes'
 
@@ -183,6 +184,13 @@ class TestSummary(OrloQueryTest):
         self.assertIn('packageOne', packages)
         self.assertIn('packageTwo', packages)
 
+    def test_package_summary_returns_query(self):
+        rid1 = self._create_release()
+        self._create_package(rid1, name='packageOne')
+
+        result = orlo.queries.package_summary()
+        self.assertIsInstance(result, sqlalchemy.orm.query.Query)
+
     def test_package_summary_with_platform(self):
         """
         Test package_summary
@@ -320,20 +328,40 @@ class TestSummary(OrloQueryTest):
         self.assertIn(('packageOne', '1.0.1'), versions)
 
 
+class TestInfo(OrloQueryTest):
+    """
+    Test the _info functions
+    """
+
+    def _create_test_package(self):
+        rid = self._create_release(platforms=['platformOne'])
+        pid = self._create_package(rid, name='packageOne', version='1.0.1')
+        return pid
+
+    def test_returns_query(self):
+        """
+        Assert that package_info should return a query
+        """
+        self._create_test_package()
+        result = orlo.queries.package_info('packageOne')
+        self.assertIsInstance(result, sqlalchemy.orm.query.Query)
+
+
 class TestCountReleases(OrloQueryTest):
     """
     Parent class for testing the CountReleases function
 
-    By subclassing it and overriding ARGS, we can test different combinations of arguments
-    with the same test code.
+    By subclassing it and overriding ARGS, we can test different combinations of
+    arguments with the same test code.
 
-    INCLUSIVE_ARGS represents a set of arguments that will match the releases created (see
-    the functions in OrloQueryTest for what those are)
-    EXCLUSIVE_ARGS represents a set of arguments that will not match any releases created,
-    i.e. should return a count of zero
+    INCLUSIVE_ARGS represents a set of arguments that will match the releases
+    created (see the functions in OrloQueryTest for what those are)
+    EXCLUSIVE_ARGS represents a set of arguments that will not match any
+    releases created, i.e. should return a count of zero
 
-    This parent class has tests that should be the same result no matter what the arguments
-    (except the exclusive case which must always a count of zero so we define it here)
+    This parent class has tests that should be the same result no matter what
+    the arguments (except the exclusive case which must always a count of zero
+    so we define it here)
     """
 
     INCLUSIVE_ARGS = {}  # Args we are testing, result should include these
