@@ -181,7 +181,7 @@ class TestPostContract(OrloHttpTest):
         Create a release
         """
         release_id = self._create_release()
-        self.assertEqual(uuid.UUID(release_id).get_version(), 4)
+        self.assertEqual(uuid.UUID(release_id).version, 4)
 
     def test_create_package(self):
         """
@@ -189,7 +189,7 @@ class TestPostContract(OrloHttpTest):
         """
         release_id = self._create_release()
         package_id = self._create_package(release_id)
-        self.assertEqual(uuid.UUID(package_id).get_version(), 4)
+        self.assertEqual(uuid.UUID(package_id).version, 4)
 
     def test_add_results(self):
         """
@@ -357,7 +357,7 @@ class TestGetContract(OrloHttpTest):
         except AssertionError as err:
             print(results_response.data)
             raise
-        r_json = json.loads(results_response.data)
+        r_json = json.loads(results_response.data.decode('utf-8'))
         return r_json
 
     def test_ping(self):
@@ -368,6 +368,15 @@ class TestGetContract(OrloHttpTest):
         self.assert200(response)
         self.assertEqual('pong', response.json['message'])
 
+    def test_version(self):
+        """
+        Test the version url
+        """
+        from orlo import __version__
+        response = self.client.get('/version')
+        self.assert200(response)
+        self.assertEqual(__version__, response.json['version'])
+
     def test_get_single_release(self):
         """
         Fetch a single release
@@ -377,6 +386,13 @@ class TestGetContract(OrloHttpTest):
 
         self.assertEqual(1, len(r['releases']))
         self.assertEqual(release_id, r['releases'][0]['id'])
+
+    def test_get_single_release_invalid(self):
+        """
+        Test that we return 400 with an invalid release ID
+        """
+        r = self._get_releases(release_id="not_a_valid_uuid",
+                               expected_status=400)
 
     def test_get_releases(self):
         """

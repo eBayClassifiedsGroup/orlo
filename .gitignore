@@ -65,3 +65,6 @@ orlo/_version.py
 .vagrant
 *.swp
 *.deb
+
+# OSX
+.DS_Store

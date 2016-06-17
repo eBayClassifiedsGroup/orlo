@@ -1,4 +1,6 @@
 from __future__ import print_function
+import logging
+import sys
 
 __author__ = 'alforbes'
 
@@ -45,3 +47,7 @@ class OrloConfigError(Exception):
     def __init__(self, message):
         Exception.__init__(self)
         print("Configuration Error: " + message)
+
+
+class OrloDeployError(OrloError):
+    status_code = 500

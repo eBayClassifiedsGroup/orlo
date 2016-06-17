@@ -1,8 +1,7 @@
-from __future__ import print_function
 import arrow
 from flask import request, jsonify
 
-import stats
+from orlo import stats
 from orlo import app
 from orlo.exceptions import InvalidUsage
 import orlo.queries as queries

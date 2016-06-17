@@ -84,15 +84,16 @@ def info_packages(package=None):
     platform = request.args.get('platform')
 
     if package:
-        packages = queries.package_info(package)
+        packages = queries.package_info(package).all()
     else:
-        packages = queries.package_summary(platform=platform)
+        packages = queries.package_summary(platform=platform).all()
 
     d = {}
 
     for package, count in packages:
         d[package] = {'releases': count}
-    return jsonify(packages), 200
+
+    return jsonify(d), 200
 
 
 @app.route('/info/packages/list', methods=['GET'])

@@ -1,5 +1,3 @@
-from __future__ import print_function, unicode_literals
-
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.types.uuid import UUIDType
 from sqlalchemy_utils.types.arrow import ArrowType
@@ -82,7 +80,7 @@ class Release(db.Model):
         self.start()
 
     def __str__(self):
-        return unicode(self.to_dict())
+        return self.to_dict()
 
     def to_dict(self):
         time_format = config.get('main', 'time_format')
@@ -92,7 +90,7 @@ class Release(db.Model):
             metadata.update(m.to_dict())
 
         return {
-            'id': unicode(self.id),
+            'id': str(self.id),
             'packages': [p.to_dict() for p in self.packages],
             'platforms': [platform.name for platform in self.platforms],
             'references': string_to_list(self.references),
@@ -161,7 +159,8 @@ class Package(db.Model):
         :param success: Whether or not the package deploy succeeded
         """
         if self.stime is None:
-            raise OrloWorkflowError("Can not stop a package which has not been started")
+            raise OrloWorkflowError(
+                "Can not stop a package which has not been started")
         self.ftime = arrow.now(config.get('main', 'time_zone'))
 
         td = self.ftime - self.stime
@@ -175,7 +174,7 @@ class Package(db.Model):
     def to_dict(self):
         time_format = config.get('main', 'time_format')
         return {
-            'id': unicode(self.id),
+            'id': str(self.id),
             'name': self.name,
             'version': self.version,
             'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,

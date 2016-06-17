@@ -1,3 +1,101 @@
+orlo (0.2.0.pre5) UNRELEASED; urgency=medium
+
+  [ Alex Forbes ]
+  * Add dependant python virtualenv package to Vagrantfile
+  * Add outline for Deploy process
+  * Use release object instead of re-declaring, add live server test
+
+  [ Ivan Coppa ]
+  * Support for Release metadata attributes, Deploy endpoint
+  * disabling debug
+
+  [ Alex Forbes ]
+  * Add integrated dummy deployer test
+  * Use relative path for deployer.rb
+
+  [ Marcel Kuiper ]
+  * Added POC for Token based AUthentication
+
+  [ Ivan Coppa ]
+  * enable deploy api call
+
+  [ Marcel Kuiper ]
+  * processed flake8 recommendations on user_auth.py
+
+  [ ivancoppa ]
+  * create base data
+
+  [ Alex Forbes ]
+  * Add last minute changes to create script
+  * Add last minute hacks to make everything work
+  * Add orlo_release to deployer env
+  * Create configuration for auth +
+  * Make URL a parameter for auth tests
+  * Only apply login_required when security is enabled
+  * Rename test classes to start with "Test"
+  * Move auth config into setup/teardown
+  * Add root page, test fixes
+  * Skip deploy test for now
+  * Move route_api to route_releases, rename metadatas => metadata
+  * Make token lifetime configurable, update orlo.ini with new options
+  * Bump version of Flask-HTTPAuth
+  * Add status code to OrloAuthError and add OrloConfigError
+  * Remove login_handler in favour or separate TokenAuth module
+  * Seperate token auth from http basic auth
+  * Only require auth when configured
+  * Implement deployer.py test deployer script
+  * Bump orloclient version, use py.test for travis
+  * Add pytz to requirements.txt
+  * Add requirements_testing.txt
+  * Move pytest to requirements_testing
+  * Use /bin/true in deploy shell test
+
+  [ Dustin Nguyen ]
+  * Added ldap auth
+  * Added ldap mock test
+
+  [ Alex Forbes ]
+  * Misc changes to deploy
+  * Tidy up example deployer
+  * Bump to pre-release 0.2
+  * Tidy comments in example deployer
+  * Use absolute path for version file
+  * Use orlo.cli as entry point instead of custom script
+  * Update Vagrantfile
+  * Fix silly bug, read config from file after set
+  * Move debian packaging files in to debian dir
+  * Explicitly set synced_folder to virtualbox provider
+  * [lintian] fix description
+  * Add /version url and test
+  * Add --version option to command line
+  * Handle getting an invalid release id gracefully
+  * Reduce test verbosity by disabling debug and removing prints
+  * [debian] Add prerm script to stop service
+  * Separate post_releases_start and post_releases_deploy
+  * Log output of deploy
+  * Use json.dumps instead of str() for reliable conversion
+  * Return output of deploy to client
+  * Add .DS_Store to gitignore
+  * Add payload of arguments to error
+  * Add configuration to documentation
+  * Break out ExecStart command into multiple lines for clarity
+  * Add note to test_auth file
+  * Make config file configurable by environment variable
+  * Include logger name in logs
+  * Update requirements for py3, use >= where possible
+  * Remove indirect dependencies
+  * Update Vagrantfile to Ubuntu Xenial
+  * Remove indirect imports
+  * [py3] fix import errors
+  * Fix tests to run under python3
+  * Fix for python2 again
+  * Add own fork of flask-testing
+  * Fix /versions sometimes returning wrong version
+
+  [ Ubuntu ]
+
+ -- Alex Forbes <alforbes@gumtree.com>  Thu, 14 Apr 2016 16:17:34 +0000
+
 orlo (0.1.1) stable; urgency=medium
 
   * Cast package_rollback as a boolean

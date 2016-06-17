@@ -1,6 +1,7 @@
 from __future__ import print_function
 from flask import jsonify, request
 from orlo import app
+from orlo import __version__
 
 __author__ = 'alforbes'
 
@@ -28,6 +29,17 @@ def root():
     """
     return jsonify({
         'message': "Orlo server, see http://orlo.readthedocs.org/"
+    })
+
+
+@app.route('/version', methods=['GET'])
+def version():
+    """
+    Display version information
+    :return:
+    """
+    return jsonify({
+        'version': str(__version__)
     })
 
 

@@ -12,7 +12,7 @@ Vagrant.configure(2) do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "ubuntu/xenial64"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -38,6 +38,7 @@ Vagrant.configure(2) do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   # config.vm.synced_folder "../data", "/vagrant_data"
+  config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -70,6 +71,9 @@ Vagrant.configure(2) do |config|
   #   sudo apt-get install -y apache2
   # SHELL
   config.vm.provision "shell", inline: <<-SHELL
+    # ubuntu 16.04 fix see https://github.com/mitchellh/vagrant/issues/7288
+    echo 127.0.0.1 `hostname` |sudo tee -a /etc/hosts
+
     # sudo sed -i 's/archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
     apt-get update
     apt-get -y install python-pip python-dev postgresql postgresql-server-dev-all
@@ -80,32 +84,31 @@ Vagrant.configure(2) do |config|
     apt-get install -y python-dev libldap2-dev libsasl2-dev libssl-dev
 
     # Build tools
-    apt-get -y install build-essential git-buildpackage debhelper python-dev dh-systemd python-virtualenv
+    apt-get -y install build-essential git-buildpackage debhelper python-dev \
+        python3-dev dh-systemd python-virtualenv
     wget -P /tmp/ \
         'https://launchpad.net/ubuntu/+archive/primary/+files/dh-virtualenv_0.11-1_all.deb'
     dpkg -i /tmp/dh-virtualenv_0.11-1_all.deb
     apt-get -f install -y
 
-    pip install --upgrade pip
-    pip install virtualenv
+    pip install --upgrade pip setuptools
+    pip install --upgrade virtualenv
 
     # Virtualenv is to avoid conflict with Debian's python-six
-    virtualenv /home/vagrant/virtualenv/orlo
-    source /home/vagrant/virtualenv/orlo/bin/activate
-    echo "source ~/virtualenv/orlo/bin/activate" >> /home/vagrant/.profile
+    virtualenv /home/ubuntu/virtualenv/orlo
+    source /home/ubuntu/virtualenv/orlo/bin/activate
+    echo "source ~/virtualenv/orlo/bin/activate" >> /home/ubuntu/.profile
 
     pip install -r /vagrant/requirements.txt
     pip install -r /vagrant/requirements_testing.txt
     pip install -r /vagrant/docs/requirements.txt
 
-    # Flask-Testing hasn't been released to pip in ages :(
-    pip install --upgrade git+https://github.com/jarus/flask-testing.git
-
-    sudo chown -R vagrant:vagrant /home/vagrant/virtualenv
+    sudo chown -R ubuntu:ubuntu /home/ubuntu/virtualenv
 
     # Create the database
     python /vagrant/create_db.py
+    python /vagrant/setup.py develop
     mkdir /etc/orlo
-    chown vagrant:root /etc/orlo
+    chown ubuntu:root /etc/orlo
   SHELL
 end

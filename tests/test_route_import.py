@@ -84,7 +84,7 @@ class TestImport(OrloTest):
         """
         Test import user matches
         """
-        self.assertEqual(self.release.user, unicode(self.doc_dict[0]['user']))
+        self.assertEqual(self.release.user, self.doc_dict[0]['user'])
 
     def test_import_param_package_name(self):
         """

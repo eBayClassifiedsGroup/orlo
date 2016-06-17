@@ -1,19 +1,19 @@
 from __future__ import print_function, unicode_literals
-import arrow
-import datetime
 from flask import json
 from orlo import app
 from orlo.orm import db, Release, Package, Platform
 from orlo.exceptions import InvalidUsage
 from sqlalchemy.orm import exc
 from six import string_types
+import uuid
 
 __author__ = 'alforbes'
 
 
 def append_or_create_platforms(request_platforms):
     """
-    Create the platforms if they don't exist, and return a list of Platform objects
+    Create the platforms if they don't exist, and return a list of Platform
+    objects
 
     :param list request_platforms: List of strings denoting platform names
     """
@@ -106,7 +106,8 @@ def validate_request_json(request):
     try:
         request.json
     except Exception:
-        # This is pretty ugly, but we want something more user friendly than "Bad Request"
+        # This is pretty ugly, but we want something more user friendly than
+        # "Bad Request"
         raise InvalidUsage("Could not parse JSON document")
 
     if not request.json:
@@ -125,7 +126,8 @@ def validate_package_input(request, release_id):
 
     if not 'name' in request.json or not 'version' in request.json:
         raise InvalidUsage("Missing name / version in request body.")
-    app.logger.debug("Package request validated, release_id {}".format(release_id))
+    app.logger.debug(
+        "Package request validated, release_id {}".format(release_id))
     return True
 
 
@@ -150,10 +152,12 @@ def list_to_string(array):
 
 def stream_json_list(heading, iterator):
     """
-    A lagging generator to stream JSON so we don't have to hold everything in memory
+    A lagging generator to stream JSON so we don't have to hold everything in
+    memory
 
-    This is a little tricky, as we need to omit the last comma to make valid JSON,
-    thus we use a lagging generator, similar to http://stackoverflow.com/questions/1630320/
+    This is a little tricky, as we need to omit the last comma to make valid
+    JSON, thus we use a lagging generator, similar to
+    http://stackoverflow.com/questions/1630320/
 
     :param heading: The title of the set, e.g. "releases"
     :param iterator: Any object with __iter__(), e.g. SQLAlchemy Query
@@ -162,7 +166,8 @@ def stream_json_list(heading, iterator):
     try:
         prev_release = next(iterator)  # get first result
     except StopIteration:
-        # StopIteration here means the length was zero, so yield a valid releases doc and stop
+        # StopIteration here means the length was zero, so yield a valid
+        # releases doc and stop
         yield '{{"{}": []}}'.format(heading)
         raise StopIteration
 
@@ -190,3 +195,17 @@ def str_to_bool(value):
     if isinstance(value, int):
         return True if value > 0 else False
     raise ValueError("Value {} can not be cast as boolean".format(value))
+
+
+def is_uuid(string):
+    """
+    Test whether a string is a valid UUID
+
+    :param string:
+    :return:
+    """
+    try:
+        uuid.UUID(string)
+    except ValueError:
+        return False
+    return True

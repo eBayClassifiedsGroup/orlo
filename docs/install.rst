@@ -4,7 +4,15 @@ Installation
 **This is a rough draft**
     This documentation is in an early state and your mileage may vary, please raise issues on github for any problems you encounter.
 
-Currently, we do not publish packages to pip, thus the only way is currently from source, but this may change when the project reaches maturity.
+From pip
+--------
+::
+
+    pip install orlo
+
+
+The pip build is not always up to date as things are still in flux. At this early stage, it is recommended to install from source.
+
 
 From source
 -----------
@@ -16,6 +24,14 @@ Clone the github repo:
     git clone https://github.com/eBayClassifiedsGroup/orlo.git
     cd orlo
     python setup.py install
+
+
+Or:
+
+::
+
+    pip install https://github.com/eBayClassifiedsGroup/orlo.git
+
 
 
 Developing in Vagrant
@@ -111,7 +127,7 @@ If installed from the debian package run
 
     orlo setup_database
 
-If you are running from source the orlo script can be found in ./bin, but you may need to invoke it explicity from your python interpreter, as it is hard-coded to the dh-virtualenv path.
+If you are running from source the orlo script can be found in ./bin, but you may need to invoke it explicitly from your python interpreter, as it is hard-coded to the dh-virtualenv path.
 
 
 Running under Gunicorn
@@ -133,4 +149,4 @@ And it should return 'pong'
 
 Nginx Setup
 -----------
-We strongly recommend running orlo behind a proxy such as nginx. An example configuration is provided under ./etc/
+We strongly recommend running orlo behind a proxy such as nginx, with TLS if you plan to use authentication. An example configuration is provided under ./etc/
