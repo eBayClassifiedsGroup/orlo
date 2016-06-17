@@ -183,13 +183,17 @@ def releases(**kwargs):
     if any(field.startswith('package_') for field in kwargs.keys()) \
             or "status" in kwargs.keys():
         # Package attributes need the join, as does status as it's really a
-        # package
-        # attribute
+        # package attribute
         query = db.session.query(Release).join(Package)
     else:
         # No need to join on package if none of our params need it
         query = db.session.query(Release)
 
+    for key in kwargs.keys():
+        if isinstance(kwargs[key], bool):
+            continue
+        if kwargs[key].lower() in ['null', 'none']:
+            kwargs[key] = None
     try:
         query = apply_filters(query, kwargs)
     except AttributeError as e:

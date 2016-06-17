@@ -487,8 +487,12 @@ class TestGetContract(OrloHttpTest):
         yesterday = (now - timedelta(days=1)).strftime(t_format)
         tomorrow = (now + timedelta(days=1)).strftime(t_format)
 
-        r_yesterday = self._get_releases(filters=['{}={}'.format(field, yesterday)])
-        r_tomorrow = self._get_releases(filters=['{}={}'.format(field, tomorrow)])
+        r_yesterday = self._get_releases(
+            filters=['{}={}'.format(field, yesterday)]
+        )
+        r_tomorrow = self._get_releases(
+            filters=['{}={}'.format(field, tomorrow)]
+        )
 
         return r_yesterday, r_tomorrow
 
@@ -500,6 +504,15 @@ class TestGetContract(OrloHttpTest):
 
         self.assertEqual(3, len(r_tomorrow['releases']))
         self.assertEqual(0, len(r_yesterday['releases']))
+
+    def test_get_release_filter_ftime_null(self):
+        """
+        Filter on releases that don't have a finish time
+        """
+        releases = self._get_releases(
+            filters=['{}={}'.format('ftime', 'null')]
+        )
+        self.assertEqual(len(releases['releases']), 0)
 
     def test_get_release_filter_stime_after(self):
         """
