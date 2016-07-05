@@ -71,6 +71,7 @@ app.logger.debug("Log level: {}".format(config.get('logging', 'level')))
 import orlo.error_handlers
 import orlo.route_base
 import orlo.route_releases
+import orlo.route_packages
 import orlo.route_import
 import orlo.route_info
 import orlo.route_stats

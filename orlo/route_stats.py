@@ -18,7 +18,8 @@ def build_stats_dict(field, value_list, platform=None, stime=None, ftime=None):
     """
     Build a dictionary of our stats
 
-    :param field: The field we are build stats for, i.e. user, package, team or platform
+    :param field: The field we are build stats for, i.e. user, package, team or
+        platform
     :param value_list: The list of values for the field
     :param platform: Filter by platform
     :param datetime ftime: Passed to count_releases
@@ -32,7 +33,7 @@ def build_stats_dict(field, value_list, platform=None, stime=None, ftime=None):
     count_releases_args = {
         'stime': stime,
         'ftime': ftime,
-        'platform': platform,  # note, platform can also be the field in the loop below
+        'platform': platform,  # platform can also be the field in the loop below
     }
 
     for field_value in value_list:
