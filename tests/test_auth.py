@@ -1,5 +1,5 @@
 from __future__ import print_function
-from flask.ext.testing import TestCase
+from flask_testing import TestCase
 from flask import jsonify
 import orlo
 from orlo.orm import db

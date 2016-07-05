@@ -23,6 +23,16 @@ def get_release(release_id):
     return db.session.query(Release).filter(Release.id == release_id)
 
 
+def get_package(package_id):
+    """
+    Fetch a single package
+
+    :param package_id:
+    :return:
+    """
+    return db.session.query(Package).filter(Package.id == package_id)
+
+
 def filter_release_status(query, status):
     """
     Filter the given query by the given release status
@@ -168,17 +178,78 @@ def apply_filters(query, args):
     return query
 
 
-def releases(**kwargs):
+def apply_package_filters(query, args):
+    """
+    Apply filters to a package query
+
+    :param query:
+    :param args:
+    :return:
+    """
+    for field, value in args.items():
+        comparison = '=='
+        time_absolute = False
+        time_delta = False
+        strip_last = False
+
+        if field.endswith('_gt'):
+            strip_last = True
+            comparison = '>'
+        if field.endswith('_lt'):
+            strip_last = True
+            comparison = '<'
+        if field.endswith('_before'):
+            strip_last = True
+            comparison = '<'
+            time_absolute = True
+        if field.endswith('_after'):
+            strip_last = True
+            comparison = '>'
+            time_absolute = True
+        if 'duration' in field.split('_'):
+            time_delta = True
+
+        if strip_last:
+            # Strip anything after the last underscore inclusive
+            field = '_'.join(field.split('_')[:-1])
+
+        filter_field = getattr(Package, field)
+
+        # Booleans
+        if value in ('True', 'true'):
+            value = True
+        if value in ('False', 'false'):
+            value = False
+
+        # Time related
+        if time_delta:
+            value = datetime.timedelta(seconds=int(value))
+        if time_absolute:
+            value = arrow.get(value)
+
+        # Do comparisons
+        app.logger.debug(
+            "Filtering: {} {} {}".format(filter_field, comparison, value))
+        if comparison == '==':
+            query = query.filter(filter_field == value)
+        if comparison == '<':
+            query = query.filter(filter_field < value)
+        if comparison == '>':
+            query = query.filter(filter_field > value)
+
+    return query
+
+
+def releases(limit=None, offset=None, desc=None, **kwargs):
     """
     Return whole releases, based on filters
 
+    :param limit: Max number of results to return
+    :param offset: Offset results. Provides pagination when combined with limit.
+    :param desc: Sort descending instead of the default ascending order
     :param kwargs: Request arguments
     :return:
     """
-
-    limit = kwargs.pop('limit', None)
-    offset = kwargs.pop('offset', None)
-    desc = kwargs.pop('desc', False)
 
     if any(field.startswith('package_') for field in kwargs.keys()) \
             or "status" in kwargs.keys():
@@ -219,6 +290,32 @@ def releases(**kwargs):
         except ValueError:
             raise InvalidUsage("offset must be a valid integer value")
         query = query.offset(offset)
+
+    return query
+
+
+def packages(**kwargs):
+    """
+    Return a list of packages
+
+    Fairly simple at present, as this is not envisioned to be frequently used.
+
+    :param kwargs: Filters
+    :return:
+    """
+    query = db.session.query(Package)
+
+    for key in kwargs.keys():
+        if isinstance(kwargs[key], bool):
+            continue
+        if kwargs[key].lower() in ['null', 'none']:
+            kwargs[key] = None
+    try:
+        query = apply_package_filters(query, kwargs)
+    except AttributeError as e:
+        raise InvalidUsage("An invalid field was specified")
+
+    query = query.order_by(Package.stime.asc())
 
     return query
 

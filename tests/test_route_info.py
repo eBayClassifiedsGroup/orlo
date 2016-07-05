@@ -1,5 +1,5 @@
 from __future__ import print_function
-from tests.test_contract import OrloHttpTest
+from tests.test_route_base import OrloHttpTest
 
 __author__ = 'alforbes'
 

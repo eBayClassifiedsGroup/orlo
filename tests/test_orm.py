@@ -1,5 +1,5 @@
 from __future__ import print_function
-from tests.test_contract import OrloTest
+from tests.test_route_base import OrloTest
 from random import randrange
 from orlo.orm import db
 from orlo.orm import Release, Package, PackageResult, Platform

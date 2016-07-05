@@ -406,8 +406,8 @@ class CountReleasesStatus(TestCountReleases):
     """
     Test count_releases when filtering on status
 
-    Note that this is a special case, as whether we consider a release successful or failed
-    depends on the _combination_ of the package statuses.
+    Note that this is a special case, as whether we consider a release
+    successful or failed depends on the _combination_ of the package statuses.
 
     Will also run parent class tests with arguments below
     """
@@ -416,7 +416,9 @@ class CountReleasesStatus(TestCountReleases):
 
     def test_count_releases_excludes_failed(self):
         """
-        Test that count_releases only returns successful releases by adding a failed one
+        Test that count_releases only returns successful releases
+
+        By adding a failed one
         """
 
         for _ in range(0, 3):
@@ -440,7 +442,8 @@ class CountReleasesStatus(TestCountReleases):
         """
         Test that we raise OrloError when proving an invalid status
 
-        As this is an enum it's more useful to raise an error than simply return a zero count
+        As this is an enum it's more useful to raise an error than simply
+        return a zero count
         """
         with self.assertRaises(orlo.exceptions.OrloError):
             query = orlo.queries.count_releases(status='BAD_STATUS_FOOBAR')
@@ -501,8 +504,8 @@ class CountReleasesRollback(TestCountReleases):
     """
     Test count_releases when filtering on rollback
 
-    The args are a little counterintuitive here, but True is the exclusive case because the parent
-    class does not create releases with rollback set to True.
+    The args are a little counterintuitive here, but True is the exclusive case
+    because the parent class does not create releases with rollback set to True.
     """
     INCLUSIVE_ARGS = {'rollback': False}
     EXCLUSIVE_ARGS = {'rollback': True}
@@ -545,7 +548,7 @@ class CountReleasesRollback(TestCountReleases):
 
     def test_partial_rollback(self):
         """
-        Test that a release is still counted when some packages are not rollbacks
+        Test a release is still counted when some packages are not rollbacks
         """
         for _ in range(0, 3):
             # 3 complete, non-rollback releases
@@ -564,16 +567,17 @@ class CountPackagesTest(OrloQueryTest):
     """
     Parent class for testing the CountPackages function
 
-    By subclassing it and overriding ARGS, we can test different combinations of arguments
-    with the same test code.
+    By subclassing it and overriding ARGS, we can test different combinations
+    of arguments with the same test code.
 
-    INCLUSIVE_ARGS represents a set of arguments that will match the packages created (see
-    the functions in OrloQueryTest for what those are)
-    EXCLUSIVE_ARGS represents a set of arguments that will not match any packages created,
-    i.e. should return a count of zero
+    INCLUSIVE_ARGS represents a set of arguments that will match the packages
+    created (see the functions in OrloQueryTest for what those are)
+    EXCLUSIVE_ARGS represents a set of arguments that will not match any
+    packages created, i.e. should return a count of zero
 
-    This parent class has tests that should be the same result no matter what the arguments
-    (except the exclusive case which must always a count of zero so we define it here)
+    This parent class has tests that should be the same result no matter what
+    the arguments (except the exclusive case which must always a count of zero
+    so we define it here)
     """
 
     INCLUSIVE_ARGS = {}  # Args we are testing, result should include these
@@ -599,7 +603,7 @@ class CountPackagesTest(OrloQueryTest):
 
     def test_count_packages_inclusive(self):
         """
-        Test count_packages returns a count of one when filtering on INCLUSIVE_ARGS
+        Test count_packages returns count of one filtering on INCLUSIVE_ARGS
         """
         self._create_finished_release()
         result = orlo.queries.count_packages(**self.INCLUSIVE_ARGS).all()
@@ -607,7 +611,7 @@ class CountPackagesTest(OrloQueryTest):
 
     def test_count_packages_exclusive(self):
         """
-        Test count_packages returns a count of zero when filtering on EXCLUSIVE_ARGS
+        Test count_packages returns a count of zero filtering on EXCLUSIVE_ARGS
         """
         self._create_finished_release()
         result = orlo.queries.count_packages(**self.EXCLUSIVE_ARGS).all()
@@ -618,8 +622,8 @@ class CountPackagesStatus(CountPackagesTest):
     """
     Test count_packages when filtering on status
 
-    Note that this is a special case, as whether we consider a release successful or failed
-    depends on the _combination_ of the package statuses.
+    Note that this is a special case, as whether we consider a release
+    successful or failed depends on the _combination_ of the package statuses.
 
     Will also run parent class tests with arguments below
     """
@@ -660,7 +664,7 @@ class CountPackagesRollback(CountPackagesTest):
 
     def test_rollback_true(self):
         """
-        Test count_packages returns a count of one when filtering on INCLUSIVE_ARGS
+        Test count_packages returns a count of one filtering on INCLUSIVE_ARGS
         """
         rid = self._create_release()
         self._create_package(rid, rollback=True)
@@ -671,7 +675,7 @@ class CountPackagesRollback(CountPackagesTest):
 
     def test_rollback_false(self):
         """
-        Test count_packages returns a count of one when filtering on INCLUSIVE_ARGS
+        Test count_packages returns a count of one filtering on INCLUSIVE_ARGS
         """
         rid = self._create_release()
         self._create_package(rid, rollback=True)
@@ -706,3 +710,49 @@ class ReleasesTest(OrloQueryTest):
         with self.assertRaises(orlo.exceptions.InvalidUsage):
             orlo.queries.releases(**args)
 
+
+class GetPackageTest(OrloQueryTest):
+    """
+    Test the packages method
+    """
+
+    def test_get_package_returns_query(self):
+        """
+        Test that we return a Query object
+        """
+        result = orlo.queries.get_package('foo')
+        self.assertIsInstance(result, sqlalchemy.orm.query.Query)
+
+    def test_get_package_works(self):
+        """
+        Test that the query will give us the right package
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid, rollback=False)
+        result = orlo.queries.get_package(pid).all()
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].id, pid)
+
+
+class PackagesTest(OrloQueryTest):
+    """
+    Test the queries.packages method
+    """
+    def test_packages_returns_query(self):
+        """
+        Test that
+        :return:
+        """
+        result = orlo.queries.packages()
+        self.assertIsInstance(result, sqlalchemy.orm.query.Query)
+
+    def test_packages_works(self):
+        """
+        Test that query returned by get_package works
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid, rollback=False)
+        result = orlo.queries.packages().all()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].id, pid)

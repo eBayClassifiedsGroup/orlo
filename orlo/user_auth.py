@@ -1,8 +1,8 @@
 from orlo import app
 from orlo.config import config
 from orlo.exceptions import OrloAuthError
-from flask.ext.httpauth import HTTPBasicAuth
-from flask.ext.tokenauth import TokenAuth, TokenManager
+from flask_httpauth import HTTPBasicAuth
+from flask_tokenauth import TokenAuth, TokenManager
 from flask import request, jsonify, g, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import (TimedJSONWebSignatureSerializer

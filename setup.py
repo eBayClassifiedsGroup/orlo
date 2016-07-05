@@ -6,9 +6,11 @@ import multiprocessing  # nopep8
 import os
 
 
-VERSION = '0.2.0'
-my_path = os.path.dirname(os.path.realpath(__file__))
-version_file = open('{}/orlo/_version.py'.format(my_path), 'w')
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+VERSION = '0.3.0'
+
+version_file = open(os.path.join(__location__, 'orlo', '_version.py'), 'w')
 version_file.write("__version__ = '{}'".format(VERSION))
 version_file.close()
 
@@ -20,7 +22,7 @@ setup(
     author='Alex Forbes',
     author_email='alforbes@ebay.com',
     license='GPL',
-    long_description=open('README.md').read(),
+    long_description=open(os.path.join(__location__, 'README.md')).read(),
     url='https://github.com/eBayClassifiedsGroup/orlo',
     packages=[
         'orlo',

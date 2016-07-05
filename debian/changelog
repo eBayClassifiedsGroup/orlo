@@ -1,4 +1,4 @@
-orlo (0.2.0.pre5) UNRELEASED; urgency=medium
+orlo (0.2.0) trusty; urgency=medium
 
   [ Alex Forbes ]
   * Add dependant python virtualenv package to Vagrantfile
@@ -93,6 +93,16 @@ orlo (0.2.0.pre5) UNRELEASED; urgency=medium
   * Fix /versions sometimes returning wrong version
 
   [ Ubuntu ]
+
+  [ Alex Forbes ]
+  * Add pyldap dependency
+  * Set back to python2 in debian build
+  * Bump version to 0.2.0
+  * Fix /info/packages tests failing
+  * Add ability to filter by none/null
+  * Raise version field length to 32
+  * Fix deprecation warnings
+  * Refine path handling in setup.py, revert Vagrantfile to Trusty
 
  -- Alex Forbes <alforbes@gumtree.com>  Thu, 14 Apr 2016 16:17:34 +0000
 
