@@ -36,11 +36,11 @@ class GetPackagesTest(OrloHttpTest):
 
     def test_packages(self):
         """
-        Start with something simple
+        Test that we get 400 and a message with no params
         """
         response = self.client.get('/packages')
-        self.assert200(response)
-        self.assertEqual('pong', response.json['message'])
+        self.assert400(response)
+        self.assertIn('message', response.json)
 
     def test_get_single_package(self):
         """
