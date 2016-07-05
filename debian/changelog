@@ -1,3 +1,13 @@
+orlo (0.3.0) trusty; urgency=medium
+
+  * Make vagrant owner of /vagrant for builds
+  * Reorganise tests
+  * Add basic /packages endpoint
+  * Bump version
+  * Fix /packages test
+
+ -- Alex Forbes <github@al4.co.nz>  Tue, 05 Jul 2016 15:19:56 +0000
+
 orlo (0.2.0) trusty; urgency=medium
 
   [ Alex Forbes ]
