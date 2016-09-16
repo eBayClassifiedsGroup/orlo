@@ -5,7 +5,7 @@ import uuid
 from orlo.orm import db, Package, Release
 from orlo.config import config
 from time import sleep
-from tests import OrloTest
+from test_base import OrloTest
 
 
 class OrloHttpTest(OrloTest):

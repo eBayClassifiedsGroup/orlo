@@ -4,7 +4,7 @@ from flask import jsonify
 import orlo
 from orlo.orm import db
 from orlo.user_auth import user_auth, token_auth, conditional_auth
-from tests import ConfigChange
+from test_base import ConfigChange
 from werkzeug.datastructures import Headers
 from werkzeug.test import Client
 import base64

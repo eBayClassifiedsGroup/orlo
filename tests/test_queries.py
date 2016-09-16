@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 import arrow
 import json
-from tests.test_orm import OrloDbTest
+from test_orm import OrloDbTest
 import orlo.queries
 import orlo.exceptions
 import orlo.stats

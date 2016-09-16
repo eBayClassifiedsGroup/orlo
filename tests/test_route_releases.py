@@ -5,7 +5,7 @@ import uuid
 from orlo.orm import db, Package, Release
 from orlo.config import config
 from time import sleep
-from tests.test_route_base import OrloHttpTest
+from test_route_base import OrloHttpTest
 
 
 __author__ = 'alforbes'

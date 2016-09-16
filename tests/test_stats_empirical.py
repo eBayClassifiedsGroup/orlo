@@ -3,7 +3,7 @@ from datetime import date, timedelta, datetime
 
 from orlo.util import append_or_create_platforms
 
-from tests.test_orm import OrloDbTest
+from test_orm import OrloDbTest
 from orlo.orm import db, Release, Package
 
 __author__ = 'alforbes'
