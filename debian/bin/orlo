@@ -5,5 +5,5 @@
 
 # For the actual logic that is run by the script below, see orlo/cli.py
 
-/usr/share/python/orlo/bin/orlo $@
+/opt/venvs/orlo/bin/orlo $@
 
