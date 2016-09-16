@@ -756,4 +756,4 @@ class PackagesTests(OrloQueryTest):
         rid = self._create_release()
         pid = self._create_package(rid, rollback=False)
         result = orlo.queries.packages().all()
-        self.assertEqual(is_uuid(result[0].id), True)
+        self.assertEqual(result[0].id, pid)
