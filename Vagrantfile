@@ -43,8 +43,8 @@ Vagrant.configure(2) do |config|
       libsasl2-dev \
       libssl-dev \
 
-    mkdir /etc/orlo
-    chown vagrant:root /etc/orlo
+    mkdir /etc/orlo /var/log/orlo
+    chown vagrant:root /etc/orlo /var/log/orlo
     chown vagrant:root /vagrant
 
     # Updating build tooling can help
@@ -68,7 +68,15 @@ Vagrant.configure(2) do |config|
     pip install -r /vagrant/orlo/requirements_testing.txt
     pip install -r /vagrant/orlo/docs/requirements.txt
 
-    sudo chown -R vagrant:vagrant /home/vagrant/virtualenv
+    mkdir /etc/orlo /var/log/orlo
+    chown -R vagrant:root /etc/orlo /var/log/orlo
+    chown -R vagrant:vagrant /home/vagrant/virtualenv
+    chown vagrant:root /vagrant
+
+    # Create the database
+    #cd /vagrant/orlo
+    #python create_db.py
+    #python setup.py develop
 
   SHELL
 
@@ -77,13 +85,6 @@ Vagrant.configure(2) do |config|
     jessie.vm.network "forwarded_port", guest: 5000, host: 5000
     jessie.vm.network "private_network", ip: "192.168.57.20"
     jessie.vm.provision "shell", inline: <<-SHELL
-      # Create the database
-      cd /vagrant/orlo
-      python create_db.py
-      python setup.py develop
-      mkdir /etc/orlo
-      chown vagrant:root /etc/orlo
-      chown vagrant:root /vagrant
     SHELL
   end
 
@@ -92,32 +93,12 @@ Vagrant.configure(2) do |config|
     trusty.vm.box = "bento/ubuntu-14.04"
     trusty.vm.network "forwarded_port", guest: 5000, host: 5100
     trusty.vm.network "private_network", ip: "192.168.57.10"
-
-    trusty.vm.provision "shell", inline: <<-SHELL
-      # Create the database
-      cd /vagrant/orlo
-      python create_db.py
-      python setup.py develop
-      mkdir /etc/orlo
-      chown vagrant:root /etc/orlo
-      chown vagrant:root /vagrant
-    SHELL
   end
 
   config.vm.define "xenial" do |xenial|
     xenial.vm.box = "bento/ubuntu-16.04"
     xenial.vm.network "forwarded_port", guest: 5000, host: 5200
     xenial.vm.network "private_network", ip: "192.168.57.20"
-
-    xenial.vm.provision "shell", inline: <<-SHELL
-      # Create the database
-      cd /vagrant/orlo
-      python create_db.py
-      python setup.py develop
-      mkdir /etc/orlo
-      chown vagrant:root /etc/orlo
-      chown vagrant:root /vagrant
-    SHELL
   end
 
   config.vm.define "db" do |db|
@@ -131,8 +112,10 @@ Vagrant.configure(2) do |config|
       apt-get -y install postgresql postgresql-server-dev-all
       echo "CREATE USER orlo WITH PASSWORD 'password'; CREATE DATABASE orlo OWNER orlo; " \
           | sudo -u postgres -i psql
-
+      echo "host    all             all             192.168.57.0/24         md5" >> /etc/postgresql/9.5/main/pg_hba.conf
+      sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /etc/postgresql/9.5/main/postgresql.conf
     SHELL
+
     # mysql
     db.vm.provision "shell", inline: <<-SHELL
       echo "mysql-server mysql-server/root_password password vagrant" | sudo debconf-set-selections
