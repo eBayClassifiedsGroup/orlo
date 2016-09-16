@@ -9,6 +9,7 @@ sdist:
 	python setup.py sdist
 
 clean:
+	python setup.py clean
 	debuild clean
 
 debian:
