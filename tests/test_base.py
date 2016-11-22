@@ -2,8 +2,9 @@ import orlo
 import unittest
 import os
 from flask_testing import TestCase, LiveServerTestCase
+from orlo.orm import db
+from orlo.orm import Release, db, Package
 from orlo.util import append_or_create_platforms
-from orlo.orm import db, Release, Package
 
 try:
     TRAVIS = True if os.environ['TRAVIS'] == 'true' else False
@@ -61,11 +62,10 @@ class OrloLiveTest(LiveServerTestCase):
         app.config['LIVESERVER_PORT'] = 8943
         app.config['LIVESERVER_TIMEOUT'] = 5
 
-        self.uri = 'http://localhost:8943'
-
         return orlo.app
 
     def setUp(self):
+        db.engine.dispose()
         db.create_all()
         db.session.begin_nested()
 
@@ -77,9 +77,13 @@ class OrloLiveTest(LiveServerTestCase):
         db.get_engine(self.app).dispose()
 
 
-class LiveDbTest(OrloLiveTest):
-    @staticmethod
-    def _create_release(user='testuser',
+class ReleaseDbUtil(object):
+    """
+    Utility functions for creating releases in the database
+    """
+    @classmethod
+    def _create_release(cls,
+                        user='testuser',
                         team='test team',
                         platforms=None,
                         references=None,
@@ -114,8 +118,9 @@ class LiveDbTest(OrloLiveTest):
 
         return r.id
 
-    @staticmethod
-    def _create_package(release_id,
+    @classmethod
+    def _create_package(cls,
+                        release_id,
                         name='test-package',
                         version='1.2.3',
                         diff_url=None,
@@ -142,6 +147,55 @@ class LiveDbTest(OrloLiveTest):
         db.session.commit()
 
         return p.id
+
+    @classmethod
+    def _start_package(cls, package_id):
+        """
+        Start a package
+
+        :param package_id:
+        """
+        package = db.session.query(Package).filter(Package.id == package_id).one()
+        package.start()
+        db.session.commit()
+
+        return package.id
+
+    @classmethod
+    def _stop_package(cls, package_id, success=True):
+        """
+        Stop a package
+
+        :param package_id:
+        """
+        package = db.session.query(Package).filter(Package.id == package_id).one()
+        package.stop(success=success)
+        db.session.commit()
+
+    @classmethod
+    def _stop_release(cls, release_id):
+        """
+        Stop a release
+
+        :param release_id:
+        """
+        release = db.session.query(Release).filter(Release.id == release_id).one()
+        release.stop()
+        db.session.commit()
+
+    @classmethod
+    def _create_finished_release(cls, success=True):
+        """
+        Create a completed release using internal methods
+        """
+
+        release_id = cls._create_release()
+        package_id = cls._create_package(release_id)
+
+        cls._start_package(package_id)
+        cls._stop_package(package_id, success=success)
+        cls._stop_release(release_id)
+        db.session.commit()
 
 
 class ConfigChange(object):

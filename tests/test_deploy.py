@@ -1,14 +1,15 @@
 from __future__ import print_function
-from test_base import OrloLiveTest, OrloTest, ConfigChange
+from test_base import OrloLiveTest, OrloTest, ConfigChange, ReleaseDbUtil
 from orlo.deploy import BaseDeploy, HttpDeploy, ShellDeploy
 from orlo.orm import db, Release, Package
-from test_base import LiveDbTest
+from test_base import OrloLiveTest
+from test_base import ReleaseDbUtil
 import unittest
 
 __author__ = 'alforbes'
 
 
-class DeployTest(LiveDbTest):
+class DeployTest(OrloLiveTest, ReleaseDbUtil):
     """
     Test the Deploy class
     """
