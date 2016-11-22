@@ -27,7 +27,8 @@ Vagrant.configure(2) do |config|
       debhelper \
       dh-systemd \
       git-buildpackage \
-      postgresql-server-dev-all \
+      postgresql-client \
+      mysql-client \
       python-all-dev \
       python-dev \
       python-pip \
@@ -109,6 +110,7 @@ Vagrant.configure(2) do |config|
           | sudo -u postgres -i psql
       echo "host    all             all             192.168.57.0/24         md5" >> /etc/postgresql/9.5/main/pg_hba.conf
       sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /etc/postgresql/9.5/main/postgresql.conf
+      systemctl restart postgresql.service
     SHELL
 
     # mysql
