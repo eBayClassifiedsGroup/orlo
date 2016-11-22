@@ -42,7 +42,7 @@ class StressTest(LiveServerTestCase, ReleaseDbUtil):
         return orlo.app
 
     def setUp(self):
-        db.engine.dispose()
+        db.get_engine(self.app).dispose()
         db.create_all()
         db.session.begin_nested()
 

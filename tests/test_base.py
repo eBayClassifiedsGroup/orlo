@@ -39,6 +39,7 @@ class OrloTest(TestCase):
         db.session.rollback()
         db.session.remove()
         db.drop_all()
+        db.engine.dispose()
 
 
 class OrloLiveTest(LiveServerTestCase):
@@ -65,7 +66,7 @@ class OrloLiveTest(LiveServerTestCase):
         return orlo.app
 
     def setUp(self):
-        db.engine.dispose()
+        # db.engine.dispose()
         db.create_all()
         db.session.begin_nested()
 
