@@ -24,4 +24,4 @@ before_install:
   - pip install tox tox-travis
 
 script:
-  - tox
+  - tox -- --maxfail=2
