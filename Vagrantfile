@@ -15,9 +15,9 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", inline: <<-SHELL
     sudo localedef -i en_GB -f UTF-8 en_GB.UTF-8
     sudo locale-gen en_GB.UTF-8
-    # sudo sed -i 's/us.archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
-    sudo sed -i 's/us.archive.ubuntu.com/repositories.ecg.so/g' /etc/apt/sources.list
-    sudo sed -i 's/httpredir.debian.org/repositories.ecg.so/g' /etc/apt/sources.list
+    sudo sed -i 's/us.archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
+#     sudo sed -i 's/us.archive.ubuntu.com/repositories.ecg.so/g' /etc/apt/sources.list
+#     sudo sed -i 's/httpredir.debian.org/repositories.ecg.so/g' /etc/apt/sources.list
 
     sudo apt-get -qq update
 
@@ -32,7 +32,7 @@ Vagrant.configure(2) do |config|
       python-dev \
       python-pip \
       python-stdeb \
-      python-virtualenv
+      python-virtualenv \
       python3-dev \
       vim \
 
@@ -43,20 +43,16 @@ Vagrant.configure(2) do |config|
       libsasl2-dev \
       libssl-dev \
 
-    mkdir /etc/orlo /var/log/orlo
-    chown vagrant:root /etc/orlo /var/log/orlo
-    chown vagrant:root /vagrant
-
     # Updating build tooling can help
     sudo pip install --upgrade \
       pip \
       setuptools \
       stdeb \
-      virtualenv
+      virtualenv \
 
     wget -P /tmp/ \
-        'https://launchpad.net/ubuntu/+archive/primary/+files/dh-virtualenv_0.11-1_all.deb'
-    dpkg -i /tmp/dh-virtualenv_0.11-1_all.deb
+        'http://launchpadlibrarian.net/291737817/dh-virtualenv_1.0-1_all.deb'
+    dpkg -i /tmp/dh-virtualenv_1.0-1_all.deb
     apt-get -f install -y
 
     # Setup a virtualenv; avoids conflicts, particularly with python-six
@@ -68,7 +64,7 @@ Vagrant.configure(2) do |config|
     pip install -r /vagrant/orlo/requirements_testing.txt
     pip install -r /vagrant/orlo/docs/requirements.txt
 
-    mkdir /etc/orlo /var/log/orlo
+    mkdir -p /etc/orlo /var/log/orlo
     chown -R vagrant:root /etc/orlo /var/log/orlo
     chown -R vagrant:vagrant /home/vagrant/virtualenv
     chown vagrant:root /vagrant
