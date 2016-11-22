@@ -144,6 +144,10 @@ def apply_filters(query, args):
             field = 'platforms'
             comparison = 'any'
             sub_field = Platform.name
+        if field == 'reference':
+            field = 'references'
+            comparison = 'like'
+            value = '%{}%'.format(value)
 
         if strip_last:
             # Strip anything after the last underscore inclusive
@@ -174,6 +178,8 @@ def apply_filters(query, args):
             query = query.filter(filter_field > value)
         if comparison == 'any':
             query = query.filter(filter_field.any(sub_field == value))
+        if comparison == 'like':
+            query = query.filter(filter_field.like(value))
 
     return query
 

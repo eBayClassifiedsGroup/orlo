@@ -4,17 +4,26 @@ from flask import jsonify
 import orlo
 from orlo.orm import db
 from orlo.user_auth import user_auth, token_auth, conditional_auth
-from tests import ConfigChange
+from test_base import ConfigChange
 from werkzeug.datastructures import Headers
 from werkzeug.test import Client
 import base64
 import ldap
 from mockldap import MockLdap
+import sys
+if sys.version_info[0] < 3:
+    from mock import patch
+else:
+    from unittest.mock import patch
+from orlo.config import config
 
 __author__ = 'alforbes'
 
 USERNAME = 'testuser'
 PASSWORD = 'blah'
+
+
+config.set('security', 'passwd_file', '')
 
 
 # A couple of test routes which require auth, and return 200 if it succeeds
@@ -148,30 +157,33 @@ class OrloAuthTest(TestCase):
         return response.json['token']
 
 
+@patch('orlo.user_auth.verify_password_file')
 class TestOrloAuthToken(OrloAuthTest):
-    def test_token(self):
+    def test_fetch_token(self, mock_verify_password_file):
         """
         Test that we can fetch a token
         """
+        mock_verify_password_file.return_value = True
         response = self.get_with_basic_auth('/token')
         self.assert200(response)
         self.assertIn('token', response.json)
 
 
+@patch('orlo.user_auth.verify_password_file')
 class TestTokenAuth(OrloAuthTest):
     """
     Parent class for testing Token authentication
     """
     URL_PATH = '/test/token_required'
 
-    def test_unauthorised(self):
+    def test_unauthorised(self, mock_verify_password):
         """
         Test that we get 401 without a token
         """
         response = self.client.get(self.URL_PATH)
         self.assert401(response)
 
-    def test_auth_disabled(self):
+    def test_auth_disabled(self, mock_verify_password):
         """
         Same test as above with auth disabled
         """
@@ -179,24 +191,25 @@ class TestTokenAuth(OrloAuthTest):
             response = self.client.get(self.URL_PATH)
             self.assert200(response)
 
-    def test_with_token(self):
+    def test_with_token(self, mock_verify_password):
         token = self.get_token()
         response = self.get_with_token_auth(self.URL_PATH, token)
         self.assert200(response)
 
-    def test_with_bad_token(self):
+    def test_with_bad_token(self, mock_verify_password):
         token = 'foo'
         response = self.get_with_token_auth(self.URL_PATH, token)
         self.assert401(response)
 
 
+@patch('orlo.user_auth.verify_password_file')
 class TestUserAuth(OrloAuthTest):
     """
     Parent class for testing HTTP Basic authentication
     """
     URL_PATH = '/test/auth_required'
 
-    def test_auth_disabled(self):
+    def test_auth_disabled(self, mock_verify_password):
         """
         Same test as above with auth disabled
         """
@@ -204,17 +217,18 @@ class TestUserAuth(OrloAuthTest):
             response = self.client.get(self.URL_PATH)
             self.assert200(response)
 
-    def test_with_login(self):
+    def test_with_login(self, mock_verify_password):
         response = self.get_with_basic_auth('/test/auth_required')
         self.assert200(response)
 
-    def test_with_ldap_login(self):
+    def test_with_ldap_login(self, mock_verify_password):
         response = self.get_with_basic_auth(
             '/test/auth_required', username='ldapuser', password='ldapuserpw'
         )
         self.assert200(response)
 
-    def test_with_bad_login(self):
+    def test_with_bad_login(self, mock_verify_password):
+        mock_verify_password.return_value = False
         response = self.get_with_basic_auth(
             '/test/auth_required', username='bad_user', password='foobar'
         )
@@ -244,7 +258,9 @@ class TestReleasesAuth(OrloAuthTest):
         response = self.client.post(self.URL_PATH, data={'foo': 'bar'})
         self.assert401(response)
 
-    def test_post_releases_with_token_returns_400(self):
+    @patch('orlo.user_auth.verify_password_file')
+    def test_post_releases_with_token_returns_400(
+            self, mock_verify_password_file):
         """
         Test auth succeeds
         """

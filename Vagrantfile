@@ -1,98 +1,67 @@
 # -*- mode: ruby -*-
-# vi: set ft=ruby :
+# vi: set ft=ruby ts=2 sw=2 expandtab :
 
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
 Vagrant.configure(2) do |config|
-  # The most common configuration options are documented and commented below.
-  # For a complete reference, please see the online documentation at
-  # https://docs.vagrantup.com.
-
-  # Every Vagrant development environment requires a box. You can search for
-  # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "ubuntu/trusty64"
-
-  # Disable automatic box update checking. If you disable this, then
-  # boxes will only be checked for updates when the user runs
-  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box = "ubuntu/trusty64"
   # config.vm.box_check_update = false
 
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
-  config.vm.network "forwarded_port", guest: 5000, host: 5000
-
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  # config.vm.network "private_network", ip: "192.168.33.10"
-
-  # Create a public network, which generally matched to bridged network.
-  # Bridged networks make the machine appear as another physical device on
-  # your network.
-  # config.vm.network "public_network"
-
-  # Share an additional folder to the guest VM. The first argument is
-  # the path on the host to the actual folder. The second argument is
-  # the path on the guest to mount the folder. And the optional third
-  # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
   config.vm.synced_folder ".", "/vagrant/orlo",
      type: "virtualbox", create: "true", owner: "vagrant"
 
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
   config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
     vb.cpus = "2"
   end
-  #
-  # View the documentation for the provider you are using for more
-  # information on available options.
 
-  # Define a Vagrant Push strategy for pushing to Atlas. Other push strategies
-  # such as FTP and Heroku are also available. See the documentation at
-  # https://docs.vagrantup.com/v2/push/atlas.html for more information.
-  # config.push.define "atlas" do |push|
-  #   push.app = "YOUR_ATLAS_USERNAME/YOUR_APPLICATION_NAME"
-  # end
-
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
-  # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   sudo apt-get update
-  #   sudo apt-get install -y apache2
-  # SHELL
   config.vm.provision "shell", inline: <<-SHELL
-    # sudo sed -i 's/archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
-    apt-get update
-    apt-get -y install python-pip python-dev postgresql postgresql-server-dev-all
-    echo "CREATE USER orlo WITH PASSWORD 'password'; CREATE DATABASE orlo OWNER orlo; " \
-        | sudo -u postgres -i psql
+    sudo localedef -i en_GB -f UTF-8 en_GB.UTF-8
+    sudo locale-gen en_GB.UTF-8
+    sudo sed -i 's/us.archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
+#     sudo sed -i 's/us.archive.ubuntu.com/repositories.ecg.so/g' /etc/apt/sources.list
+#     sudo sed -i 's/httpredir.debian.org/repositories.ecg.so/g' /etc/apt/sources.list
+
+    sudo apt-get -qq update
+
+    # Build/test tools
+    apt-get -y install \
+      build-essential \
+      debhelper \
+      dh-systemd \
+      git-buildpackage \
+      postgresql-client \
+      mysql-client \
+      python-all-dev \
+      python-dev \
+      python-pip \
+      python-stdeb \
+      python-virtualenv \
+      python3-all-dev \
+      python3-dev \
+      python3-pip \
+      python3-stdeb \
+      python3-virtualenv \
+      python3-dev \
+      vim \
 
     # python-ldap dependencies
-    apt-get install -y python-dev libldap2-dev libsasl2-dev libssl-dev
+    apt-get install -y \
+      python-dev \
+      libldap2-dev \
+      libsasl2-dev \
+      libssl-dev \
 
-    # Build tools
-    apt-get -y install build-essential git-buildpackage debhelper python-dev \
-        python3-dev dh-systemd python-virtualenv
+    # Updating build tooling can help
+    sudo pip install --upgrade \
+      pip \
+      setuptools \
+      stdeb \
+      virtualenv \
+
     wget -P /tmp/ \
-        'https://launchpad.net/ubuntu/+archive/primary/+files/dh-virtualenv_0.11-1_all.deb'
-    dpkg -i /tmp/dh-virtualenv_0.11-1_all.deb
+        'http://launchpadlibrarian.net/291737817/dh-virtualenv_1.0-1_all.deb'
+    dpkg -i /tmp/dh-virtualenv_1.0-1_all.deb
     apt-get -f install -y
 
-    pip install --upgrade pip setuptools
-    pip install --upgrade virtualenv
-
-    # Virtualenv is to avoid conflict with Debian's python-six
+    # Setup a virtualenv; avoids conflicts, particularly with python-six
     virtualenv /home/vagrant/virtualenv/orlo
     source /home/vagrant/virtualenv/orlo/bin/activate
     echo "source ~/virtualenv/orlo/bin/activate" >> /home/vagrant/.profile
@@ -101,14 +70,62 @@ Vagrant.configure(2) do |config|
     pip install -r /vagrant/orlo/requirements_testing.txt
     pip install -r /vagrant/orlo/docs/requirements.txt
 
-    sudo chown -R vagrant:vagrant /home/vagrant/virtualenv
+    mkdir -p /etc/orlo /var/log/orlo
+    chown -R vagrant:root /etc/orlo /var/log/orlo
+    chown -R vagrant:vagrant /home/vagrant/virtualenv
+    chown vagrant:root /vagrant
 
     # Create the database
-    cd /vagrant/orlo
-    python create_db.py
-    python setup.py develop
-    mkdir /etc/orlo
-    chown vagrant:root /etc/orlo
-    chown vagrant:root /vagrant
+    #cd /vagrant/orlo
+    #python create_db.py
+    #python setup.py develop
+
   SHELL
+
+  config.vm.define "jessie" do |jessie|
+    jessie.vm.box = "bento/debian-8.6"
+    jessie.vm.network "forwarded_port", guest: 5000, host: 5000
+    jessie.vm.network "private_network", ip: "192.168.57.20"
+    jessie.vm.provision "shell", inline: <<-SHELL
+    SHELL
+  end
+
+#   config.vm.define "trusty" do |trusty|
+#     trusty.vm.box = "bento/ubuntu-14.04"
+#     trusty.vm.network "forwarded_port", guest: 5000, host: 5100
+#     trusty.vm.network "private_network", ip: "192.168.57.10"
+#   end
+
+  config.vm.define "xenial" do |xenial|
+    xenial.vm.box = "bento/ubuntu-16.04"
+    xenial.vm.network "forwarded_port", guest: 5000, host: 5200
+    xenial.vm.network "private_network", ip: "192.168.57.30"
+  end
+
+  config.vm.define "db" do |db|
+    db.vm.box = "bento/ubuntu-16.04"
+    db.vm.network "forwarded_port", guest: 5000, host: 15432
+    db.vm.network "forwarded_port", guest: 5000, host: 13306
+    db.vm.network "private_network", ip: "192.168.57.100"
+
+    # postgres
+    db.vm.provision "shell", inline: <<-SHELL
+      apt-get -y install postgresql postgresql-server-dev-all
+      echo "CREATE USER orlo WITH PASSWORD 'password'; CREATE DATABASE orlo OWNER orlo; " \
+          | sudo -u postgres -i psql
+      echo "host    all             all             192.168.57.0/24         md5" >> /etc/postgresql/9.5/main/pg_hba.conf
+      sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /etc/postgresql/9.5/main/postgresql.conf
+      systemctl restart postgresql.service
+    SHELL
+
+    # mysql
+    db.vm.provision "shell", inline: <<-SHELL
+      echo "mysql-server mysql-server/root_password password vagrant" | sudo debconf-set-selections
+      echo "mysql-server mysql-server/root_password_again password vagrant" | sudo debconf-set-selections
+      apt-get -y install mysql-server
+      echo "create user 'orlo'@'*' identified by 'password'; CREATE DATABASE orlo; " \
+        "GRANT ALL on orlo.* TO 'orlo'@'*';" | mysql -uroot -pvagrant
+    SHELL
+  end
+
 end

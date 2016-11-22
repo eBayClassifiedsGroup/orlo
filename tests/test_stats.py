@@ -3,7 +3,7 @@ import arrow
 import orlo.queries
 import orlo.exceptions
 import orlo.stats
-from tests.test_orm import OrloDbTest
+from test_orm import OrloDbTest
 
 __author__ = 'alforbes'
 

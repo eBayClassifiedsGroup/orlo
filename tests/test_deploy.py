@@ -1,5 +1,5 @@
 from __future__ import print_function
-from tests import OrloLiveTest, OrloTest, ConfigChange
+from test_base import OrloLiveTest, OrloTest, ConfigChange
 from orlo.deploy import BaseDeploy, HttpDeploy, ShellDeploy
 from orlo.orm import db, Release, Package
 from orlo.util import append_or_create_platforms

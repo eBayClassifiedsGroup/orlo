@@ -2,7 +2,7 @@ from __future__ import print_function, unicode_literals
 import json
 from orlo.orm import Release, Package, Platform, db
 from orlo.config import config
-from tests.test_route_base import OrloTest
+from test_route_base import OrloTest
 
 __author__ = 'alforbes'
 

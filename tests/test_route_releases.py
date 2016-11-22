@@ -5,7 +5,7 @@ import uuid
 from orlo.orm import db, Package, Release
 from orlo.config import config
 from time import sleep
-from tests.test_route_base import OrloHttpTest
+from test_route_base import OrloHttpTest
 
 
 __author__ = 'alforbes'
@@ -440,6 +440,26 @@ class TestGetContract(OrloHttpTest):
 
         self.assertEqual(len(first_results['releases']), 3)
         self.assertEqual(len(second_results['releases']), 2)
+
+    def test_get_release_filter_reference(self):
+        """
+        Test filtering on reference
+        """
+        for _ in range(0, 3):
+            rid = self._create_release(references='REF')
+            self._create_package(rid)
+        for _ in range(0, 2):
+            rid = self._create_release()
+            self._create_package(rid)
+
+        first_results = self._get_releases(filters=['reference=REF'])
+        second_results = self._get_releases(filters=['reference=ZERO'])
+
+        self.assertEqual(len(first_results['releases']), 3)
+        self.assertEqual(len(second_results['releases']), 0)
+
+        for r in first_results['releases']:
+            self.assertEqual(r['references'], ['REF'])
 
     def test_get_release_limit_one(self):
         """

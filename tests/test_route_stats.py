@@ -1,5 +1,5 @@
 from __future__ import print_function
-from tests.test_orm import OrloDbTest
+from test_orm import OrloDbTest
 import arrow
 import unittest
 

@@ -1,12 +1,14 @@
 from __future__ import print_function, unicode_literals
 import arrow
 import json
-from tests.test_orm import OrloDbTest
+from test_orm import OrloDbTest
 import orlo.queries
 import orlo.exceptions
 import orlo.stats
 from time import sleep
 import sqlalchemy.orm
+import uuid
+from orlo.util import is_uuid
 
 __author__ = 'alforbes'
 
@@ -735,7 +737,7 @@ class GetPackageTest(OrloQueryTest):
         self.assertEqual(result[0].id, pid)
 
 
-class PackagesTest(OrloQueryTest):
+class PackagesTests(OrloQueryTest):
     """
     Test the queries.packages method
     """
@@ -754,5 +756,4 @@ class PackagesTest(OrloQueryTest):
         rid = self._create_release()
         pid = self._create_package(rid, rollback=False)
         result = orlo.queries.packages().all()
-        self.assertEqual(len(result), 1)
         self.assertEqual(result[0].id, pid)
