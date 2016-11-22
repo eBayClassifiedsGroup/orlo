@@ -6,6 +6,7 @@ from orlo.orm import db, Package, Release
 from orlo.config import config
 from time import sleep
 from test_route_base import OrloHttpTest
+from test_base import OrloLiveTest
 
 
 __author__ = 'alforbes'
@@ -685,3 +686,5 @@ class TestGetContract(OrloHttpTest):
         Test get /releases without filters returns 400
         """
         self._get_releases(expected_status=400)
+
+

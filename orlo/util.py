@@ -182,6 +182,10 @@ def stream_json_list(heading, iterator):
     # Now yield the last iteration without comma but with the closing brackets
     yield json.dumps(prev_release.to_dict()) + ']}'
 
+    # Must close the db session here to avoid leaking connections,
+    # flask-sqlalchemy doesn't do it for us
+    db.session.close()
+
 
 def str_to_bool(value):
     if isinstance(value, string_types):
