@@ -10,7 +10,11 @@ from werkzeug.test import Client
 import base64
 import ldap
 from mockldap import MockLdap
-from mock import patch
+import sys
+if sys.version_info[0] < 3:
+    from mock import patch
+else:
+    from unittest.mock import patch
 from orlo.config import config
 
 __author__ = 'alforbes'
