@@ -20,6 +20,9 @@ except ImportError:
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = config.get('db', 'uri')
+app.config['SQLALCHEMY_POOL_SIZE'] = config.getint('db', 'pool_size')
+app.config['SQLALCHEMY_POOL_RECYCLE'] = 1
+app.config['SQLALCHEMY_MAX_OVERFLOW'] = 10
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 if config.getboolean('main', 'propagate_exceptions'):

@@ -33,6 +33,7 @@ config.set('security', 'user_base_dn', 'ou=people,ou=example,o=test')
 config.add_section('db')
 config.set('db', 'uri', 'sqlite://')
 config.set('db', 'echo_queries', 'false')
+config.set('db', 'pool_size', '50')
 
 config.add_section('logging')
 config.set('logging', 'level', 'info')
