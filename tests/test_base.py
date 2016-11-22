@@ -1,7 +1,13 @@
 import orlo
 import unittest
+import os
 from orlo.orm import db
 from flask_testing import TestCase, LiveServerTestCase
+
+try:
+    TRAVIS = True if os.environ['TRAVIS'] == 'true' else False
+except KeyError:
+    TRAVIS = False
 
 
 class OrloTest(TestCase):
@@ -9,9 +15,12 @@ class OrloTest(TestCase):
     Base test class to setup the app
     """
     def create_app(self):
+        if TRAVIS:
+            db_uri = 'postgres://orlo:password@localhost:5432/orlo'
+        else:
+            db_uri = 'postgres://orlo:password@192.168.57.100:5432/orlo'
         app = orlo.app
-        app.config['SQLALCHEMY_DATABASE_URI'] = \
-            'postgres://orlo:password@192.168.57.100:5432/orlo'
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
         # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
         app.config['TESTING'] = True
         app.config['DEBUG'] = False
@@ -36,9 +45,13 @@ class OrloLiveTest(LiveServerTestCase):
     """
 
     def create_app(self):
+        if TRAVIS:
+            db_uri = 'postgres://orlo:password@localhost:5432/orlo'
+        else:
+            db_uri = 'postgres://orlo:password@192.168.57.100:5432/orlo'
+
         app = orlo.app
-        app.config['SQLALCHEMY_DATABASE_URI'] = \
-            'postgres://orlo:password@192.168.57.100:5432/orlo'
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
         # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
         app.config['TESTING'] = True
         app.config['DEBUG'] = False
