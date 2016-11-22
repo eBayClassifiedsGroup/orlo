@@ -58,6 +58,10 @@ class OrloLiveTest(LiveServerTestCase):
         app.config['DEBUG'] = False
         app.config['TRAP_HTTP_EXCEPTIONS'] = True
         app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
+        app.config['LIVESERVER_PORT'] = 8943
+        app.config['LIVESERVER_TIMEOUT'] = 5
+
+        self.uri = 'http://localhost:8943'
 
         return orlo.app
 
@@ -67,16 +71,13 @@ class OrloLiveTest(LiveServerTestCase):
 
     def tearDown(self):
         db.session.rollback()
-        db.drop_all()
+        db.session.close()
+        db.drop_all()  # stall here implies connection leak
         db.session.remove()
         db.get_engine(self.app).dispose()
 
 
 class LiveDbTest(OrloLiveTest):
-    def setUp(self):
-        # super(DeployTest, self).setUp()
-        db.create_all()
-
     @staticmethod
     def _create_release(user='testuser',
                         team='test team',

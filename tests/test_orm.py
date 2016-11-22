@@ -23,7 +23,8 @@ class OrloDbTest(OrloTest):
     Base test class for tests that need to manipulate data without using the http API
     """
 
-    def _create_release(self,
+    @classmethod
+    def _create_release(cls,
                         user='testuser',
                         team='test team',
                         platforms=None,
@@ -59,8 +60,9 @@ class OrloDbTest(OrloTest):
 
         return r.id
 
-    @staticmethod
-    def _create_package(release_id,
+    @classmethod
+    def _create_package(cls,
+                        release_id,
                         name='test-package',
                         version='1.2.3',
                         diff_url=None,
@@ -88,8 +90,8 @@ class OrloDbTest(OrloTest):
 
         return p.id
 
-    @staticmethod
-    def _start_package(package_id):
+    @classmethod
+    def _start_package(cls, package_id):
         """
         Start a package
 
@@ -101,8 +103,8 @@ class OrloDbTest(OrloTest):
 
         return package.id
 
-    @staticmethod
-    def _stop_package(package_id, success=True):
+    @classmethod
+    def _stop_package(cls, package_id, success=True):
         """
         Stop a package
 
@@ -112,8 +114,8 @@ class OrloDbTest(OrloTest):
         package.stop(success=success)
         db.session.commit()
 
-    @staticmethod
-    def _stop_release(release_id):
+    @classmethod
+    def _stop_release(cls, release_id):
         """
         Stop a release
 
@@ -123,17 +125,18 @@ class OrloDbTest(OrloTest):
         release.stop()
         db.session.commit()
 
-    def _create_finished_release(self, success=True):
+    @classmethod
+    def _create_finished_release(cls, success=True):
         """
         Create a completed release using internal methods
         """
 
-        release_id = self._create_release()
-        package_id = self._create_package(release_id)
+        release_id = cls._create_release()
+        package_id = cls._create_package(release_id)
 
-        self._start_package(package_id)
-        self._stop_package(package_id, success=success)
-        self._stop_release(release_id)
+        cls._start_package(package_id)
+        cls._stop_package(package_id, success=success)
+        cls._stop_release(release_id)
         db.session.commit()
 
 
