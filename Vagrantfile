@@ -34,6 +34,11 @@ Vagrant.configure(2) do |config|
       python-pip \
       python-stdeb \
       python-virtualenv \
+      python3-all-dev \
+      python3-dev \
+      python3-pip \
+      python3-stdeb \
+      python3-virtualenv \
       python3-dev \
       vim \
 
