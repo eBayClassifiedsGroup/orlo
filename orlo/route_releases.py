@@ -311,33 +311,32 @@ def get_releases(release_id=None):
     Return a list of releases to the client, filters optional
 
     :param string release_id: Optionally specify a single release UUID to
-    fetch. \
-        This does not disable filters.
-    :query int desc: Normally results are returned ordered by stime
-    ascending, setting
-        desc to true will reverse this and sort by stime descending
+        fetch. This does not disable filters.
+    :query bool desc: Normally results are returned ordered by stime
+        ascending, setting desc to true will reverse this and sort by stime
+        descending
     :query int limit: Limit the results by int
     :query int offset: Offset the results by int
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform
     :query string stime_before: Only include releases that started before \
-    timestamp given
+        timestamp given
     :query string stime_after: Only include releases that started after \
-    timestamp given
+        timestamp given
     :query string ftime_before: Only include releases that finished before \
-    timestamp given
+        timestamp given
     :query string ftime_after: Only include releases that finished after \
-    timestamp given
+        timestamp given
     :query string team: Filter releases by team
     :query string status: Filter by release status. This field is calculated \
-    from the package status, see special note below.
+        from the package status, see special note below.
     :query int duration_lt: Only include releases that took less than (int) \
-    seconds
+        seconds
     :query int duration_gt: Only include releases that took more than (int) \
-    seconds
+        seconds
     :query boolean package_rollback: Filter on whether or not the releases \
-    contain a rollback
+        contain a rollback
     :query string package_name: Filter by package name
     :query string package_version: Filter by package version
     :query int package_duration_gt: Filter by packages of duration greater than
