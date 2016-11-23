@@ -3,7 +3,7 @@
 [Unit]
 Description=orlo
 After=network.target
-ConditionPathExists=/usr/share/python/orlo/bin/gunicorn
+ConditionPathExists=/opt/venvs/orlo/bin/gunicorn
 
 [Service]
 Type=simple
