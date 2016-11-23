@@ -1,3 +1,12 @@
+orlo (0.3.1-2) jessie; urgency=medium
+
+  [ Alex Forbes ]
+  * Fix path to gunicorn in systemd unit
+
+  [ vagrant ]
+
+ -- Alex Forbes <github@al4.co.nz>  Wed, 23 Nov 2016 18:02:42 +0000
+
 orlo (0.3.1-1) jessie; urgency=medium
 
   [ Alex Forbes ]
