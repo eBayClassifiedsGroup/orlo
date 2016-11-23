@@ -13,6 +13,7 @@ Vagrant.configure(2) do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
+    echo 'en_GB.UTF-8 UTF-8' | tee -a /etc/locale.gen
     sudo localedef -i en_GB -f UTF-8 en_GB.UTF-8
     sudo locale-gen en_GB.UTF-8
     sudo sed -i 's/us.archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
