@@ -69,7 +69,6 @@ class Start(Command):
             'on_starting': on_starting,
             'workers': workers,
         }
-        app.logger.critical('test logger')
         try:
             OrloApplication(app, gunicorn_options).run()
         except KeyboardInterrupt:
@@ -130,8 +129,7 @@ def check_database():
                 alembic.upgrade()
             elif current_head != current_rev:
                 app.logger.info('New database revision available, calling '
-                              'alembic '
-                            'upgrade')
+                                'alembic upgrade')
                 alembic.upgrade()
     except sqlalchemy.exc.OperationalError:
         app.logger.warning('Database is not configured, creating tables')
