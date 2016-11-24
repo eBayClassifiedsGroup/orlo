@@ -59,16 +59,20 @@ if not app.debug:
         log_level = logging.INFO
     app.logger.setLevel(log_level)
 
+    log_format = config.get('logging', 'format')
+    formatter = Formatter(log_format)
+
+    for h in app.logger.handlers:
+        h.setFormatter(formatter)
+
     log_dir = config.get('logging', 'directory')
-    logfile = os.path.join(log_dir, 'flask.log')
+    logfile = os.path.join(log_dir, 'orlo.log')
     if log_dir != 'disabled':
         file_handler = RotatingFileHandler(
             logfile,
             maxBytes=1048576,
             backupCount=1,
         )
-        log_format = config.get('logging', 'format')
-        formatter = Formatter(log_format)
 
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)

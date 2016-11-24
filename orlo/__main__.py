@@ -4,7 +4,7 @@ import logging
 import os
 import traceback
 
-import alembic
+import flask
 import alembic.util.exc as alembic_exc
 import sqlalchemy.exc
 from logging.handlers import RotatingFileHandler
@@ -13,14 +13,11 @@ from flask_script import Manager, Command, Option, Server
 from orlo.exceptions import OrloStartupError
 
 from orlo.config import config
-from orlo.app import app, OrloApplication
+from orlo.app import app, OrloApplication, alembic
 from orlo.orm import db
 
 
 __author__ = 'alforbes'
-
-
-logger = logging.getLogger('orlo')
 
 
 class Start(Command):
@@ -49,41 +46,18 @@ class Start(Command):
         """
         log_level = getattr(logging, loglevel.upper())
         app.logger.setLevel(log_level)
-
-        formatter = logging.Formatter(
-            config.get('logging', 'format', raw=True))
-
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
-        app.logger.addHandler(stream_handler)
-
-        if console:
-            # Stream handler should use configured log level
-            stream_handler.setLevel(log_level)
-        else:
-            # Only print critical errors from now on
-            stream_handler.setLevel(logging.CRITICAL)
-
-        log_dir = config.get('logging', 'directory')
-        logfile = os.path.join(log_dir, 'flask.log')
-        if log_dir != 'disabled':
-            file_handler = RotatingFileHandler(
-                logfile,
-                maxBytes=1048576,
-                backupCount=1,
-            )
-            log_format = config.get('logging', 'format')
-            formatter = logging.Formatter(log_format)
-
-            file_handler.setFormatter(formatter)
-            file_handler.setLevel(logging.DEBUG)
-            logger.addHandler(file_handler)
+        app.logger.propagate = False
+        # Flask's ProductionHandler is locked at error unless debug mode is
+        # enabled. We don't necessarily want to enable debug mode whenever we
+        # capture debug logs, as it's a security risk.
+        for h in app.logger.handlers:
+            h.level = log_level
 
         app.logger.debug('Debug logging enabled')
 
         log_dir = config.get('logging', 'directory')
         gunicorn_options = {
-            'accesslog': os.path.join(log_dir, 'access.log') if not
+            'accesslog': os.path.join(log_dir, 'gunicorn_access.log') if not
             console else '-',
             'bind': '%s:%s' % ('0.0.0.0', '5000'),
             'capture_output': True,
@@ -95,6 +69,7 @@ class Start(Command):
             'on_starting': on_starting,
             'workers': workers,
         }
+        app.logger.critical('test logger')
         try:
             OrloApplication(app, gunicorn_options).run()
         except KeyboardInterrupt:
@@ -129,30 +104,40 @@ def on_starting(server):
 
 
 def check_database():
-    logger.info('Checking database "{}"'.format(
+    app.logger.info('Checking database "{}"'.format(
         config.get('db', 'uri')
     ))
+
+    try:
+        # Can we connect to the DB
+        db.engine.execute('select 1')
+    except sqlalchemy.exc.OperationalError:
+        app.logger.error("Cannot connect to the database, please check the "
+                         "database and configuration.")
+        raise SystemExit(1)
 
     try:
         with app.app_context():
             current_head = alembic.script_directory.get_current_head()
             current_rev = alembic.migration_context.get_current_revision()
-            logger.debug('Current revision: {}'.format(current_rev))
-            logger.debug('Current head: {}'.format(current_head))
+            app.logger.debug('Current revision: {}'.format(current_rev))
+            app.logger.debug('Current head: {}'.format(current_head))
             if current_head is None:
                 raise OrloStartupError('No alembic revisions, this is a bug')
             elif current_rev is None:
-                logger.info('Database not configured, calling alembic upgrade')
+                app.logger.info('Database not configured, calling alembic '
+                                'upgrade')
                 alembic.upgrade()
             elif current_head != current_rev:
-                logger.info('New database revision available, calling alembic '
+                app.logger.info('New database revision available, calling '
+                              'alembic '
                             'upgrade')
                 alembic.upgrade()
     except sqlalchemy.exc.OperationalError:
-        logger.warning('Database is not configured, creating tables')
+        app.logger.warning('Database is not configured, creating tables')
         db.create_all()
     except alembic_exc.CommandError:
-        logger.error(
+        app.logger.error(
             'Alembic raised an exception, please check the state of the '
             'database, and that there aren\'t any extra files in '
             '/opt/venvs/orlo/local/lib/python2.7/site-packages/orlo/'
@@ -160,7 +145,7 @@ def check_database():
                 traceback.format_exc()))
         raise SystemExit(1)
 
-    logger.info('Database is configured')
+    app.logger.info('Database is configured')
 
 
 def main():
