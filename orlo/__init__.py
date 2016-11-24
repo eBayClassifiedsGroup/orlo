@@ -80,6 +80,7 @@ import orlo.route_releases
 import orlo.route_packages
 import orlo.route_import
 import orlo.route_info
+import orlo.route_internal
 import orlo.route_stats
 import orlo.user_auth
 
