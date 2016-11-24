@@ -1,14 +1,14 @@
 from __future__ import print_function, division, absolute_import
 from __future__ import unicode_literals
-from flask import Flask
+
 import logging
-from logging.handlers import RotatingFileHandler
 from logging import Formatter
-import sys
+from logging.handlers import RotatingFileHandler
+
+from flask import Flask
 
 from orlo.config import config, CONFIG_FILE
-from orlo.exceptions import OrloStartupError, OrloError, OrloAuthError, \
-    OrloConfigError
+from orlo.exceptions import OrloStartupError
 
 try:
     # _version is created by setup.py
@@ -75,13 +75,7 @@ app.logger.debug("Log level: {}".format(config.get('logging', 'level')))
 
 # Must be imported last
 import orlo.error_handlers
-import orlo.route_base
-import orlo.route_releases
-import orlo.route_packages
-import orlo.route_import
-import orlo.route_info
-import orlo.route_internal
-import orlo.route_stats
+import orlo.routes
 import orlo.user_auth
 
 app.logger.info("Startup completed with configuration from {}".format(
