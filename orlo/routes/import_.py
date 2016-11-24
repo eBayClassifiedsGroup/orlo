@@ -1,7 +1,7 @@
 import arrow
 import json
 from flask import jsonify, request
-from orlo import app
+from orlo.app import app
 from orlo.orm import db, Package, Release, PackageResult, ReleaseNote, Platform
 from orlo.util import validate_request_json
 from orlo.user_auth import token_auth

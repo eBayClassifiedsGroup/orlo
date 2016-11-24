@@ -1,6 +1,6 @@
 from __future__ import print_function
 from flask import request, jsonify, url_for
-from orlo import app
+from orlo.app import app
 import orlo.queries as queries
 
 __author__ = 'alforbes'

@@ -4,7 +4,7 @@ import subprocess
 from threading import Timer
 from orlo.config import config
 from orlo.exceptions import OrloDeployError
-from orlo import app
+from orlo.app import app
 
 __author__ = 'alforbes'
 

@@ -1,7 +1,7 @@
 from __future__ import print_function
 import datetime
 import arrow
-from orlo import app
+from orlo.app import app
 from orlo.orm import db, Release, Platform, Package, release_platform
 from orlo.exceptions import OrloError, InvalidUsage
 from sqlalchemy import and_, exc

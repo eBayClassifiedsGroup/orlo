@@ -2,7 +2,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.types.uuid import UUIDType
 from sqlalchemy_utils.types.arrow import ArrowType
 
-from orlo import app, config
+from orlo.app import app
+from orlo.config import config
 from orlo.exceptions import OrloWorkflowError
 import pytz
 import uuid

@@ -1,5 +1,7 @@
 from flask import jsonify, request, Response, json, g
-from orlo import app, queries, config
+from orlo.app import app
+from orlo import queries
+from orlo.config import config
 from orlo.exceptions import InvalidUsage
 from orlo.user_auth import token_auth
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, \

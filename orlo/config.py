@@ -12,12 +12,14 @@ except KeyError:
 config = RawConfigParser()
 
 config.add_section('main')
-config.set('main', 'debug_mode', 'false')
-config.set('main', 'propagate_exceptions', 'true')
 config.set('main', 'time_format', '%Y-%m-%dT%H:%M:%SZ')
 config.set('main', 'time_zone', 'UTC')
 config.set('main', 'strict_slashes', 'false')
 config.set('main', 'base_url', 'http://localhost:8080')
+
+config.add_section('gunicorn')
+config.set('gunicorn', 'workers', '4')
+config.set('gunicorn', 'loglevel', '4')
 
 config.add_section('security')
 config.set('security', 'enabled', 'false')
@@ -35,16 +37,20 @@ config.set('db', 'uri', 'sqlite://')
 config.set('db', 'echo_queries', 'false')
 config.set('db', 'pool_size', '50')
 
+config.add_section('flask')
+config.set('flask', 'propagate_exceptions', 'true')
+config.set('flask', 'debug', 'false')
+
 config.add_section('logging')
 config.set('logging', 'level', 'info')
-config.set('logging', 'file', 'disabled')
 config.set('logging', 'format', '%(asctime)s [%(name)s] %(levelname)s %('
                                 'module)s:%(funcName)s:%(lineno)d - %('
                                 'message)s')
+config.set('logging', 'directory', '/var/log/orlo')
 
 config.add_section('deploy')
-config.set('deploy', 'timeout',
-           '3600')  # How long to timeout external deployer calls
+# How long to timeout external deployer calls
+config.set('deploy', 'timeout', '3600')
 
 config.add_section('deploy_shell')
 config.set('deploy_shell', 'command_path',

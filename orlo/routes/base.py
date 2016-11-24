@@ -1,6 +1,6 @@
 from __future__ import print_function
 from flask import jsonify, request
-from orlo import app
+from orlo.app import app
 from orlo import __version__
 
 __author__ = 'alforbes'

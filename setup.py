@@ -29,14 +29,16 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        'orloclient',
         'Flask',
+        'Flask-Alembic >= 2.0.1',
+        'Flask-HTTPAuth',
         'Flask-Migrate',
         'Flask-SQLAlchemy',
-        'Flask-HTTPAuth',
+        'Flask-Script >= 2.0.5',
         'Flask-TokenAuth',
         'arrow',
         'gunicorn',
+        'orloclient',
         'psycopg2',
         'pyldap',
         'pytz',
@@ -50,6 +52,6 @@ setup(
     test_suite='tests',
     # Creates a script in /usr/local/bin
     entry_points={
-        'console_scripts': ['orlo=orlo.cli:main']
+        'console_scripts': ['orlo=orlo.__main__:main']
     }
 )

@@ -1,12 +1,7 @@
 from __future__ import print_function
 import argparse
 
-try:
-    from orlo import __version__
-except ImportError:
-    # _version.py doesn't exist
-    __version__ = "TEST_BUILD"
-
+from orlo import __version__
 
 __author__ = 'alforbes'
 
@@ -55,7 +50,7 @@ def parse_args():
 
 
 def write_config(args):
-    from orlo import config
+    from orlo.config import config
     config_file = open(args.file_path, 'w')
     config.write(config_file)
 
@@ -75,7 +70,7 @@ def run_server(args):
     print("Warning: this is a development server and not suitable "
           "for production, we recommend running under gunicorn.")
 
-    from orlo import app
+    from orlo.app import app
     app.config['DEBUG'] = True
     app.config['TRAP_HTTP_EXCEPTIONS'] = True
     app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
