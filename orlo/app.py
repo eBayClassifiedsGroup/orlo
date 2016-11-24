@@ -46,18 +46,21 @@ if config.getboolean('flask', 'debug'):
     app.debug = True
 
 if not app.debug:
-    log_level = config.get('logging', 'level')
-    if log_level == 'debug':
-        app.logger.setLevel(logging.DEBUG)
-    elif log_level == 'info':
-        app.logger.setLevel(logging.INFO)
-    elif log_level == 'warning':
-        app.logger.setLevel(logging.WARNING)
-    elif log_level == 'error':
-        app.logger.setLevel(logging.ERROR)
+    # If you are calling orlo.app directly rather than with the embedded
+    # gunicorn, you may want to add a streamHandler
+    try:
+        _level = config.get('logging', 'level')
+        log_level = getattr(logging, _level.upper())
+    except AttributeError:
+        app.logger.error(
+            'Failed to set log level to {}, see '
+            'https://docs.python.org/3.6/library/logging.html#logging-levels '
+            'for valid levels.'.format(_level))
+        log_level = logging.INFO
+    app.logger.setLevel(log_level)
 
     log_dir = config.get('logging', 'directory')
-    logfile = os.path.join(log_dir, 'app.log')
+    logfile = os.path.join(log_dir, 'flask.log')
     if log_dir != 'disabled':
         file_handler = RotatingFileHandler(
             logfile,
@@ -68,6 +71,8 @@ if not app.debug:
         formatter = Formatter(log_format)
 
         file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+
         app.logger.addHandler(file_handler)
 
 

@@ -19,7 +19,6 @@ config.set('main', 'base_url', 'http://localhost:8080')
 
 config.add_section('gunicorn')
 config.set('gunicorn', 'workers', '4')
-config.set('gunicorn', 'loglevel', '4')
 
 config.add_section('security')
 config.set('security', 'enabled', 'false')
@@ -46,7 +45,7 @@ config.set('logging', 'level', 'info')
 config.set('logging', 'format', '%(asctime)s [%(name)s] %(levelname)s %('
                                 'module)s:%(funcName)s:%(lineno)d - %('
                                 'message)s')
-config.set('logging', 'directory', '/var/log/orlo')
+config.set('logging', 'directory', '/var/log/orlo')  # disabled for no log files
 
 config.add_section('deploy')
 # How long to timeout external deployer calls
