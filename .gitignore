@@ -24,6 +24,10 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+debian/*.debhelper
+debian/*.substvars
+debian/orlo
+debian/files
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

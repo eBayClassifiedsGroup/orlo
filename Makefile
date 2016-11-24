@@ -16,6 +16,6 @@ deb:
 	debuild -us -uc
 
 changelog:
-	gbp dch --ignore-branch --auto --commit
+	gbp dch --ignore-branch --auto --commit debian
 
 .PHONY: debian sdist test clean changelog
