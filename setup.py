@@ -29,6 +29,7 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
+        'orloclient',
         'Flask',
         'Flask-Migrate',
         'Flask-SQLAlchemy',
