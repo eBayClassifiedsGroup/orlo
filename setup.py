@@ -14,6 +14,13 @@ version_file = open(os.path.join(__location__, 'orlo', '_version.py'), 'w')
 version_file.write("__version__ = '{}'".format(VERSION))
 version_file.close()
 
+tests_require = [
+    'Flask-Testing',
+    'orloclient>=0.3.0',
+    'mockldap',
+    'pytest',
+]
+
 
 setup(
     name='orlo',
@@ -38,17 +45,17 @@ setup(
         'Flask-TokenAuth',
         'arrow',
         'gunicorn',
-        'orloclient',
+        'orloclient>=0.3.0',
         'psycopg2',
         'pyldap',
         'pytz',
         'sphinxcontrib-httpdomain',
         'sqlalchemy-utils',
     ],
-    tests_require=[
-        'Flask-Testing',
-        'orloclient>=0.1.1',
-    ],
+    extras_require={
+        'test': tests_require,
+    },
+    tests_require=tests_require,
     test_suite='tests',
     # Creates a script in /usr/local/bin
     entry_points={
