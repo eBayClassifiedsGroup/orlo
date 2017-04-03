@@ -9,7 +9,6 @@ from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, \
 from orlo.util import validate_request_json, create_release, \
     validate_release_input, validate_package_input, fetch_release, \
     create_package, fetch_package, stream_json_list, str_to_bool, is_uuid
-from orlo.deploy import ShellDeploy
 from orlo.user_auth import conditional_auth
 
 security_enabled = config.getboolean('security', 'enabled')
@@ -122,34 +121,6 @@ def post_results(release_id, package_id):
     db.session.add(results)
     db.session.commit()
     return '', 204
-
-
-@app.route('/releases/<release_id>/deploy', methods=['POST'])
-@conditional_auth(token_auth.token_required)
-def post_releases_deploy(release_id):
-    """
-    Deploy a Release
-
-    :param string release_id: Release UUID
-
-    **Example curl**:
-
-    .. sourcecode:: shell
-
-        curl -H "Content-Type: application/json" \\
-        -X POST http://127.0.0.1/releases/${RELEASE_ID}/deploy
-    """
-    release = fetch_release(release_id)
-    app.logger.info("Release start, release {}".format(release_id))
-
-    release.start()
-    db.session.add(release)
-    db.session.commit()
-
-    # TODO call deploy Class start Method, i.e. pure python rather than shell
-    deploy = ShellDeploy(release)
-    output = deploy.start()
-    return jsonify(output), 200
 
 
 @app.route('/releases/<release_id>/start', methods=['POST'])
