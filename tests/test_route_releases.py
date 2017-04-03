@@ -478,16 +478,18 @@ class TestGetContract(OrloHttpTest):
         """
         Test that offset=1 skips the first release
         """
-        rid = None
+        rids = []
         for _ in range(0, 2):
-            rid = self._create_release()
+            rids.append(self._create_release())
             sleep(0.1)
 
         r = self._get_releases(filters=['offset=1'])
         self.assertEqual(len(r['releases']), 1)
-        self.assertEqual(r['releases'][0]['id'], rid)
+        # Default order is now descending, so the skip means we're skipping the
+        # last release, so the release given should be the first created.
+        self.assertEqual(r['releases'][0]['id'], rids[0])
 
-    def test_get_release_desc(self):
+    def test_get_release_asc(self):
         """
         Should return in reverse order
         """
@@ -497,9 +499,9 @@ class TestGetContract(OrloHttpTest):
             rid = self._create_release()
             sleep(0.1)
 
-        r = self._get_releases(filters=['desc=true'])
-        # First in list should be last to be created
-        self.assertEqual(r['releases'][0]['id'], rid)
+        r = self._get_releases(filters=['asc=true'])
+        # Last in list should be last to be created
+        self.assertEqual(r['releases'][2]['id'], rid)
 
     def test_get_release_package_name(self):
         """
@@ -680,11 +682,3 @@ class TestGetContract(OrloHttpTest):
 
         result = self._get_releases(filters=['status=garbage_boz'], expected_status=400)
         self.assertIn('message', result)
-
-    def test_get_releases_with_no_filters(self):
-        """
-        Test get /releases without filters returns 400
-        """
-        self._get_releases(expected_status=400)
-
-

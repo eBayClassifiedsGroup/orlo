@@ -285,10 +285,10 @@ def get_releases(release_id=None):
 
     :param string release_id: Optionally specify a single release UUID to
         fetch. This does not disable filters.
-    :query bool desc: Normally results are returned ordered by stime
-        ascending, setting desc to true will reverse this and sort by stime
-        descending
-    :query int limit: Limit the results by int
+    :query bool asc: Normally results are returned ordered by stime
+        descending, setting asc to true will reverse this and sort by stime
+        ascending
+    :query int limit: Limit the results by int (default 100)
     :query int offset: Offset the results by int
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
@@ -328,7 +328,6 @@ def get_releases(release_id=None):
         value. If any one package has the value "IN_PROGRESS" or "FAILED",
         that status applies to the whole release, with "FAILED" overriding
         "IN_PROGRESS".
-
     """
 
     booleans = ('rollback', 'package_rollback',)
@@ -337,14 +336,13 @@ def get_releases(release_id=None):
         if not is_uuid(release_id):
             raise InvalidUsage("Release ID given is not a valid UUID")
         query = queries.get_release(release_id)
-    elif len([x for x in request.args.keys()]) == 0:
-        raise InvalidUsage("Please specify a filter. See "
-                           "http://orlo.readthedocs.org/en/latest/rest.html"
-                           "#get--releases for more info")
     else:  # Bit more complex
+        # Defaults
+        args = {
+            'limit': 100
+        }
         # Flatten args, as the ImmutableDict puts some values in a list when
         # expanded
-        args = {}
         for k in request.args.keys():
             if k in booleans:
                 args[k] = str_to_bool(request.args.get(k))

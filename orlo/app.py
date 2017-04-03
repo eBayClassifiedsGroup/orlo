@@ -25,7 +25,7 @@ alembic.init_app(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = config.get('db', 'uri')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-if 'sqlite' not in app.config['SQLALCHEMY_DATABASE_URI']:
+if not app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
     # SQLite doesn't support these
     app.config['SQLALCHEMY_POOL_SIZE'] = config.getint('db', 'pool_size')
     app.config['SQLALCHEMY_POOL_RECYCLE'] = 2
