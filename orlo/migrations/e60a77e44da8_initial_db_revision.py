@@ -48,7 +48,6 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
         sa.UniqueConstraint('name'),
-        checkfirst=True
     )
     op.create_table(
         'release',
@@ -61,7 +60,6 @@ def upgrade():
         sa.Column('team', sa.String(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
-        checkfirst=True
     )
     op.create_index(op.f('ix_release_stime'), 'release', ['stime'], unique=False)
     op.create_table(
@@ -79,7 +77,6 @@ def upgrade():
         sa.ForeignKeyConstraint(['release_id'], ['release.id'], ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
-        checkfirst=True
     )
 
     op.create_index(op.f('ix_package_stime'), 'package', ['stime'], unique=False)
@@ -92,7 +89,6 @@ def upgrade():
         sa.ForeignKeyConstraint(['release_id'], ['release.id'], ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
-        checkfirst=True
     )
     op.create_table(
         'release_note',
@@ -102,7 +98,6 @@ def upgrade():
         sa.ForeignKeyConstraint(['release_id'], ['release.id'], ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
-        checkfirst=True
     )
     op.create_table(
         'release_platform',
@@ -110,7 +105,6 @@ def upgrade():
         sa.Column('platform_id', HackyUUIDType(), nullable=True),
         sa.ForeignKeyConstraint(['platform_id'], ['platform.id'], ),
         sa.ForeignKeyConstraint(['release_id'], ['release.id'], ),
-        checkfirst=True
     )
 
     op.create_table(
@@ -121,7 +115,6 @@ def upgrade():
         sa.ForeignKeyConstraint(['package_id'], ['package.id'], ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
-        checkfirst=True
     )
     ### end Alembic commands ###
 
