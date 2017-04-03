@@ -102,6 +102,14 @@ def on_starting(server):
     check_database()
 
 
+def stamp_initial_revision():
+    """ Stamp the database with the initial revision """
+    app.logger.warning("*** Stamping the database with the initial revision. \
+This can result in database inconsistencies, please check the schema if you \
+experience crashes. ***")
+    alembic.migration_context.stamp(alembic.script_directory,
+                                    "e60a77e44da8")
+
 def check_database():
     app.logger.info('Checking database "{}"'.format(
         config.get('db', 'uri')
@@ -126,14 +134,30 @@ def check_database():
             elif current_rev is None:
                 app.logger.info('Database not configured, calling alembic '
                                 'upgrade')
-                alembic.upgrade()
+                try:
+                    alembic.upgrade()
+                except sqlalchemy.exc.ProgrammingError as e:
+                    # if this occurs on upgrade from None, it's probably because
+                    # tables already existed
+                    app.logger.error("Database migration failed: {}".format(
+                        e.message))
+                    if e.message.endswith('relation "platform" already exists\n'):
+                        app.logger.warning(
+                            "This error is expected when installing an "
+                            "alembic-enabled build for the first time, "
+                            "continuing")
+                        stamp_initial_revision()
+                    else:
+                        raise
             elif current_head != current_rev:
                 app.logger.info('New database revision available, calling '
                                 'alembic upgrade')
                 alembic.upgrade()
     except sqlalchemy.exc.OperationalError:
-        app.logger.warning('Database is not configured, creating tables')
-        db.create_all()
+        if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+            app.logger.warning('Database is not configured, creating tables')
+            db.create_all()
+            stamp_initial_revision()
     except alembic_exc.CommandError:
         app.logger.error(
             'Alembic raised an exception, please check the state of the '
@@ -142,6 +166,8 @@ def check_database():
             'migrations. Exception was:\n{}'.format(
                 traceback.format_exc()))
         raise SystemExit(1)
+    finally:
+        alembic.migration_context.connection.close()
 
     app.logger.info('Database is configured')
 
