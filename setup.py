@@ -16,9 +16,10 @@ version_file.close()
 
 tests_require = [
     'Flask-Testing',
-    'orloclient>=0.3.0',
+    'orloclient>=0.2.0',
     'mockldap',
     'pytest',
+    'tox',
 ]
 
 
@@ -45,7 +46,7 @@ setup(
         'Flask-TokenAuth',
         'arrow',
         'gunicorn',
-        'orloclient>=0.3.0',
+        'orloclient>=0.2.0',
         'psycopg2',
         'pyldap',
         'pytz',
