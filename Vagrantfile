@@ -29,6 +29,7 @@ Vagrant.configure(2) do |config|
       dh-systemd \
       git-buildpackage \
       postgresql-client \
+      libpq-dev \
       mysql-client \
       python-all-dev \
       python-dev \
