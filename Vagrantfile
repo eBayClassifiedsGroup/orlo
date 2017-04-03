@@ -72,6 +72,9 @@ Vagrant.configure(2) do |config|
     python setup.py develop
 
     mkdir -p /etc/orlo /var/log/orlo
+    echo -e "[db]\nuri=postgres://orlo:password@192.168.57.100" > /etc/orlo/orlo.ini
+
+
     chown -R vagrant:root /etc/orlo /var/log/orlo
     chown -R vagrant:vagrant /home/vagrant/virtualenv
     chown vagrant:root /vagrant
