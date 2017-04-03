@@ -47,13 +47,4 @@ config.set('logging', 'format', '%(asctime)s [%(name)s] %(levelname)s %('
                                 'message)s')
 config.set('logging', 'directory', '/var/log/orlo')  # disabled for no log files
 
-config.add_section('deploy')
-# How long to timeout external deployer calls
-config.set('deploy', 'timeout', '3600')
-
-config.add_section('deploy_shell')
-config.set('deploy_shell', 'command_path',
-           os.path.dirname(os.path.abspath(__file__)) +
-           '/../deployer.py')
-
 config.read(CONFIG_FILE)
