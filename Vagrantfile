@@ -67,35 +67,23 @@ Vagrant.configure(2) do |config|
     source /home/vagrant/virtualenv/orlo/bin/activate
     echo "source ~/virtualenv/orlo/bin/activate" >> /home/vagrant/.profile
 
-    pip install -r /vagrant/orlo/requirements.txt
-    pip install -r /vagrant/orlo/requirements_testing.txt
+    cd /vagrant/orlo
+    pip install .[test]
     pip install -r /vagrant/orlo/docs/requirements.txt
 
     mkdir -p /etc/orlo /var/log/orlo
     chown -R vagrant:root /etc/orlo /var/log/orlo
     chown -R vagrant:vagrant /home/vagrant/virtualenv
     chown vagrant:root /vagrant
-
-    # Create the database
-    #cd /vagrant/orlo
-    #python create_db.py
-    #python setup.py develop
-
   SHELL
 
   config.vm.define "jessie" do |jessie|
-    jessie.vm.box = "bento/debian-8.6"
+    jessie.vm.box = "bento/debian-8.7"
     jessie.vm.network "forwarded_port", guest: 5000, host: 5000
     jessie.vm.network "private_network", ip: "192.168.57.20"
     jessie.vm.provision "shell", inline: <<-SHELL
     SHELL
   end
-
-#   config.vm.define "trusty" do |trusty|
-#     trusty.vm.box = "bento/ubuntu-14.04"
-#     trusty.vm.network "forwarded_port", guest: 5000, host: 5100
-#     trusty.vm.network "private_network", ip: "192.168.57.10"
-#   end
 
   config.vm.define "xenial" do |xenial|
     xenial.vm.box = "bento/ubuntu-16.04"
