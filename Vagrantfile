@@ -51,12 +51,8 @@ Vagrant.configure(2) do |config|
       libsasl2-dev \
       libssl-dev \
 
-    # Updating build tooling can help
-    sudo pip install --upgrade \
-      pip \
-      setuptools \
-      stdeb \
-      virtualenv \
+    sudo pip install --upgrade pip setuptools
+    sudo pip install --upgrade stdeb virtualenv
 
     wget -P /tmp/ \
         'http://launchpadlibrarian.net/291737817/dh-virtualenv_1.0-1_all.deb'
@@ -68,9 +64,12 @@ Vagrant.configure(2) do |config|
     source /home/vagrant/virtualenv/orlo/bin/activate
     echo "source ~/virtualenv/orlo/bin/activate" >> /home/vagrant/.profile
 
+    pip install --upgrade pip setuptools
+
     cd /vagrant/orlo
     pip install .[test]
     pip install -r /vagrant/orlo/docs/requirements.txt
+    python setup.py develop
 
     mkdir -p /etc/orlo /var/log/orlo
     chown -R vagrant:root /etc/orlo /var/log/orlo
