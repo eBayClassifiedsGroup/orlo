@@ -1,7 +1,7 @@
 Installation
 ============
 
-**This is a rough draft**
+**This is a draft**
     This documentation is in an early state and your mileage may vary, please raise issues on github for any problems you encounter.
 
 From pip
@@ -11,7 +11,7 @@ From pip
     pip install orlo
 
 
-The pip build is not always up to date as things are still in flux. At this early stage, it is recommended to install from source.
+The pip build will usually be up to date, but occasionally it may be behind, especially relative to development forks.
 
 
 From source
@@ -39,9 +39,10 @@ Developing in Vagrant
 
 Install Vagrant as per the docs, cd to the git clone of orlo and run `vagrant up`.
 
-From here you should be able to do `cd /vagrant` followed by `python setup.py install`.
+From here you should be able to do `cd /vagrant/orlo` followed by `python setup.py develop`.
 
-Tests can be run with `python setup.py test`.
+Tests can be run with `tox`.
+
 
 Building the debian package
 ---------------------------
@@ -64,14 +65,20 @@ From there, cd into a copy of the orlo repo and run `make debian`.
 
 If you have made changes beforehand, it is a good idea to update the version in setup.py and run `make changelog` first so that your package is distinct from any that we release. You will need to have git configured for this (git-dch will tell you on invocation).
 
+
 Initial Configuration
 ---------------------
 
-The debian package provides a script to perform actions such as writing the config, setting up the database and running a test server. This can be found in the source at `bin/orlo`.
+Orlo provides a command line interface for performing actions such as writing the config, setting up the database and running a test server. Run `orlo --help` for more information.
+
+On first install, you will want to write out a config file:
 
 ::
 
     sudo orlo write_config
+
+Once setup, you can run the server with `systemctl start orlo` if you used the debian package, or `orlo runserver` if you installed with pip.
+
 
 Database setup
 --------------
@@ -126,8 +133,6 @@ If installed from the debian package run
 ::
 
     orlo setup_database
-
-If you are running from source the orlo script can be found in ./bin, but you may need to invoke it explicitly from your python interpreter, as it is hard-coded to the dh-virtualenv path.
 
 
 Running under Gunicorn
