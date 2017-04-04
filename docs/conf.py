@@ -16,6 +16,7 @@ import sys
 import os
 import shlex
 import alabaster
+from mock import MagicMock
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -310,3 +311,22 @@ html_theme_options = {
     'github_button': True,
     'travis_button': True,
 }
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
+
+
+MOCK_MODULES = [
+    'psycopg2',
+    'psycopg2.extras',
+    'psycopg2.extensions',
+    'pyldap',
+    'gunicorn',
+    'gunicorn.six',
+    'gunicorn.app',
+    'gunicorn.app.base',
+]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
