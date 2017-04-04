@@ -14,6 +14,41 @@ version_file = open(os.path.join(__location__, 'orlo', '_version.py'), 'w')
 version_file.write("__version__ = '{}'".format(VERSION))
 version_file.close()
 
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+install_requires = [
+    'Flask',
+    'Flask-Alembic >= 2.0.1',
+    'Flask-HTTPAuth',
+    'Flask-Migrate',
+    'Flask-SQLAlchemy',
+    'Flask-Script >= 2.0.5',
+    'Flask-TokenAuth',
+    'arrow',
+    'gunicorn',
+    'orloclient>=0.2.0',
+    'psycopg2',
+    'pyldap',
+    'pytz',
+    'sqlalchemy-utils',
+]
+
+# Horrible hack
+rtd_requires = [
+    'Flask',
+    'Flask-Alembic >= 2.0.1',
+    'Flask-HTTPAuth',
+    'Flask-Migrate',
+    'Flask-SQLAlchemy',
+    'Flask-Script >= 2.0.5',
+    'Flask-TokenAuth',
+    'arrow',
+    'orloclient>=0.2.0',
+    'pytz',
+    'sqlalchemy-utils',
+    'sphinxcontrib-httpdomain',
+]
+
 tests_require = [
     'Flask-Testing',
     'orloclient>=0.4.0',
@@ -36,25 +71,10 @@ setup(
         exclude=['tests', 'debian', 'docs', 'etc']
     ),
     include_package_data=True,
-    install_requires=[
-        'Flask',
-        'Flask-Alembic >= 2.0.1',
-        'Flask-HTTPAuth',
-        'Flask-Migrate',
-        'Flask-SQLAlchemy',
-        'Flask-Script >= 2.0.5',
-        'Flask-TokenAuth',
-        'arrow',
-        'gunicorn',
-        'orloclient>=0.2.0',
-        'psycopg2',
-        'pyldap',
-        'pytz',
-        'sphinxcontrib-httpdomain',
-        'sqlalchemy-utils',
-    ],
+    install_requires=rtd_requires if on_rtd else install_requires,
     extras_require={
         'test': tests_require,
+        'doc': rtd_requires,
     },
     tests_require=tests_require,
     test_suite='tests',
