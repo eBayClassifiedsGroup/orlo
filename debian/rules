@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 DH_VIRTUALENV_INSTALL_ROOT := /opt/venvs
 export DH_VIRTUALENV_INSTALL_ROOT
+export PATH := $(PATH):/usr/local/bin
 
 %:
 	dh $@ --with systemd --with python-virtualenv
