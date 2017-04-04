@@ -17,6 +17,10 @@ for var, default in defaults.items():
     except KeyError:
         pass
 
+# Horrible hack, but I am tired
+if os.environ.get('READTHEDOCS', None) == 'True':
+    defaults['ORLO_LOGDIR'] = 'disabled'
+
 config = RawConfigParser()
 
 config.add_section('main')
