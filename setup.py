@@ -16,7 +16,7 @@ version_file.close()
 
 tests_require = [
     'Flask-Testing',
-    'orloclient>=0.2.0',
+    'orloclient>=0.4.0',
     'mockldap',
     'pytest',
     'tox',
