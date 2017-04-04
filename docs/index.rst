@@ -44,17 +44,8 @@ Why "orlo"?
 
 Originally this project was called "Sponge", because sponges are absorbent. But it turns out that name was already in use on readthedocs.org, so it was renamed. In English, orlo means "a plinth supporting the base of a column".
 
-Roadmap
+
+Clients
 -------
 
-Currently, Orlo can:
- - Record release information in a database
- - Return release information in JSON
- - Present basic stats on releases
-
-We also have API documentation and a client library in Python (see [orlo-client](https://github.com/eBayClassifiedsGroup/orloclient))
-
-In the future, we hope to add:
- - UI to display and consume the data (started at [orloui](https://github.com/al4/orloui))
- - Security and authentication/authorization (at present everything is wide open)
- - Control API for performing deployments (not yet started)
+At present we only have a Python client, see [orlo-client](https://github.com/eBayClassifiedsGroup/orloclient).
