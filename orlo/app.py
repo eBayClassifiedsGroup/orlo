@@ -11,7 +11,7 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_alembic import Alembic
 
-from orlo.config import config, CONFIG_FILE
+from orlo.config import config
 from orlo.exceptions import OrloStartupError
 
 

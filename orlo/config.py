@@ -4,10 +4,18 @@ from six.moves.configparser import RawConfigParser
 
 __author__ = 'alforbes'
 
-try:
-    CONFIG_FILE = os.environ['ORLO_CONFIG']
-except KeyError:
-    CONFIG_FILE = '/etc/orlo/orlo.ini'
+
+# Defaults that can be overridden by environment variables
+defaults = {
+    'ORLO_CONFIG': '/etc/orlo/orlo.ini',
+    'ORLO_LOGDIR': '/var/log/orlo',
+}
+
+for var, default in defaults.items():
+    try:
+        defaults[var] = os.environ[var]
+    except KeyError:
+        pass
 
 config = RawConfigParser()
 
@@ -45,6 +53,7 @@ config.set('logging', 'level', 'info')
 config.set('logging', 'format', '%(asctime)s [%(name)s] %(levelname)s %('
                                 'module)s:%(funcName)s:%(lineno)d - %('
                                 'message)s')
-config.set('logging', 'directory', '/var/log/orlo')  # disabled for no log files
+config.set('logging', 'directory', defaults['ORLO_LOGDIR'])  # "disabled" for no
+                                                          # log files
 
-config.read(CONFIG_FILE)
+config.read(defaults['ORLO_CONFIG'])
