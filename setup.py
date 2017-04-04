@@ -17,7 +17,6 @@ version_file.close()
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 install_requires = [
-    'Flask',
     'Flask-Alembic >= 2.0.1',
     'Flask-HTTPAuth',
     'Flask-Migrate',
@@ -31,6 +30,7 @@ install_requires = [
     'pyldap',
     'pytz',
     'sqlalchemy-utils',
+    'Flask',
 ]
 
 # Horrible hack
