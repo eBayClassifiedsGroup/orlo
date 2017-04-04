@@ -1,4 +1,4 @@
-from orlo import app
+from orlo.app import app
 from orlo.config import config
 from orlo.exceptions import OrloAuthError
 from flask_httpauth import HTTPBasicAuth

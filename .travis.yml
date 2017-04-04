@@ -1,4 +1,5 @@
 language: python
+dist: trusty
 
 notifications:
   slack: ebayclassifiedsgroup:lH5V2FnojyNCh8X84Qi1FKjk
@@ -11,7 +12,7 @@ addons:
   apt:
     packages:
     - curl
-  postgresql: "9.3"
+  postgresql: "9.4"
 
 services:
   - postgresql
@@ -24,4 +25,4 @@ before_install:
   - pip install tox tox-travis
 
 script:
-  - tox -- --maxfail=2
+  - tox -v -- --maxfail=2

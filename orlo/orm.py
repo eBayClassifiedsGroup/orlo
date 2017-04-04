@@ -2,7 +2,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils.types.uuid import UUIDType
 from sqlalchemy_utils.types.arrow import ArrowType
 
-from orlo import app, config
+from orlo.app import app
+from orlo.config import config
 from orlo.exceptions import OrloWorkflowError
 import pytz
 import uuid
@@ -177,12 +178,13 @@ class Package(db.Model):
             'id': str(self.id),
             'name': self.name,
             'version': self.version,
-            'stime': self.stime.strftime(config.get('main', 'time_format')) if self.stime else None,
-            'ftime': self.ftime.strftime(config.get('main', 'time_format')) if self.ftime else None,
+            'stime': self.stime.strftime(time_format) if self.stime else None,
+            'ftime': self.ftime.strftime(time_format) if self.ftime else None,
             'duration': self.duration.seconds if self.duration else None,
             'rollback': self.rollback,
             'status': self.status,
             'diff_url': self.diff_url,
+            'release_id': self.release_id,
         }
 
 

@@ -1,6 +1,6 @@
 from __future__ import print_function
 from flask import jsonify, request
-from orlo import app
+from orlo.app import app
 from orlo.exceptions import InvalidUsage, OrloError
 
 __author__ = 'alforbes'

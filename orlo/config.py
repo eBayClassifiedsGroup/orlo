@@ -4,20 +4,29 @@ from six.moves.configparser import RawConfigParser
 
 __author__ = 'alforbes'
 
-try:
-    CONFIG_FILE = os.environ['ORLO_CONFIG']
-except KeyError:
-    CONFIG_FILE = '/etc/orlo/orlo.ini'
+
+# Defaults that can be overridden by environment variables
+defaults = {
+    'ORLO_CONFIG': '/etc/orlo/orlo.ini',
+    'ORLO_LOGDIR': '/var/log/orlo',
+}
+
+for var, default in defaults.items():
+    try:
+        defaults[var] = os.environ[var]
+    except KeyError:
+        pass
 
 config = RawConfigParser()
 
 config.add_section('main')
-config.set('main', 'debug_mode', 'false')
-config.set('main', 'propagate_exceptions', 'true')
 config.set('main', 'time_format', '%Y-%m-%dT%H:%M:%SZ')
 config.set('main', 'time_zone', 'UTC')
 config.set('main', 'strict_slashes', 'false')
 config.set('main', 'base_url', 'http://localhost:8080')
+
+config.add_section('gunicorn')
+config.set('gunicorn', 'workers', '4')
 
 config.add_section('security')
 config.set('security', 'enabled', 'false')
@@ -35,20 +44,16 @@ config.set('db', 'uri', 'sqlite://')
 config.set('db', 'echo_queries', 'false')
 config.set('db', 'pool_size', '50')
 
+config.add_section('flask')
+config.set('flask', 'propagate_exceptions', 'true')
+config.set('flask', 'debug', 'false')
+
 config.add_section('logging')
 config.set('logging', 'level', 'info')
-config.set('logging', 'file', 'disabled')
 config.set('logging', 'format', '%(asctime)s [%(name)s] %(levelname)s %('
                                 'module)s:%(funcName)s:%(lineno)d - %('
                                 'message)s')
+config.set('logging', 'directory', defaults['ORLO_LOGDIR'])  # "disabled" for no
+                                                          # log files
 
-config.add_section('deploy')
-config.set('deploy', 'timeout',
-           '3600')  # How long to timeout external deployer calls
-
-config.add_section('deploy_shell')
-config.set('deploy_shell', 'command_path',
-           os.path.dirname(os.path.abspath(__file__)) +
-           '/../deployer.py')
-
-config.read(CONFIG_FILE)
+config.read(defaults['ORLO_CONFIG'])

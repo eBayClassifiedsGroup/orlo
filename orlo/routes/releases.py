@@ -1,5 +1,7 @@
 from flask import jsonify, request, Response, json, g
-from orlo import app, queries, config
+from orlo.app import app
+from orlo import queries
+from orlo.config import config
 from orlo.exceptions import InvalidUsage
 from orlo.user_auth import token_auth
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, \
@@ -7,7 +9,6 @@ from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, \
 from orlo.util import validate_request_json, create_release, \
     validate_release_input, validate_package_input, fetch_release, \
     create_package, fetch_package, stream_json_list, str_to_bool, is_uuid
-from orlo.deploy import ShellDeploy
 from orlo.user_auth import conditional_auth
 
 security_enabled = config.getboolean('security', 'enabled')
@@ -120,34 +121,6 @@ def post_results(release_id, package_id):
     db.session.add(results)
     db.session.commit()
     return '', 204
-
-
-@app.route('/releases/<release_id>/deploy', methods=['POST'])
-@conditional_auth(token_auth.token_required)
-def post_releases_deploy(release_id):
-    """
-    Deploy a Release
-
-    :param string release_id: Release UUID
-
-    **Example curl**:
-
-    .. sourcecode:: shell
-
-        curl -H "Content-Type: application/json" \\
-        -X POST http://127.0.0.1/releases/${RELEASE_ID}/deploy
-    """
-    release = fetch_release(release_id)
-    app.logger.info("Release start, release {}".format(release_id))
-
-    release.start()
-    db.session.add(release)
-    db.session.commit()
-
-    # TODO call deploy Class start Method, i.e. pure python rather than shell
-    deploy = ShellDeploy(release)
-    output = deploy.start()
-    return jsonify(output), 200
 
 
 @app.route('/releases/<release_id>/start', methods=['POST'])
@@ -312,10 +285,10 @@ def get_releases(release_id=None):
 
     :param string release_id: Optionally specify a single release UUID to
         fetch. This does not disable filters.
-    :query bool desc: Normally results are returned ordered by stime
-        ascending, setting desc to true will reverse this and sort by stime
-        descending
-    :query int limit: Limit the results by int
+    :query bool asc: Normally results are returned ordered by stime
+        descending, setting asc to true will reverse this and sort by stime
+        ascending
+    :query int limit: Limit the results by int (default 100)
     :query int offset: Offset the results by int
     :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
@@ -355,7 +328,6 @@ def get_releases(release_id=None):
         value. If any one package has the value "IN_PROGRESS" or "FAILED",
         that status applies to the whole release, with "FAILED" overriding
         "IN_PROGRESS".
-
     """
 
     booleans = ('rollback', 'package_rollback',)
@@ -364,14 +336,13 @@ def get_releases(release_id=None):
         if not is_uuid(release_id):
             raise InvalidUsage("Release ID given is not a valid UUID")
         query = queries.get_release(release_id)
-    elif len([x for x in request.args.keys()]) == 0:
-        raise InvalidUsage("Please specify a filter. See "
-                           "http://orlo.readthedocs.org/en/latest/rest.html"
-                           "#get--releases for more info")
     else:  # Bit more complex
+        # Defaults
+        args = {
+            'limit': 100
+        }
         # Flatten args, as the ImmutableDict puts some values in a list when
         # expanded
-        args = {}
         for k in request.args.keys():
             if k in booleans:
                 args[k] = str_to_bool(request.args.get(k))

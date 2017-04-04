@@ -2,7 +2,7 @@ import arrow
 from flask import request, jsonify
 
 from orlo import stats
-from orlo import app
+from orlo.app import app
 from orlo.exceptions import InvalidUsage
 import orlo.queries as queries
 

@@ -1,3 +1,56 @@
+orlo (0.3.1-3) UNRELEASED; urgency=medium
+
+  [ Alex Forbes ]
+  * Fix exec path
+
+  [ vagrant ]
+
+ -- Alex Forbes <github@al4.co.nz>  Thu, 24 Nov 2016 10:09:28 +0000
+
+orlo (0.3.1-2) jessie; urgency=medium
+
+  [ Alex Forbes ]
+  * Fix path to gunicorn in systemd unit
+
+  [ vagrant ]
+
+ -- Alex Forbes <github@al4.co.nz>  Wed, 23 Nov 2016 18:02:42 +0000
+
+orlo (0.3.1-1) jessie; urgency=medium
+
+  [ Alex Forbes ]
+  * Fix test
+  * Rename __init__ to test_base and update imports
+  * Create multiple vagrant machines for testing
+  * Add jessie and xenial vagrant boxes for build/testing
+  * Run python setup.py clean in make clean
+  * Change deb install location to /opt/venvs
+  * Add initial tox.ini
+  * Default internal config should be sqlite
+  * Configure tests to use postgres in vagrant
+  * Remove trusty vm, fix IP
+  * Use main repos, upgrade dh-virtualenv, fix missing \
+  * Add db clients and restart postgres
+  * Small doc fix
+  * Remove dependency on passwd file by mocking the verification function
+  * Use tox to run tests in travis
+  * mock has moved under py3
+  * Set test database to localhost if running in Travis
+  * Set posargs for tox and maxfail for pytest
+  * Pass travis env car through to tox
+  * Rename DeployTest as LiveDbTest, move to test_base
+  * Add stress test
+  * Add liveserver config to app, refactor db test with classmethods
+  * Close the session in our json streamer to avoid leaking connections
+  * Test refactor
+  * Fix test failure caused by previous tests not clearing db connection
+  * Bump version to 0.3.1
+  * Fix locale in vagrantfile (for me anyway 😁), use tox for testing
+
+  [ vagrant ]
+
+ -- Alex Forbes <github@al4.co.nz>  Wed, 23 Nov 2016 17:39:48 +0000
+
 orlo (0.3.1) trusty; urgency=medium
 
   * Add support for filtering by reference

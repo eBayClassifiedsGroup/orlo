@@ -3,7 +3,7 @@ from test_route_base import OrloTest
 from random import randrange
 from orlo.orm import db
 from orlo.orm import Release, Package, PackageResult, Platform
-from orlo import app
+from orlo.app import app
 from sqlalchemy.orm import exc
 import arrow
 import datetime

@@ -1,6 +1,6 @@
 from __future__ import print_function
 from orlo.queries import apply_filters, filter_release_rollback, filter_release_status
-from orlo import app
+from orlo.app import app
 from orlo.orm import db, Release, Platform, Package, release_platform
 from orlo.exceptions import OrloError, InvalidUsage
 from collections import OrderedDict

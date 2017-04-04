@@ -13,6 +13,7 @@ Vagrant.configure(2) do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
+    echo 'en_GB.UTF-8 UTF-8' | tee -a /etc/locale.gen
     sudo localedef -i en_GB -f UTF-8 en_GB.UTF-8
     sudo locale-gen en_GB.UTF-8
     sudo sed -i 's/us.archive.ubuntu.com/nl.archive.ubuntu.com/g' /etc/apt/sources.list
@@ -28,6 +29,7 @@ Vagrant.configure(2) do |config|
       dh-systemd \
       git-buildpackage \
       postgresql-client \
+      libpq-dev \
       mysql-client \
       python-all-dev \
       python-dev \
@@ -49,12 +51,8 @@ Vagrant.configure(2) do |config|
       libsasl2-dev \
       libssl-dev \
 
-    # Updating build tooling can help
-    sudo pip install --upgrade \
-      pip \
-      setuptools \
-      stdeb \
-      virtualenv \
+    sudo pip install --upgrade pip setuptools
+    sudo pip install --upgrade stdeb virtualenv
 
     wget -P /tmp/ \
         'http://launchpadlibrarian.net/291737817/dh-virtualenv_1.0-1_all.deb'
@@ -66,35 +64,29 @@ Vagrant.configure(2) do |config|
     source /home/vagrant/virtualenv/orlo/bin/activate
     echo "source ~/virtualenv/orlo/bin/activate" >> /home/vagrant/.profile
 
-    pip install -r /vagrant/orlo/requirements.txt
-    pip install -r /vagrant/orlo/requirements_testing.txt
+    pip install --upgrade pip setuptools
+
+    cd /vagrant/orlo
+    pip install .[test]
     pip install -r /vagrant/orlo/docs/requirements.txt
+    python setup.py develop
 
     mkdir -p /etc/orlo /var/log/orlo
+    # echo -e "[db]\nuri=postgres://orlo:password@192.168.57.100" > /etc/orlo/orlo.ini
+
+
     chown -R vagrant:root /etc/orlo /var/log/orlo
     chown -R vagrant:vagrant /home/vagrant/virtualenv
     chown vagrant:root /vagrant
-
-    # Create the database
-    #cd /vagrant/orlo
-    #python create_db.py
-    #python setup.py develop
-
   SHELL
 
   config.vm.define "jessie" do |jessie|
-    jessie.vm.box = "bento/debian-8.6"
+    jessie.vm.box = "bento/debian-8.7"
     jessie.vm.network "forwarded_port", guest: 5000, host: 5000
     jessie.vm.network "private_network", ip: "192.168.57.20"
     jessie.vm.provision "shell", inline: <<-SHELL
     SHELL
   end
-
-#   config.vm.define "trusty" do |trusty|
-#     trusty.vm.box = "bento/ubuntu-14.04"
-#     trusty.vm.network "forwarded_port", guest: 5000, host: 5100
-#     trusty.vm.network "private_network", ip: "192.168.57.10"
-#   end
 
   config.vm.define "xenial" do |xenial|
     xenial.vm.box = "bento/ubuntu-16.04"

@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 from flask import json
-from orlo import app
+from orlo.app import app
 from orlo.orm import db, Release, Package, Platform
 from orlo.exceptions import InvalidUsage
 from sqlalchemy.orm import exc

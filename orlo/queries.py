@@ -1,7 +1,7 @@
 from __future__ import print_function
 import datetime
 import arrow
-from orlo import app
+from orlo.app import app
 from orlo.orm import db, Release, Platform, Package, release_platform
 from orlo.exceptions import OrloError, InvalidUsage
 from sqlalchemy import and_, exc
@@ -246,13 +246,13 @@ def apply_package_filters(query, args):
     return query
 
 
-def releases(limit=None, offset=None, desc=None, **kwargs):
+def releases(limit=None, offset=None, asc=None, **kwargs):
     """
     Return whole releases, based on filters
 
     :param limit: Max number of results to return
     :param offset: Offset results. Provides pagination when combined with limit.
-    :param desc: Sort descending instead of the default ascending order
+    :param asc: Sort ascending instead of the default descending order
     :param kwargs: Request arguments
     :return:
     """
@@ -277,10 +277,10 @@ def releases(limit=None, offset=None, desc=None, **kwargs):
         raise InvalidUsage(
             "An invalid field was specified: {}".format(e.args[0]))
 
-    if desc:
-        stime_field = Release.stime.desc
-    else:
+    if asc:
         stime_field = Release.stime.asc
+    else:
+        stime_field = Release.stime.desc
 
     query = query.order_by(stime_field())
 

@@ -1,6 +1,7 @@
 from __future__ import print_function
 from flask import jsonify, request, Response, json, g
-from orlo import app, queries, config
+from orlo.app import app
+from orlo import queries
 from orlo.exceptions import InvalidUsage
 from orlo.user_auth import token_auth
 from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, \
@@ -8,7 +9,6 @@ from orlo.orm import db, Release, Package, PackageResult, ReleaseNote, \
 from orlo.util import validate_request_json, create_release, \
     validate_release_input, validate_package_input, fetch_release, \
     create_package, fetch_package, stream_json_list, str_to_bool, is_uuid
-from orlo.deploy import ShellDeploy
 from orlo.user_auth import conditional_auth
 
 __author__ = 'alforbes'
