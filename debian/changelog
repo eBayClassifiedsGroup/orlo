@@ -1,9 +1,54 @@
-orlo (0.3.1-3) UNRELEASED; urgency=medium
+orlo (0.4.0-1) UNRELEASED; urgency=medium
+
+  Build changes only
+
+  [ Alex Forbes ]
+  * postgressql-server-dev-all needed for build
+  * Add /usr/local/bin to build environment path
+  * Preinstall no-manylinux package to avoid manylinux wheels
+  * Include orloclient 0.4.0
+
+  [ Alex Forbes ]
+  * Mock psycopg2, pyldap and gunicorn in docs build
+
+ -- Alex Forbes <github@al4.co.nz>  Tue, 04 Apr 2017 15:39:06 +0000
+
+orlo (0.4.0) jessie; urgency=medium
 
   [ Alex Forbes ]
   * Fix exec path
-
-  [ vagrant ]
+  * Restrict gbp dch to debian dir, add debuild artifacts to gitignore
+  * Set universal wheel in setup.cfg
+  * Add orloclient as dependency
+  * Add /internal/version endpoint
+  * Move routes to subdirectory
+  * Refactor orlo command line, embed gunicorn app, add db migrations
+  * Commit initial database version
+  * WIP
+  * Fix migration script
+  * Fix up log handling
+  * Alembic migration WIP
+  * Use extras hack for tests_require
+  * Update vagrantfile
+  * Add libpq-dev to vagrantfile, required for psycopg2
+  * Upgrade pip/setuptools in virtualenv
+  * Depend on orloclient 0.2.0 for now, until 0.3.0 is released
+  * Add release_id to package dictionaries
+  * Remove /deploy functionality
+  * Remove deployer-related files
+  * Configure postgres in vagrant image
+  * Stamp pre-existing databases with the initial revision
+  * Remove checkfirst from create_table statements
+  * Comment out postgres config for now
+  * Suggested changes, courtesy of Carlo Bongiovanni
+  * Remove obsolete and empty test file
+  * Allow overriding of log directory by environment
+  * Upgrade postgres to 9.4 in travis
+  * Remove unneeded requirements.txt files
+  * Use trusty travis image rather than precise
+  * Increase tox verbosity
+  * Fix packages entry in setup.py
+  * Bump version to 0.4.0
 
  -- Alex Forbes <github@al4.co.nz>  Thu, 24 Nov 2016 10:09:28 +0000
 

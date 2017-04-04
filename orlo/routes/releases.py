@@ -290,7 +290,6 @@ def get_releases(release_id=None):
         ascending
     :query int limit: Limit the results by int (default 100)
     :query int offset: Offset the results by int
-    :query string package_name: Filter releases by package name
     :query string user: Filter releases by user the that performed the release
     :query string platform: Filter releases by platform
     :query string stime_before: Only include releases that started before \
