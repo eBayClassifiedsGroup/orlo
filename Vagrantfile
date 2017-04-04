@@ -31,6 +31,7 @@ Vagrant.configure(2) do |config|
       postgresql-client \
       libpq-dev \
       mysql-client \
+      postgresql-server-dev-all \
       python-all-dev \
       python-dev \
       python-pip \
