@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # from distutils.core import setup
-from setuptools import setup
+from setuptools import setup, find_packages
 import multiprocessing  # nopep8
 import os
 
@@ -32,9 +32,9 @@ setup(
     license='GPL',
     long_description=open(os.path.join(__location__, 'README.md')).read(),
     url='https://github.com/eBayClassifiedsGroup/orlo',
-    packages=[
-        'orlo',
-    ],
+    packages=find_packages(
+        exclude=['tests', 'debian', 'docs', 'etc']
+    ),
     include_package_data=True,
     install_requires=[
         'Flask',
