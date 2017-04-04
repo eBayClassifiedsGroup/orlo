@@ -35,7 +35,7 @@ install_requires = [
 
 # Horrible hack
 rtd_requires = [
-    'Flask',
+    'Flask>=0.12',
     'Flask-Alembic >= 2.0.1',
     'Flask-HTTPAuth',
     'Flask-Migrate',
