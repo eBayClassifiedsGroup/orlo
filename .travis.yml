@@ -1,4 +1,5 @@
 language: python
+dist: trusty
 
 notifications:
   slack: ebayclassifiedsgroup:lH5V2FnojyNCh8X84Qi1FKjk
