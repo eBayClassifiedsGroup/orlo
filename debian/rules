@@ -7,4 +7,4 @@ export PATH := $(PATH):/usr/local/bin
 	dh $@ --with systemd --with python-virtualenv
 
 override_dh_virtualenv:
-	dh_virtualenv --no-test --python /usr/bin/python
+	dh_virtualenv --python /usr/bin/python --preinstall=no-manylinux1
