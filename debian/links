@@ -1,1 +1,2 @@
 opt/venvs/orlo/bin/orlo usr/bin/orlo
+opt/venvs/orlo/bin/orloclient usr/bin/orloclient
