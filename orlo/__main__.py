@@ -67,7 +67,7 @@ class Start(Command):
             console else '-',
             'loglevel': loglevel or config.get('logging', 'level'),
             'on_starting': on_starting,
-            'workers': workers,
+            'workers': workers or config.get('gunicorn', 'workers'),
         }
         try:
             OrloApplication(app, gunicorn_options).run()

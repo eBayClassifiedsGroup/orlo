@@ -30,7 +30,7 @@ config.set('main', 'strict_slashes', 'false')
 config.set('main', 'base_url', 'http://localhost:8080')
 
 config.add_section('gunicorn')
-config.set('gunicorn', 'workers', '4')
+config.set('gunicorn', 'workers', '2')
 
 config.add_section('security')
 config.set('security', 'enabled', 'false')
@@ -58,6 +58,6 @@ config.set('logging', 'format', '%(asctime)s [%(name)s] %(levelname)s %('
                                 'module)s:%(funcName)s:%(lineno)d - %('
                                 'message)s')
 config.set('logging', 'directory', defaults['ORLO_LOGDIR'])  # "disabled" for no
-                                                          # log files
+                                                             # log files
 
 config.read(defaults['ORLO_CONFIG'])
