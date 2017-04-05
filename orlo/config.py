@@ -31,6 +31,7 @@ config.set('main', 'base_url', 'http://localhost:8080')
 
 config.add_section('gunicorn')
 config.set('gunicorn', 'workers', '2')
+config.set('gunicorn', 'bind', '127.0.0.1:8080')
 
 config.add_section('security')
 config.set('security', 'enabled', 'false')

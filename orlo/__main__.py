@@ -34,9 +34,11 @@ class Start(Command):
                help="Log to console instead of configured log files"),
         Option('-w', '--workers', default=config.get('gunicorn', 'workers'),
                help="Number of gunicorn workers to start"),
+        Option('-b', '--bind', default=config.get('gunicorn', 'bind'),
+               help="host:port to bind to"),
     )
 
-    def run(self, loglevel, console, workers):
+    def run(self, loglevel, console, workers, bind):
         """
         Start the production server
 
@@ -59,7 +61,7 @@ class Start(Command):
         gunicorn_options = {
             'accesslog': os.path.join(log_dir, 'gunicorn_access.log') if not
             console else '-',
-            'bind': '%s:%s' % ('0.0.0.0', '5000'),
+            'bind': bind or config.get('gunicorn', 'bind'),
             'capture_output': True,
             'errorlog': os.path.join(log_dir, 'gunicorn_error.log') if not
             console else '-',
