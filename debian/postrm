@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+case "$1" in
+    remove)
+        ;;
+    purge)
+        userdel orlo || true
+        groupdel orlo || true
+        ;;
+    upgrade)
+        ;;
+
+esac
+
+#DEBHELPER#

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#DEBHELPER#
+
+set -ue
+
+logdir=/var/log/orlo
+vardir=/var/lib/orlo
+user=orlo
+group=orlo
+
+case "$1" in
+    configure)
+        addgroup --system ${group}
+        adduser --system --home ${vardir} --group -- ${group}
+
+        mkdir -p ${logdir} || true
+        chown -R ${user}:${group} ${logdir}
+        chmod -R 775 ${logdir}
+
+        mkdir -p ${vardir} || true
+        chown -R ${user}:${group} ${vardir}
+        chmod -R 775 ${vardir}
+
+        ;;
+    abort-upgrade|abort-remove|abort-deconfigure)
+        # nothing to do
+        ;;
+esac
