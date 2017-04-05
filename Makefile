@@ -9,10 +9,11 @@ sdist:
 	python setup.py sdist
 
 clean:
-	python setup.py clean
-	debuild clean
+	@python setup.py clean
+	@debuild clean
+	@rm -rf .tox
 
-deb:
+deb: clean
 	debuild -us -uc
 
 changelog:

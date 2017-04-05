@@ -1,4 +1,4 @@
-orlo (0.4.0-1) UNRELEASED; urgency=medium
+orlo (0.4.1) jessie; urgency=medium
 
   Build changes only
 
@@ -7,8 +7,6 @@ orlo (0.4.0-1) UNRELEASED; urgency=medium
   * Add /usr/local/bin to build environment path
   * Preinstall no-manylinux package to avoid manylinux wheels
   * Include orloclient 0.4.0
-
-  [ Alex Forbes ]
   * Mock psycopg2, pyldap and gunicorn in docs build
 
  -- Alex Forbes <github@al4.co.nz>  Tue, 04 Apr 2017 15:39:06 +0000
