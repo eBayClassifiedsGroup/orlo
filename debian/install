@@ -1,2 +1,1 @@
-debian/bin/orlo usr/bin
 etc/orlo.ini /etc/orlo
