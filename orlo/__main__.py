@@ -22,7 +22,7 @@ __author__ = 'alforbes'
 
 class Start(Command):
     """
-    Run the Gunicorn API server
+    Run the Gunicorn API server, suitable for production use
     """
 
     option_list = (
@@ -96,7 +96,6 @@ class WriteConfig(Command):
 script_manager = Manager(app)
 script_manager.add_command('db', alembic_script)
 script_manager.add_command('start', Start)
-script_manager.add_command('run_dev_server', Server(host='0.0.0.0', port=5000))
 
 
 def on_starting(server):
