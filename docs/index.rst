@@ -20,6 +20,7 @@ Contents
     install
     config
     rest
+    security
 
 
 About Orlo
