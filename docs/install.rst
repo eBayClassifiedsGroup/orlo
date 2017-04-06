@@ -61,7 +61,7 @@ The debian packages you will need (already installed by Vagrant) are:
 
 It should work on Ubuntu 14.04 and Debian Jessie onwards.
 
-From there, cd into a copy of the orlo repo and run `make debian`.
+From there, cd into a copy of the orlo repo and run `make deb`.
 
 If you have made changes beforehand, it is a good idea to update the version in setup.py and run `make changelog` first so that your package is distinct from any that we release. You will need to have git configured for this (git-dch will tell you on invocation).
 
