@@ -37,7 +37,7 @@ if config.getboolean('flask', 'propagate_exceptions'):
 if config.getboolean('db', 'echo_queries'):
     app.config['SQLALCHEMY_ECHO'] = True
 
-if not config.getboolean('main', 'strict_slashes'):
+if not config.getboolean('flask', 'strict_slashes'):
     app.url_map.strict_slashes = False
 
 # Debug mode ignores all custom logging and should only be used in
