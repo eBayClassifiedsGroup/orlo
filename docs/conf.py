@@ -54,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'orlo'
-copyright = u'2015, Alex Forbes'
+copyright = u'2017, eBay Classifieds Group'
 author = u'Alex Forbes'
 
 # The version info for the project you're documenting, acts as replacement for
