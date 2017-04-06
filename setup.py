@@ -55,7 +55,7 @@ tests_require = [
     'mockldap',
     'pytest',
     'tox',
-]
+] + install_requires
 
 
 setup(
@@ -73,6 +73,7 @@ setup(
     include_package_data=True,
     install_requires=rtd_requires if on_rtd else install_requires,
     extras_require={
+        'install': install_requires,
         'test': tests_require,
         'doc': rtd_requires,
     },
