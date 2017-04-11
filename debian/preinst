@@ -7,9 +7,9 @@ set -e
 case "$1" in
     # If version 0.3.x we need to purge the user and group, as they were 
     # non-system beforehand, and the new postinst creates them with --system
-    upgrade|install)
-        old_uid=$(id -u orlo)
-        old_gid=$(getent group orlo | cut -d: -f3)
+    upgrade)
+        old_uid=$(id -u orlo || true)
+        old_gid=$(getent group orlo || true | cut -d: -f3)
 
         if [ 0$old_uid -gt 1000 ]; then
             deluser orlo || true
@@ -17,5 +17,7 @@ case "$1" in
         if [ 0$old_gid -gt 1000 ]; then
             delgroup orlo || true
         fi
+    ;;
+    install)
     ;;
 esac
