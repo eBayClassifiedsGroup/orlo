@@ -682,3 +682,21 @@ class TestGetContract(OrloHttpTest):
 
         result = self._get_releases(filters=['status=garbage_boz'], expected_status=400)
         self.assertIn('message', result)
+
+    def test_get_release_with_notes(self):
+        """
+        Tests get /release/<id> returns notes
+        """
+        release_id = self._create_release()
+        response = self._post_releases_notes(release_id, "this is a test message")
+        self.assertEqual(204, response.status_code)
+
+        output = self._get_releases(release_id=release_id)
+        self.assertIn('notes', output['releases'][0])
+
+        notes = output['releases'][0]['notes']
+        self.assertIn(
+            'test note lorem ipsum',
+            notes
+        )
+
