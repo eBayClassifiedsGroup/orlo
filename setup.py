@@ -8,7 +8,7 @@ import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-VERSION = '0.4.1'
+VERSION = '0.4.2'
 
 version_file = open(os.path.join(__location__, 'orlo', '_version.py'), 'w')
 version_file.write("__version__ = '{}'".format(VERSION))
