@@ -1,6 +1,7 @@
 from __future__ import print_function
 from test_route_base import OrloHttpTest
 import json
+import uuid
 
 __author__ = 'alforbes'
 
@@ -34,12 +35,20 @@ class GetPackagesTest(OrloHttpTest):
         r_json = json.loads(results_response.data.decode('utf-8'))
         return r_json
 
-    def test_packages(self):
+    def test_packages_invalid_uuid_returns_400(self):
         """
-        Test that we get 400 and a message with no params
+        Test that we get 400 with an invald uuid
         """
-        response = self.client.get('/packages')
+        response = self.client.get('/packages/not-a-valid-uuid')
         self.assert400(response)
+        self.assertIn('message', response.json)
+
+    def test_packages_missing_package_returns_404(self):
+        """
+        Test that we get 404 when there are no packages
+        """
+        response = self.client.get('/packages/{}'.format(uuid.uuid4()))
+        self.assert404(response)
         self.assertIn('message', response.json)
 
     def test_get_single_package(self):

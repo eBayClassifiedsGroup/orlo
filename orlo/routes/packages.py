@@ -37,14 +37,12 @@ def get_packages(package_id=None):
         if not is_uuid(package_id):
             raise InvalidUsage("Package ID given is not a valid UUID")
         query = queries.get_package(package_id)
-    elif len([x for x in request.args.keys()]) == 0:
-        raise InvalidUsage("Please specify a filter. See "
-                           "http://orlo.readthedocs.org/en/latest/rest.html"
-                           "#get--packages for more info")
     else:  # Bit more complex
         # Flatten args, as the ImmutableDict puts some values in a list when
         # expanded
-        args = {}
+        args = {
+            'limit': 100
+        }
         for k in request.args.keys():
             if k in booleans:
                 args[k] = str_to_bool(request.args.get(k))
@@ -55,6 +53,11 @@ def get_packages(package_id=None):
     # Execute eagerly to avoid confusing stack traces within the Response on
     # error
     db.session.execute(query)
+
+    if query.count() is 0:
+        response = jsonify(message="No packages found", packages=[])
+        response.status_code = 404
+        return response
 
     return Response(stream_json_list('packages', query),
                     content_type='application/json')
