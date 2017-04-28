@@ -353,5 +353,10 @@ def get_releases(release_id=None):
     # error
     db.session.execute(query)
 
+    if query.count() is 0:
+        response = jsonify(message="No releases found", releases=[])
+        response.status_code = 404
+        return response
+
     return Response(stream_json_list('releases', query),
                     content_type='application/json')

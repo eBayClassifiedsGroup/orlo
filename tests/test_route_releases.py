@@ -218,6 +218,20 @@ class TestGetContract(OrloHttpTest):
         r = self._get_releases(release_id="not_a_valid_uuid",
                                expected_status=400)
 
+    def test_get_single_release_404(self):
+        """
+        Test that we return 404 with a valid but non-existent release ID
+        """
+        r = self._get_releases(release_id=str(uuid.uuid4()),
+                               expected_status=404)
+
+    def test_get_filtered_releases_404(self):
+        """
+        Test that we return 404 with a filter that returns no results
+        """
+        results = self._get_releases(expected_status=404,
+            filters=['package_name=non-existent-package'])
+
     def test_get_releases(self):
         """
         Test the list of releases
