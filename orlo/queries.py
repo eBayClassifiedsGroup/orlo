@@ -44,6 +44,7 @@ def filter_release_status(query, status):
     :param status: The status to filter on
     :return:
     """
+    app.logger.info("Filtering release status on {}".format(status))
     enums = Package.status.property.columns[0].type.enums
     if status not in enums:
         raise InvalidUsage("Invalid package status, {} is not in {}".format(
@@ -60,6 +61,8 @@ def filter_release_status(query, status):
     elif status in ["FAILED", "IN_PROGRESS"]:
         # ANY package can match for this status to apply to the release
         query = query.filter(Release.packages.any(Package.status == status))
+    else:
+        app.logger.debug("Not filtering query on release status")
     return query
 
 
@@ -457,7 +460,7 @@ def package_list(platform=None):
     return query
 
 
-def package_versions(platform=None):
+def package_versions(platform=None, exclude_partial_releases=False):
     """
     List the current version of all packages
 
@@ -466,6 +469,10 @@ def package_versions(platform=None):
     release time
 
     :param platform: Platform to filter on
+    :param exclude_partial_releases: If false, a package, that is part of a 
+        release, which has other packages IN_PROGRESS, will not be considered 
+        the current version. If true, a package will be the current version 
+        as long as its status is SUCCESSFUL. 
     """
 
     # Sub query gets a list of successful packages by last successful release
@@ -474,10 +481,18 @@ def package_versions(platform=None):
             Package.name.label('name'),
             db.func.max(Package.stime).label('max_stime')) \
         .filter(Package.status == 'SUCCESSFUL')
+
+    if platform or exclude_partial_releases:
+        # Need to join on Release
+        sub_q = sub_q.join(Release)
     if platform:  # filter by platform
-        sub_q = sub_q \
-            .join(Release) \
-            .filter(Release.platforms.any(Platform.name == platform))
+        sub_q = sub_q.filter(Release.platforms.any(Platform.name == platform))
+    if exclude_partial_releases:
+        # Filter out packages which are part of a release in progress,
+        # see issue#52
+        app.logger.critical("FOO")
+        sub_q = filter_release_status(sub_q, status="SUCCESSFUL")
+
     sub_q = sub_q \
         .group_by(Package.name) \
         .subquery()

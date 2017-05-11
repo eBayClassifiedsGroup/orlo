@@ -5,13 +5,19 @@ from test_orm import OrloDbTest
 import orlo.queries
 import orlo.exceptions
 import orlo.stats
-from orlo.orm import Release, Package
+from orlo.orm import Release, Package, app
 from time import sleep
 import sqlalchemy.orm
 import uuid
 from orlo.util import is_uuid
+import logging
 
 __author__ = 'alforbes'
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 
 
 """
@@ -262,6 +268,8 @@ class TestSummary(OrloQueryTest):
 
         self.assertEqual(len(result), 0)
 
+
+class TestPackageVersions(OrloQueryTest):
     def test_package_versions(self):
         """
         Test package_versions
@@ -330,6 +338,38 @@ class TestSummary(OrloQueryTest):
         versions = [(p, v) for p, v in result]  # strip out the time
         # Correct versions:
         self.assertIn(('packageOne', '1.0.1'), versions)
+
+    def test_package_versions_excludes_partial_releases(self):
+        """ Test that we exclude releases in progress
+        
+        When partial_releases is False (the default). See issue#52.
+        """
+        # Full release of both components
+        rid1 = self._create_release(platforms=['platformOne'])
+        pid1 = self._create_package(rid1, name='packageOne', version='1.0')
+        pid2 = self._create_package(rid1, name='packageTwo', version='1.0')
+        self._start_package(pid1)
+        self._stop_package(pid1)
+        self._start_package(pid2)
+        self._stop_package(pid2)
+        sleep(0.1)  # To ensure some time separation
+
+        # Partial release
+        rid2 = self._create_release(platforms=['platformOne'])
+        pid1 = self._create_package(rid2, name='packageOne', version='2.0')
+        pid2 = self._create_package(rid2, name='packageTwo', version='2.0')
+        self._start_package(pid1)
+        self._stop_package(pid1)
+        self._start_package(pid2)
+        # note - have not stopped packageTwo
+
+        result = orlo.queries.package_versions(
+            exclude_partial_releases=True, platform='platformOne').all()
+        self.assertEqual(len(result), 2)
+        for pkg, ver in result:
+            # Should both be version 1.0, despite packageOne 2.0 being
+            # successful
+            self.assertEqual(ver, '1.0')
 
 
 class TestInfo(OrloQueryTest):
