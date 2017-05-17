@@ -44,6 +44,7 @@ def filter_release_status(query, status):
     :param status: The status to filter on
     :return:
     """
+    app.logger.info("Filtering release status on {}".format(status))
     enums = Package.status.property.columns[0].type.enums
     if status not in enums:
         raise InvalidUsage("Invalid package status, {} is not in {}".format(
@@ -60,6 +61,8 @@ def filter_release_status(query, status):
     elif status in ["FAILED", "IN_PROGRESS"]:
         # ANY package can match for this status to apply to the release
         query = query.filter(Release.packages.any(Package.status == status))
+    else:
+        app.logger.debug("Not filtering query on release status")
     return query
 
 
@@ -246,41 +249,57 @@ def apply_package_filters(query, args):
     return query
 
 
-def releases(limit=None, offset=None, asc=None, **kwargs):
+def build_query(object_type, limit=None, offset=None, asc=None, **kwargs):
     """
     Return whole releases, based on filters
 
+    :param object_type: Object type to query, Release or Package
     :param limit: Max number of results to return
     :param offset: Offset results. Provides pagination when combined with limit.
     :param asc: Sort ascending instead of the default descending order
     :param kwargs: Request arguments
     :return:
     """
+    if object_type is Release:
+        filter_function = apply_filters
+    elif object_type is Package:
+        filter_function = apply_package_filters
+    else:
+        raise OrloError("build_query does not support object {}".format(
+            object_type
+        ))
 
     if any(field.startswith('package_') for field in kwargs.keys()) \
-            or "status" in kwargs.keys():
-        # Package attributes need the join, as does status as it's really a
-        # package attribute
-        query = db.session.query(Release).join(Package)
+            or ("status" in kwargs.keys() and object_type is Release):
+        if object_type is not Release:
+            raise InvalidUsage(
+                "'package_' parameters are only valid for Release queries. "
+                "(hint: retry without the package_ prefix)")
+        else:
+            # Package attributes need the join, as does status as it's really a
+            # package attribute
+            query = db.session.query(object_type).join(Package)
     else:
         # No need to join on package if none of our params need it
-        query = db.session.query(Release)
+        query = db.session.query(object_type)
 
     for key in kwargs.keys():
         if isinstance(kwargs[key], bool):
             continue
         if kwargs[key].lower() in ['null', 'none']:
             kwargs[key] = None
+
     try:
-        query = apply_filters(query, kwargs)
+        query = filter_function(query, kwargs)
     except AttributeError as e:
         raise InvalidUsage(
-            "An invalid field was specified: {}".format(e.args[0]))
+            "An invalid field for table {} was specified: {}".format(
+                object_type.__tablename__, e.args[0]))
 
     if asc:
-        stime_field = Release.stime.asc
+        stime_field = object_type.stime.asc
     else:
-        stime_field = Release.stime.desc
+        stime_field = object_type.stime.desc
 
     query = query.order_by(stime_field())
 
@@ -299,32 +318,8 @@ def releases(limit=None, offset=None, asc=None, **kwargs):
 
     return query
 
-
-def packages(**kwargs):
-    """
-    Return a list of packages
-
-    Fairly simple at present, as this is not envisioned to be frequently used.
-
-    :param kwargs: Filters
-    :return:
-    """
-    query = db.session.query(Package)
-
-    for key in kwargs.keys():
-        if isinstance(kwargs[key], bool):
-            continue
-        if kwargs[key].lower() in ['null', 'none']:
-            kwargs[key] = None
-    try:
-        query = apply_package_filters(query, kwargs)
-    except AttributeError as e:
-        raise InvalidUsage("An invalid field was specified")
-
-    query = query.order_by(Package.stime.asc())
-
-    return query
-
+def packages():
+    pass
 
 def user_summary(platform=None):
     """
@@ -465,7 +460,7 @@ def package_list(platform=None):
     return query
 
 
-def package_versions(platform=None):
+def package_versions(platform=None, by_release=False):
     """
     List the current version of all packages
 
@@ -474,6 +469,11 @@ def package_versions(platform=None):
     release time
 
     :param platform: Platform to filter on
+    :param bool by_release: If true, a package, that is part of a release which
+        is not SUCCESSFUL, will not be considered the current version, even
+        if its own status is SUCCESSFUL. If false, a package will be the
+        current version as long as its own status is SUCCESSFUL.
+        Default: False.
     """
 
     # Sub query gets a list of successful packages by last successful release
@@ -482,10 +482,17 @@ def package_versions(platform=None):
             Package.name.label('name'),
             db.func.max(Package.stime).label('max_stime')) \
         .filter(Package.status == 'SUCCESSFUL')
+
+    if platform or by_release:
+        # Need to join on Release
+        sub_q = sub_q.join(Release)
     if platform:  # filter by platform
-        sub_q = sub_q \
-            .join(Release) \
-            .filter(Release.platforms.any(Platform.name == platform))
+        sub_q = sub_q.filter(Release.platforms.any(Platform.name == platform))
+    if by_release:
+        # Filter out packages which are part of a release in progress,
+        # see issue#52
+        sub_q = filter_release_status(sub_q, status="SUCCESSFUL")
+
     sub_q = sub_q \
         .group_by(Package.name) \
         .subquery()

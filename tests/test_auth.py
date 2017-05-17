@@ -237,25 +237,22 @@ class TestUserAuth(OrloAuthTest):
 
 class TestReleasesAuth(OrloAuthTest):
     """
-    Test auth against a real url, /releases
+    Test auth against real urls
 
     Bit more complicated as we have to do some POST requests
     """
-    URL_PATH = '/releases'
-
     def test_get_returns_200(self):
         """
         No auth required for GETs
         """
-        url = self.URL_PATH + '?platform=foo'
-        response = self.client.get(url)
+        response = self.client.get('/info')
         self.assert200(response)
 
     def test_post_releases_returns_401(self):
         """
         Test auth fails
         """
-        response = self.client.post(self.URL_PATH, data={'foo': 'bar'})
+        response = self.client.post('/releases', data={'foo': 'bar'})
         self.assert401(response)
 
     @patch('orlo.user_auth.verify_password_file')
@@ -266,7 +263,7 @@ class TestReleasesAuth(OrloAuthTest):
         """
         token = self.get_token()
         response = self.post_with_token_auth(
-            self.URL_PATH, token=token, data={'foo': 'bar'},
+            '/releases', token=token, data={'foo': 'bar'},
         )
         self.assert400(response)
         self.assertIn(b'message', response.data)

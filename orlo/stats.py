@@ -1,9 +1,9 @@
 from __future__ import print_function
+from collections import OrderedDict
 from orlo.queries import apply_filters, filter_release_rollback, filter_release_status
 from orlo.app import app
-from orlo.orm import db, Release, Platform, Package, release_platform
-from orlo.exceptions import OrloError, InvalidUsage
-from collections import OrderedDict
+from orlo.orm import db, Release, Package
+from orlo.exceptions import InvalidUsage
 
 __author__ = 'alforbes'
 
@@ -20,7 +20,9 @@ def releases_by_time(unit, summarize_by_unit=False, **kwargs):
     :param unit: Passed to add_release_by_time_to_dict()
     """
 
-    query = db.session.query(Release.id, Release.stime).join(Package).group_by(Release)
+    query = db.session.query(Release.id, Release.stime)\
+        .join(Package)\
+        .group_by(Release)
     query = apply_filters(query, kwargs)
 
     return get_dict_of_objects_by_time(query, unit, summarize_by_unit)
@@ -34,7 +36,8 @@ def packages_by_time(unit, summarize_by_unit=False, **kwargs):
     :param unit: Passed to add_release_by_time_to_dict()
     """
 
-    query = db.session.query(Package.id, Package.name, Package.stime).join(Release)
+    query = db.session.query(Package.id, Package.name, Package.stime)\
+        .join(Release)
     query = apply_filters(query, kwargs)
 
     return get_dict_of_objects_by_time(query, unit, summarize_by_unit)
@@ -56,29 +59,32 @@ def get_dict_of_objects_by_time(query, unit, summarize_by_unit=False):
 
     # Build queries for the individual stats
     q_normal_successful = filter_release_status(
-            filter_release_rollback(query, rollback=False), 'SUCCESSFUL'
+        filter_release_rollback(query, rollback=False), 'SUCCESSFUL'
     )
     q_normal_failed = filter_release_status(
-            filter_release_rollback(query, rollback=False), 'FAILED'
+        filter_release_rollback(query, rollback=False), 'FAILED'
     )
     q_rollback_successful = filter_release_status(
-            filter_release_rollback(query, rollback=True), 'SUCCESSFUL'
+        filter_release_rollback(query, rollback=True), 'SUCCESSFUL'
     )
     q_rollback_failed = filter_release_status(
-            filter_release_rollback(query, rollback=True), 'FAILED'
+        filter_release_rollback(query, rollback=True), 'FAILED'
     )
 
     output_dict = OrderedDict()
 
     add_objects_by_time_to_dict(
-            q_normal_successful, output_dict, ('normal', 'successful'), unit, summarize_by_unit)
+        q_normal_successful, output_dict, ('normal', 'successful'), unit,
+        summarize_by_unit)
     add_objects_by_time_to_dict(
-            q_normal_failed, output_dict, ('normal', 'failed'), unit, summarize_by_unit)
+        q_normal_failed, output_dict, ('normal', 'failed'), unit,
+        summarize_by_unit)
     add_objects_by_time_to_dict(
-            q_rollback_successful, output_dict, ('rollback', 'successful'), unit,
-            summarize_by_unit)
+        q_rollback_successful, output_dict, ('rollback', 'successful'), unit,
+        summarize_by_unit)
     add_objects_by_time_to_dict(
-            q_rollback_failed, output_dict, ('rollback', 'failed'), unit, summarize_by_unit)
+        q_rollback_failed, output_dict, ('rollback', 'failed'), unit,
+        summarize_by_unit)
 
     return output_dict
 
@@ -86,18 +92,19 @@ def get_dict_of_objects_by_time(query, unit, summarize_by_unit=False):
 def add_objects_by_time_to_dict(query, releases_dict, t_category, unit='month',
                                 summarize_by_unit=False):
     """
-    Take a query and add each of its objects to a dictionary, broken down by time
+    Take a query and add its objects to a dictionary, broken down by time
 
-    If the query given has a 'name' column, that will be included in the dictionary path
-    above the categories (t_category).
+    If the query given has a 'name' column, that will be included in the
+    dictionary path above the categories (t_category).
 
     :param dict releases_dict: Dict to add to
-    :param tuple t_category: tuple of headings, i.e. (<normal|rollback>, <successful|failed>)
+    :param tuple t_category: tuple of headings, i.e. (<normal|rollback>,
+        <successful|failed>)
     :param query query: Query object to retrieve releases from
     :param string unit: Can be 'iso', 'hour', 'day', 'week', 'month', 'year',
-    :param boolean summarize_by_unit: Only break down releases by the given unit, i.e. only one
-        layer deep. For example, if "year" is the unit, we group all releases under the year
-        and do not add month etc underneath.
+    :param boolean summarize_by_unit: Only break down releases by the given
+        unit, i.e. only one layer deep. For example, if "year" is the unit, we
+        group all releases under the year and do not add month etc underneath.
     :return:
 
     **Note**: this can also be use for packages
@@ -124,9 +131,9 @@ def add_objects_by_time_to_dict(query, releases_dict, t_category, unit='month',
                              str(object_.stime.day), str(object_.stime.hour)]
             else:
                 raise InvalidUsage(
-                        'Invalid unit "{}" specified for release breakdown'.format(unit))
+                    'Invalid unit "{}" specified for release breakdown'.format(
+                        unit))
         if hasattr(object_, 'name'):
-            #
             tree_args.append(object_.name)
         # Append categories
         tree_args += t_category
@@ -144,7 +151,7 @@ def append_tree_recursive(tree, parent, nodes, node_index=0):
     :return:
     """
     app.logger.debug('Called recursive function with args:\n{}, {}, {}'.format(
-            str(tree), str(parent), str(nodes)))
+        str(tree), str(parent), str(nodes)))
 
     child_index = node_index + 1
     try:

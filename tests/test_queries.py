@@ -1,21 +1,20 @@
 from __future__ import print_function, unicode_literals
 import arrow
-import json
 from test_orm import OrloDbTest
 import orlo.queries
 import orlo.exceptions
 import orlo.stats
+from orlo.orm import Release, Package
 from time import sleep
 import sqlalchemy.orm
-import uuid
-from orlo.util import is_uuid
+import logging
 
 __author__ = 'alforbes'
 
 
-"""
-Test the query functions in queries.py
-"""
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 
 
 class OrloQueryTest(OrloDbTest):
@@ -261,13 +260,16 @@ class TestSummary(OrloQueryTest):
 
         self.assertEqual(len(result), 0)
 
+
+class TestPackageVersions(OrloQueryTest):
     def test_package_versions(self):
         """
         Test package_versions
 
-        In this test, we create two releases. packageOne succeeds in both but packageTwo fails
-        in the second, therefore the current version for packageOne should be the second release,
-        but packageTwo should remain with the first version
+        In this test, we create two releases. packageOne succeeds in both but
+        packageTwo fails in the second, therefore the current version for
+        packageOne should be the second release, but packageTwo should remain
+        with the first version
         """
         rid1 = self._create_release(platforms=['platformOne'])
         pid1 = self._create_package(rid1, name='packageOne', version='1.0.1')
@@ -328,6 +330,38 @@ class TestSummary(OrloQueryTest):
         versions = [(p, v) for p, v in result]  # strip out the time
         # Correct versions:
         self.assertIn(('packageOne', '1.0.1'), versions)
+
+    def test_package_versions_excludes_partial_releases(self):
+        """ Test that we exclude releases in progress
+
+        When partial_releases is False (the default). See issue#52.
+        """
+        # Full release of both components
+        rid1 = self._create_release(platforms=['platformOne'])
+        pid1 = self._create_package(rid1, name='packageOne', version='1.0')
+        pid2 = self._create_package(rid1, name='packageTwo', version='1.0')
+        self._start_package(pid1)
+        self._stop_package(pid1)
+        self._start_package(pid2)
+        self._stop_package(pid2)
+        sleep(0.1)  # To ensure some time separation
+
+        # Partial release
+        rid2 = self._create_release(platforms=['platformOne'])
+        pid1 = self._create_package(rid2, name='packageOne', version='2.0')
+        pid2 = self._create_package(rid2, name='packageTwo', version='2.0')
+        self._start_package(pid1)
+        self._stop_package(pid1)
+        self._start_package(pid2)
+        # note - have not stopped packageTwo
+
+        result = orlo.queries.package_versions(
+            by_release=True, platform='platformOne').all()
+        self.assertEqual(len(result), 2)
+        for _, ver in result:
+            # Should both be version 1.0, despite packageOne 2.0 being
+            # successful
+            self.assertEqual(ver, '1.0')
 
 
 class TestInfo(OrloQueryTest):
@@ -687,12 +721,29 @@ class CountPackagesRollback(CountPackagesTest):
         self.assertEqual(1, result[0][0])
 
 
-class ReleasesTest(OrloQueryTest):
+class TestBuildQuery(OrloQueryTest):
     """
-    Test the releases method
+    Test the build_query method
     """
 
-    def test_releases_with_bad_limit(self):
+    def test_build_query_returns_query_with_Release(self):
+        """
+        Test that
+        :return:
+        """
+        result = orlo.queries.build_query(Release)
+        self.assertIsInstance(result, sqlalchemy.orm.query.Query)
+
+
+    def test_build_query_returns_query_with_Package(self):
+        """
+        Test that
+        :return:
+        """
+        result = orlo.queries.build_query(Package)
+        self.assertIsInstance(result, sqlalchemy.orm.query.Query)
+
+    def test_bad_query_with_bad_limit(self):
         """
         Test releases raises InvalidUsage when limit is not an int
         """
@@ -700,9 +751,9 @@ class ReleasesTest(OrloQueryTest):
             'limit': 'bad_limit',
         }
         with self.assertRaises(orlo.exceptions.InvalidUsage):
-            orlo.queries.releases(**args)
+            orlo.queries.build_query(Release, **args)
 
-    def test_releases_with_bad_offset(self):
+    def test_bad_query_with_bad_offset(self):
         """
         Test releases raises InvalidUsage when offset is not an int
         """
@@ -710,7 +761,16 @@ class ReleasesTest(OrloQueryTest):
             'offset': 'bad_offset',
         }
         with self.assertRaises(orlo.exceptions.InvalidUsage):
-            orlo.queries.releases(**args)
+            orlo.queries.build_query(Release, **args)
+
+    def test_with_package(self):
+        """
+        Test that query returned by get_package works
+        """
+        rid = self._create_release()
+        pid = self._create_package(rid, rollback=False)
+        result = orlo.queries.build_query(Package).all()
+        self.assertEqual(result[0].id, pid)
 
 
 class GetPackageTest(OrloQueryTest):
@@ -734,26 +794,4 @@ class GetPackageTest(OrloQueryTest):
         result = orlo.queries.get_package(pid).all()
 
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].id, pid)
-
-
-class PackagesTests(OrloQueryTest):
-    """
-    Test the queries.packages method
-    """
-    def test_packages_returns_query(self):
-        """
-        Test that
-        :return:
-        """
-        result = orlo.queries.packages()
-        self.assertIsInstance(result, sqlalchemy.orm.query.Query)
-
-    def test_packages_works(self):
-        """
-        Test that query returned by get_package works
-        """
-        rid = self._create_release()
-        pid = self._create_package(rid, rollback=False)
-        result = orlo.queries.packages().all()
         self.assertEqual(result[0].id, pid)

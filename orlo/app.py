@@ -98,7 +98,7 @@ class OrloApplication(gunicorn.app.base.BaseApplication):
 
 
 if config.getboolean('security', 'enabled') and \
-                config.get('security', 'secret_key') == 'change_me':
+        config.get('security', 'secret_key') == 'change_me':
     raise OrloStartupError(
         "Security is enabled, please configure security:secret_key in orlo.ini")
 

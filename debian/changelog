@@ -1,3 +1,11 @@
+orlo (0.4.2) jessie; urgency=medium
+
+  Build changes only
+
+  * Fix preinst script on install
+
+ -- Alex Forbes <github@al4.co.nz>  Tue, 11 Apr 2017 13:52:57 +0000
+
 orlo (0.4.1) jessie; urgency=medium
 
   Build changes only

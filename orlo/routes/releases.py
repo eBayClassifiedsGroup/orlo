@@ -347,11 +347,15 @@ def get_releases(release_id=None):
                 args[k] = str_to_bool(request.args.get(k))
             else:
                 args[k] = request.args.get(k)
-        query = queries.releases(**args)
+        query = queries.build_query(Release, **args)
 
     # Execute eagerly to avoid confusing stack traces within the Response on
     # error
     db.session.execute(query)
+
+    if query.count() == 0:
+        response = jsonify(message="No releases found", releases=[])
+        return response, 404
 
     return Response(stream_json_list('releases', query),
                     content_type='application/json')

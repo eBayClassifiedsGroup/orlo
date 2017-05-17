@@ -8,7 +8,7 @@ import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-VERSION = '0.4.1'
+VERSION = '0.4.3'
 
 version_file = open(os.path.join(__location__, 'orlo', '_version.py'), 'w')
 version_file.write("__version__ = '{}'".format(VERSION))
@@ -26,7 +26,7 @@ install_requires = [
     'Flask-TokenAuth',
     'arrow',
     'gunicorn',
-    'orloclient>=0.2.0',
+    'orloclient>=0.4.5',
     'psycopg2',
     'pyldap',
     'pytz',
@@ -55,7 +55,7 @@ tests_require = [
     'mockldap',
     'pytest',
     'tox',
-]
+] + install_requires
 
 
 setup(
@@ -73,6 +73,7 @@ setup(
     include_package_data=True,
     install_requires=rtd_requires if on_rtd else install_requires,
     extras_require={
+        'install': install_requires,
         'test': tests_require,
         'doc': rtd_requires,
     },
