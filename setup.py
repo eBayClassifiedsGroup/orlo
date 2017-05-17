@@ -26,7 +26,7 @@ install_requires = [
     'Flask-TokenAuth',
     'arrow',
     'gunicorn',
-    'orloclient>=0.2.0',
+    'orloclient>=0.4.5',
     'psycopg2',
     'pyldap',
     'pytz',
