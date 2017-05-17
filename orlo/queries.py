@@ -460,7 +460,7 @@ def package_list(platform=None):
     return query
 
 
-def package_versions(platform=None, exclude_partial_releases=False):
+def package_versions(platform=None, by_release=False):
     """
     List the current version of all packages
 
@@ -469,10 +469,11 @@ def package_versions(platform=None, exclude_partial_releases=False):
     release time
 
     :param platform: Platform to filter on
-    :param exclude_partial_releases: If false, a package, that is part of a 
-        release, which has other packages IN_PROGRESS, will not be considered 
-        the current version. If true, a package will be the current version 
-        as long as its status is SUCCESSFUL. 
+    :param bool by_release: If true, a package, that is part of a release which
+        is not SUCCESSFUL, will not be considered the current version, even
+        if its own status is SUCCESSFUL. If false, a package will be the
+        current version as long as its own status is SUCCESSFUL.
+        Default: False.
     """
 
     # Sub query gets a list of successful packages by last successful release
@@ -482,15 +483,14 @@ def package_versions(platform=None, exclude_partial_releases=False):
             db.func.max(Package.stime).label('max_stime')) \
         .filter(Package.status == 'SUCCESSFUL')
 
-    if platform or exclude_partial_releases:
+    if platform or by_release:
         # Need to join on Release
         sub_q = sub_q.join(Release)
     if platform:  # filter by platform
         sub_q = sub_q.filter(Release.platforms.any(Platform.name == platform))
-    if exclude_partial_releases:
+    if by_release:
         # Filter out packages which are part of a release in progress,
         # see issue#52
-        app.logger.critical("FOO")
         sub_q = filter_release_status(sub_q, status="SUCCESSFUL")
 
     sub_q = sub_q \

@@ -1,6 +1,8 @@
 from __future__ import print_function
 from flask import request, jsonify, url_for
 from orlo.app import app
+from orlo.util import str_to_bool
+from orlo.config import config
 import orlo.queries as queries
 
 __author__ = 'alforbes'
@@ -116,10 +118,22 @@ def info_package_versions():
     """
     Return current version of all packages
 
-    :query platform:
+    :query bool platform: Filter versions by platform
+    :query bool by_release: If true, a package, that is part 
+        of a release which is not SUCCESSFUL, will not be considered the 
+        current version, even if its own status is SUCCESSFUL.
+        If false, a package will be the current version as long as its own 
+        status is SUCCESSFUL. Default: False.
     """
     platform = request.args.get('platform')
-    q = queries.package_versions(platform=platform)
+    exclude_partial_releases = str_to_bool(
+        request.args.get('by_release') or \
+        config.get('behaviour', 'versions_by_release')
+    )
+
+    q = queries.package_versions(
+        platform=platform,
+        by_release=exclude_partial_releases)
     result = q.all()
 
     packages = {}

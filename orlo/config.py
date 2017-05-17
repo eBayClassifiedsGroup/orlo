@@ -61,4 +61,7 @@ config.set('logging', 'format', '%(asctime)s [%(name)s] %(levelname)s %('
 config.set('logging', 'directory', defaults['ORLO_LOGDIR'])  # "disabled" for no
                                                              # log files
 
+config.add_section('behaviour')
+config.set('behaviour', 'versions_by_release', 'false')
+
 config.read(defaults['ORLO_CONFIG'])

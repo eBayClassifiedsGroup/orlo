@@ -162,3 +162,9 @@ class TestInfoUrl(OrloHttpTest):
         response = self.client.get('/info/packages/versions?platform=non-existent-platform')
         self.assert200(response)
         self.assertNotIn('test-package', response.json)
+
+    def test_info_package_versions_with_by_release(self):
+        self._create_finished_release()
+        response = self.client.get('/info/packages/versions?by_release=true')
+        self.assert200(response)
+        self.assertIn('test-package', response.json)

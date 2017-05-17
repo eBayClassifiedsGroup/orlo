@@ -364,7 +364,7 @@ class TestPackageVersions(OrloQueryTest):
         # note - have not stopped packageTwo
 
         result = orlo.queries.package_versions(
-            exclude_partial_releases=True, platform='platformOne').all()
+            by_release=True, platform='platformOne').all()
         self.assertEqual(len(result), 2)
         for pkg, ver in result:
             # Should both be version 1.0, despite packageOne 2.0 being
