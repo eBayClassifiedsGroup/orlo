@@ -355,8 +355,7 @@ def get_releases(release_id=None):
 
     if query.count() is 0:
         response = jsonify(message="No releases found", releases=[])
-        response.status_code = 404
-        return response
+        return response, 404
 
     return Response(stream_json_list('releases', query),
                     content_type='application/json')

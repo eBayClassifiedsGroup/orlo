@@ -180,6 +180,10 @@ class TestGetContract(OrloHttpTest):
     def _get_releases(self, release_id=None, filters=None, expected_status=200):
         """
         Perform a GET to /releases with optional filters
+        
+        :param string release_id: release uuid
+        :param list filters: list of filters
+        :param expected_status: status code to expect (or None to not assert)
         """
 
         if release_id:
@@ -193,11 +197,12 @@ class TestGetContract(OrloHttpTest):
             path, content_type='application/json',
         )
 
-        try:
-            self.assertEqual(results_response.status_code, expected_status)
-        except AssertionError as err:
-            print(results_response.data)
-            raise
+        if expected_status:
+            try:
+                self.assertEqual(results_response.status_code, expected_status)
+            except AssertionError as err:
+                print(results_response.data)
+                raise
         r_json = json.loads(results_response.data.decode('utf-8'))
         return r_json
 
@@ -326,10 +331,10 @@ class TestGetContract(OrloHttpTest):
         tomorrow = (now + timedelta(days=1)).strftime(t_format)
 
         r_yesterday = self._get_releases(
-            filters=['{}={}'.format(field, yesterday)]
+            filters=['{}={}'.format(field, yesterday)], expected_status=None
         )
         r_tomorrow = self._get_releases(
-            filters=['{}={}'.format(field, tomorrow)]
+            filters=['{}={}'.format(field, tomorrow)], expected_status=None
         )
 
         return r_yesterday, r_tomorrow
@@ -348,7 +353,8 @@ class TestGetContract(OrloHttpTest):
         Filter on releases that don't have a finish time
         """
         releases = self._get_releases(
-            filters=['{}={}'.format('ftime', 'null')]
+            filters=['{}={}'.format('ftime', 'null')],
+            expected_status=404,
         )
         self.assertEqual(len(releases['releases']), 0)
 
@@ -394,7 +400,8 @@ class TestGetContract(OrloHttpTest):
         r = self._get_releases(filters=['duration_lt=10'])
         self.assertEqual(3, len(r['releases']))
 
-        r = self._get_releases(filters=['duration_lt=0'])
+        r = self._get_releases(filters=['duration_lt=0'],
+                               expected_status=404)
         self.assertEqual(0, len(r['releases']))
 
     def test_get_release_filter_duration_gt(self):
@@ -404,7 +411,8 @@ class TestGetContract(OrloHttpTest):
         for _ in range(0, 3):
             self._create_finished_release()
 
-        r = self._get_releases(filters=['duration_gt=10'])
+        r = self._get_releases(filters=['duration_gt=10'],
+                               expected_status=404)
         self.assertEqual(0, len(r['releases']))
 
         r = self._get_releases(filters=['duration_gt=0'])
@@ -468,7 +476,8 @@ class TestGetContract(OrloHttpTest):
             self._create_package(rid)
 
         first_results = self._get_releases(filters=['reference=REF'])
-        second_results = self._get_releases(filters=['reference=ZERO'])
+        second_results = self._get_releases(filters=['reference=ZERO'],
+                                            expected_status=404)
 
         self.assertEqual(len(first_results['releases']), 3)
         self.assertEqual(len(second_results['releases']), 0)
@@ -642,7 +651,8 @@ class TestGetContract(OrloHttpTest):
                                                      'package_status=NOT_STARTED'])
         # should be zero
         third_results = self._get_releases(filters=['package_rollback=False',
-                                                    'package_status=SUCCESSFUL'])
+                                                    'package_status=SUCCESSFUL'],
+                                           expected_status=404)
 
         self.assertEqual(len(first_results['releases']), 3)
         self.assertEqual(len(second_results['releases']), 2)

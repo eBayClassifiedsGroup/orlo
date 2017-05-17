@@ -265,9 +265,10 @@ class TestSummary(OrloQueryTest):
         """
         Test package_versions
 
-        In this test, we create two releases. packageOne succeeds in both but packageTwo fails
-        in the second, therefore the current version for packageOne should be the second release,
-        but packageTwo should remain with the first version
+        In this test, we create two releases. packageOne succeeds in both but 
+        packageTwo fails in the second, therefore the current version for 
+        packageOne should be the second release, but packageTwo should remain 
+        with the first version
         """
         rid1 = self._create_release(platforms=['platformOne'])
         pid1 = self._create_package(rid1, name='packageOne', version='1.0.1')
