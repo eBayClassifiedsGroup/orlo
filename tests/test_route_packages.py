@@ -13,7 +13,7 @@ class GetPackagesTest(OrloHttpTest):
 
     def _get_packages(self, package_id=None, filters=None, expected_status=200):
         """
-        Perform a GET to /releases with optional filters
+        Perform a GET to /packages with optional filters
         """
 
         if package_id:

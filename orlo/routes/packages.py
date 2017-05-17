@@ -48,7 +48,7 @@ def get_packages(package_id=None):
                 args[k] = str_to_bool(request.args.get(k))
             else:
                 args[k] = request.args.get(k)
-        query = queries.packages(**args)
+        query = queries.build_query(Package, **args)
 
     # Execute eagerly to avoid confusing stack traces within the Response on
     # error

@@ -246,41 +246,57 @@ def apply_package_filters(query, args):
     return query
 
 
-def releases(limit=None, offset=None, asc=None, **kwargs):
+def build_query(object_type, limit=None, offset=None, asc=None, **kwargs):
     """
     Return whole releases, based on filters
 
+    :param object_type: Object type to query, Release or Package
     :param limit: Max number of results to return
     :param offset: Offset results. Provides pagination when combined with limit.
     :param asc: Sort ascending instead of the default descending order
     :param kwargs: Request arguments
     :return:
     """
+    if object_type is Release:
+        filter_function = apply_filters
+    elif object_type is Package:
+        filter_function = apply_package_filters
+    else:
+        raise OrloError("build_query does not support object {}".format(
+            object_type
+        ))
 
     if any(field.startswith('package_') for field in kwargs.keys()) \
-            or "status" in kwargs.keys():
-        # Package attributes need the join, as does status as it's really a
-        # package attribute
-        query = db.session.query(Release).join(Package)
+            or ("status" in kwargs.keys() and object_type is Release):
+        if object_type is not Release:
+            raise InvalidUsage(
+                "'package_' parameters are only valid for Release queries. "
+                "(hint: retry without the package_ prefix)")
+        else:
+            # Package attributes need the join, as does status as it's really a
+            # package attribute
+            query = db.session.query(object_type).join(Package)
     else:
         # No need to join on package if none of our params need it
-        query = db.session.query(Release)
+        query = db.session.query(object_type)
 
     for key in kwargs.keys():
         if isinstance(kwargs[key], bool):
             continue
         if kwargs[key].lower() in ['null', 'none']:
             kwargs[key] = None
+
     try:
-        query = apply_filters(query, kwargs)
+        query = filter_function(query, kwargs)
     except AttributeError as e:
         raise InvalidUsage(
-            "An invalid field was specified: {}".format(e.args[0]))
+            "An invalid field for table {} was specified: {}".format(
+                object_type.__tablename__, e.args[0]))
 
     if asc:
-        stime_field = Release.stime.asc
+        stime_field = object_type.stime.asc
     else:
-        stime_field = Release.stime.desc
+        stime_field = object_type.stime.desc
 
     query = query.order_by(stime_field())
 
@@ -299,32 +315,8 @@ def releases(limit=None, offset=None, asc=None, **kwargs):
 
     return query
 
-
-def packages(**kwargs):
-    """
-    Return a list of packages
-
-    Fairly simple at present, as this is not envisioned to be frequently used.
-
-    :param kwargs: Filters
-    :return:
-    """
-    query = db.session.query(Package)
-
-    for key in kwargs.keys():
-        if isinstance(kwargs[key], bool):
-            continue
-        if kwargs[key].lower() in ['null', 'none']:
-            kwargs[key] = None
-    try:
-        query = apply_package_filters(query, kwargs)
-    except AttributeError as e:
-        raise InvalidUsage("An invalid field was specified")
-
-    query = query.order_by(Package.stime.asc())
-
-    return query
-
+def packages():
+    pass
 
 def user_summary(platform=None):
     """

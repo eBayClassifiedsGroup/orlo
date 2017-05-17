@@ -347,7 +347,7 @@ def get_releases(release_id=None):
                 args[k] = str_to_bool(request.args.get(k))
             else:
                 args[k] = request.args.get(k)
-        query = queries.releases(**args)
+        query = queries.build_query(Release, **args)
 
     # Execute eagerly to avoid confusing stack traces within the Response on
     # error
