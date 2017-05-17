@@ -119,11 +119,10 @@ def info_package_versions():
     Return current version of all packages
 
     :query bool platform: Filter versions by platform
-    :query bool by_release: If true, a package, that is part 
-        of a release which is not SUCCESSFUL, will not be considered the 
-        current version, even if its own status is SUCCESSFUL.
-        If false, a package will be the current version as long as its own 
-        status is SUCCESSFUL. Default: False.
+    :query bool by_release: If true, a package that is part of a release, which
+        is not SUCCESSFUL, will not be considered the current version, even if
+        its own status is SUCCESSFUL. If false, a package will be the current
+        version as long as its own status is SUCCESSFUL. Default: False.
     """
     platform = request.args.get('platform')
     exclude_partial_releases = str_to_bool(

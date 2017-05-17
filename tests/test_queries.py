@@ -1,15 +1,12 @@
 from __future__ import print_function, unicode_literals
 import arrow
-import json
 from test_orm import OrloDbTest
 import orlo.queries
 import orlo.exceptions
 import orlo.stats
-from orlo.orm import Release, Package, app
+from orlo.orm import Release, Package
 from time import sleep
 import sqlalchemy.orm
-import uuid
-from orlo.util import is_uuid
 import logging
 
 __author__ = 'alforbes'
@@ -18,11 +15,6 @@ __author__ = 'alforbes'
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-
-
-"""
-Test the query functions in queries.py
-"""
 
 
 class OrloQueryTest(OrloDbTest):
@@ -274,9 +266,9 @@ class TestPackageVersions(OrloQueryTest):
         """
         Test package_versions
 
-        In this test, we create two releases. packageOne succeeds in both but 
-        packageTwo fails in the second, therefore the current version for 
-        packageOne should be the second release, but packageTwo should remain 
+        In this test, we create two releases. packageOne succeeds in both but
+        packageTwo fails in the second, therefore the current version for
+        packageOne should be the second release, but packageTwo should remain
         with the first version
         """
         rid1 = self._create_release(platforms=['platformOne'])
@@ -341,7 +333,7 @@ class TestPackageVersions(OrloQueryTest):
 
     def test_package_versions_excludes_partial_releases(self):
         """ Test that we exclude releases in progress
-        
+
         When partial_releases is False (the default). See issue#52.
         """
         # Full release of both components
@@ -366,7 +358,7 @@ class TestPackageVersions(OrloQueryTest):
         result = orlo.queries.package_versions(
             by_release=True, platform='platformOne').all()
         self.assertEqual(len(result), 2)
-        for pkg, ver in result:
+        for _, ver in result:
             # Should both be version 1.0, despite packageOne 2.0 being
             # successful
             self.assertEqual(ver, '1.0')

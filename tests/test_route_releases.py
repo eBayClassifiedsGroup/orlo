@@ -179,8 +179,8 @@ class TestGetContract(OrloHttpTest):
 
     def _get_releases(self, release_id=None, filters=None, expected_status=200):
         """
-        Perform a GET to /releases with optional filters
-        
+        Perform a GET to /releases with optional
+
         :param string release_id: release uuid
         :param list filters: list of filters
         :param expected_status: status code to expect (or None to not assert)
@@ -227,14 +227,15 @@ class TestGetContract(OrloHttpTest):
         """
         Test that we return 404 with a valid but non-existent release ID
         """
-        r = self._get_releases(release_id=str(uuid.uuid4()),
-                               expected_status=404)
+        self._get_releases(release_id=str(uuid.uuid4()),
+                           expected_status=404)
 
     def test_get_filtered_releases_404(self):
         """
         Test that we return 404 with a filter that returns no results
         """
-        results = self._get_releases(expected_status=404,
+        self._get_releases(
+            expected_status=404,
             filters=['package_name=non-existent-package'])
 
     def test_get_releases(self):
